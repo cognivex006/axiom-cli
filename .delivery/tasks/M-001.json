@@ -1,0 +1,63 @@
+{
+  "task_id": "M-001",
+  "branch": "feature/m-001-macos-oneline",
+  "base_revision": "ddd55e3ed659b999fa53f3eedbb3a8b08d0163e0",
+  "verification": "local_verified_ci_pending",
+  "delivery_state": "pending",
+  "spec_revision": "8eff6db51bfe3c4ca1940bd20555cb989641ce31",
+  "scope_revision": "c38bf95368c89a34f1d3e2cdaf39b54e1be110f4",
+  "commands": [
+    {
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo clippy --locked --all-targets -- -D warnings",
+      "exit_code": 0
+    },
+    {
+      "command": "cargo test --locked",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m unittest tests.test_bootstrappers -v",
+      "exit_code": 0,
+      "tests": 12
+    },
+    {
+      "command": "python3 tests/l004_posix_bootstrap.py --archive <published-macos-x64-archive> --work <new-test-directory>",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 tests/m001_published_oneliner.py --work <new-test-home> --out <report.json>",
+      "exit_code": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/M-001/README.md",
+      "sha256": "658cbd3c754d4f51c2ccb94cdcbaad7d61faeeb67e1be4402725778689d6d1a2"
+    },
+    {
+      "path": "evidence/M-001/cargo-test.txt",
+      "sha256": "31f98345e5325e4489ae12abdf4fc5e2622f8023e80ab009fb50890ac0ac90ec"
+    },
+    {
+      "path": "evidence/M-001/clippy.txt",
+      "sha256": "38841cb33434258b9abaa9da0fbeff9eabfc0cb0db9c7dc690ddd63cbc166bbe"
+    },
+    {
+      "path": "evidence/M-001/local-boundaries.json",
+      "sha256": "ee128fedd71893c2941f27b200c4acef011b471d824a51f9406a321d12d5bbcc"
+    },
+    {
+      "path": "evidence/M-001/local-published.json",
+      "sha256": "566701901811cb4d1b3a64246bcd67aea6bff952c3121939b6933e127ef1f699"
+    },
+    {
+      "path": "evidence/M-001/preflight-validation.txt",
+      "sha256": "40a8305b353fb3411cd100ca6d9091f6288bc1fb3a17d5deddec8d2f161e0edd"
+    }
+  ],
+  "limitations": "Local native evidence uses isolated homes under existing uid 501, not a fresh account. Local root refusal is an identity fixture; hosted CI performs the actual early root refusal. Fresh candidate and published hosted jobs must pass before canonical completion. No release/tag/publication performed."
+}

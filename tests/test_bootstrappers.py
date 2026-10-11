@@ -71,6 +71,37 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, (name, result.stderr))
 
 
+@unittest.skipUnless(shutil.which("sh"), "no sh on this host")
+class InstallRootRefusalTests(unittest.TestCase):
+    """M-001: force the root identity boundary; fail if any download/placement is attempted."""
+
+    def test_root_is_refused_before_platform_probe_download_or_mktemp(self):
+        import os
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="axiom-install-root-") as directory:
+            home = Path(directory)
+            shim = home / "bin"
+            shim.mkdir()
+            identity = shim / "id"
+            identity.write_text('#!/bin/sh\n[ "$1" = -u ] || exit 99\necho 0\n')
+            identity.chmod(0o755)
+            for name in ("uname", "curl", "wget", "mktemp", "tar"):
+                probe = shim / name
+                probe.write_text('#!/bin/sh\necho "unexpected side effect" >&2\nexit 99\n')
+                probe.chmod(0o755)
+            script = home / "install.sh"
+            script.write_bytes(gen.generate("v1.2.3", SUMS)["install.sh"])
+            before = sorted(p.relative_to(home).as_posix() for p in home.rglob("*"))
+            env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
+            env.update(HOME=str(home), PATH=str(shim))
+            result = subprocess.run([shutil.which("sh"), str(script), "--yes"],
+                                    env=env, capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("refusing to run as root", result.stderr)
+            self.assertNotIn("unexpected side effect", result.stderr)
+            self.assertEqual(before, sorted(p.relative_to(home).as_posix() for p in home.rglob("*")))
+
+
 class UpdateBootstrapperTests(unittest.TestCase):
     """L-013 (ADR-0035): update.ps1 / update.sh are pinned, logic-free and state-aware."""
 

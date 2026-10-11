@@ -1,3 +1,8 @@
+## Unreleased — M-001 Mac Intel one-line install
+
+- Run the native Mac Intel candidate one-liner in a fresh `macos-15-intel` CI job, with version, doctor, update, uninstall and reinstall evidence. Keep M evidence separate from the L Linux/Windows lanes (ADR-0034).
+- Extend the native bootstrap harness to Mac Intel, cover options and digest/network/root refusals, and preserve existing test directories and installations. A separate published smoke test uses a real terminal, one confirmation and no `AXIOM_*` seam; local isolated-home proof never claims a clean OS account.
+
 ## 0.1.5 — L-019 short command axm release
 
 - Compose and verify 0.1.5 from the published 0.1.5 owner releases (axiom-graphd version-only; axiom-mcp with the graph_version axm commands, L-018; axiom-skills with the axm skill, L-017) so the release installs `axm` next to `axiom-cli` (ADR-0036, L-016). One version 0.1.5 across core, MCP, skills and CLI (R22, R24).
