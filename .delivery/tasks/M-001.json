@@ -2,8 +2,8 @@
   "task_id": "M-001",
   "branch": "feature/m-001-macos-oneline",
   "base_revision": "ddd55e3ed659b999fa53f3eedbb3a8b08d0163e0",
-  "verification": "local_verified_ci_pending",
-  "delivery_state": "pending",
+  "verification": "verified",
+  "delivery_state": "pushed",
   "spec_revision": "8eff6db51bfe3c4ca1940bd20555cb989641ce31",
   "scope_revision": "c38bf95368c89a34f1d3e2cdaf39b54e1be110f4",
   "commands": [
@@ -39,8 +39,16 @@
       "sha256": "658cbd3c754d4f51c2ccb94cdcbaad7d61faeeb67e1be4402725778689d6d1a2"
     },
     {
+      "path": "evidence/M-001/candidate-provenance.json",
+      "sha256": "efd734c4605bf313a07bd72704ec0f7ce0059428542555b14bd31366e7be9cc3"
+    },
+    {
       "path": "evidence/M-001/cargo-test.txt",
-      "sha256": "31f98345e5325e4489ae12abdf4fc5e2622f8023e80ab009fb50890ac0ac90ec"
+      "sha256": "a89cd0fe87c09838e8a8b3130c14eac59aea8e238f9ff929520778a112183036"
+    },
+    {
+      "path": "evidence/M-001/ci-jobs.json",
+      "sha256": "552ebf98cd88bf19181d378fc687f2c4ed34658ee95ec6ed6bbaa983fb4145b2"
     },
     {
       "path": "evidence/M-001/clippy.txt",
@@ -55,9 +63,40 @@
       "sha256": "566701901811cb4d1b3a64246bcd67aea6bff952c3121939b6933e127ef1f699"
     },
     {
+      "path": "evidence/M-001/m001-boundaries.json",
+      "sha256": "c8c4998aa52bf0c04e54e43387d7b2bd0fd98b4c5329687131196ba21a25c8e8"
+    },
+    {
+      "path": "evidence/M-001/native-ci-rust.txt",
+      "sha256": "00167cbfcadc33799004d5de78d388d8b68f140c6eb0b022f876661cd735a1dd"
+    },
+    {
+      "path": "evidence/M-001/oneliner-macos-x64.json",
+      "sha256": "95f10c98334420d7f7c6466c70daf2aa9181515f7b0d6ae16a84d5864b465290"
+    },
+    {
       "path": "evidence/M-001/preflight-validation.txt",
       "sha256": "40a8305b353fb3411cd100ca6d9091f6288bc1fb3a17d5deddec8d2f161e0edd"
+    },
+    {
+      "path": "evidence/M-001/published-SHA256SUMS",
+      "sha256": "694bed434db4905058b93094940dc4280caf175e738eb39bae89c7f56a9c0c2e"
+    },
+    {
+      "path": "evidence/M-001/published-ci.json",
+      "sha256": "c167105a3ab24628216b96bed602c14eda9a22334e6edd35e4812fc1fd5eacbe"
+    },
+    {
+      "path": "evidence/M-001/published-provenance.json",
+      "sha256": "8c414ccbca56c7b1cb4fc449916f86b22e618d841bfb1a6d1877afd5be086820"
     }
   ],
-  "limitations": "Local native evidence uses isolated homes under existing uid 501, not a fresh account. Local root refusal is an identity fixture; hosted CI performs the actual early root refusal. Fresh candidate and published hosted jobs must pass before canonical completion. No release/tag/publication performed."
+  "limitations": "Local isolated-home proof is diagnostic only. Acceptance uses fresh native macos-15-intel hosted accounts; published bytes are v0.1.5. M-002 is separate verification. No tag, new release, signing or certification claim.",
+  "verified_source_revision": "089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "verified_source_remote_revision": "089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "run_url": "https://github.com/orchex006/axiom-cli/actions/runs/38122497976",
+  "acceptance": {
+    "AC1": "Native hosted published install, all native candidate boundaries including root refusal passed.",
+    "AC2": "Fresh Mac Intel candidate lifecycle and all required owner Rust checks passed."
+  }
 }
