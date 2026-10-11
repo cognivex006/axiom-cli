@@ -1,0 +1,22 @@
+{
+  "task_id": "O-008",
+  "scope": "User-requested README navigation only, ahead of dependent runtime implementation",
+  "status": "documentation_slice_verified",
+  "canonical_task_status": "todo",
+  "dependencies": "O-003 through O-007 remain pending; no full O-008 acceptance or before/after gate claimed",
+  "branch": "feature/o-008-readme-navigation",
+  "base_revision": "4a8e589218491d79f50474a512e851f532342769",
+  "spec_revision": "8eff6db51bfe3c4ca1940bd20555cb989641ce31",
+  "preflight": "Read owner governance and O-008 card; clean main, canonical origin, task branch, 18 immutable contract hashes verified; user explicitly requested this README slice",
+  "allowed_paths": [
+    "README.md",
+    "Changelog.md",
+    "evidence/O-008/readme-navigation.json"
+  ],
+  "verification": {
+    "readme_links": 36,
+    "cross_repository_targets": "Checked tracked main paths and canonical remotes locally; no HTTP availability claim",
+    "runtime_tests": "not_run: documentation only"
+  },
+  "review": "No installer, command behavior, host configuration or published release change; O-008 stays todo"
+}

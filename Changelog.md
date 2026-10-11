@@ -1,3 +1,7 @@
+## Unreleased — O-008 README navigation
+
+- Add an ecosystem directory and task-oriented links to graphd, MCP, skills and the specification repository. Explain installation versus project/host setup, expose help in the command table and clarify the confirmation prompt. This owner-requested documentation slice does not complete O-008 or claim the pending O runtime fixes.
+
 ## Unreleased — M-001 Mac Intel one-line install
 
 - Run the native Mac Intel candidate one-liner in a fresh `macos-15-intel` CI job, with version, doctor, update, uninstall and reinstall evidence. Keep M evidence separate from the L Linux/Windows lanes (ADR-0034).
