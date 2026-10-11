@@ -1,0 +1,22 @@
+2026-10-11T07:47:00.9659170Z ##[group]Run rustup toolchain install 1.85.0 --profile minimal --component rustfmt --component clippy
+2026-10-11T07:47:00.9660710Z [36;1mrustup toolchain install 1.85.0 --profile minimal --component rustfmt --component clippy[0m
+2026-10-11T07:47:00.9661610Z [36;1mcargo +1.85.0 fmt --check[0m
+2026-10-11T07:47:00.9662240Z [36;1mcargo +1.85.0 clippy --locked --all-targets -- -D warnings[0m
+2026-10-11T07:47:00.9662920Z [36;1mcargo +1.85.0 test --locked[0m
+2026-10-11T07:47:00.9663460Z [36;1mcargo +1.85.0 build --locked --release[0m
+2026-10-11T07:47:10.8328810Z info: self-update is disabled for this build of rustup
+2026-10-11T07:47:10.8329770Z info: any updates to rustup will need to be fetched with your system package manager
+2026-10-11T07:47:10.8330810Z   1.85.0-x86_64-apple-darwin installed - rustc 1.85.0 (4d91de4e4 2025-02-17)
+2026-10-11T07:47:11.6395820Z     Checking axiom-cli v0.1.5 (<runner-home>/work/axiom-cli/axiom-cli)
+2026-10-11T07:47:15.8129980Z     Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.25s
+2026-10-11T07:47:28.1420470Z     Finished `test` profile [unoptimized + debuginfo] target(s) in 12.28s
+2026-10-11T07:47:28.1433980Z      Running unittests src/main.rs (target/debug/deps/axiom_cli-1b6e8b95ad11a593)
+2026-10-11T07:47:28.2329840Z test result: ok. 110 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+2026-10-11T07:47:28.6000250Z test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+2026-10-11T07:47:31.1963620Z test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.59s
+2026-10-11T07:47:31.2081400Z test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-11T07:47:31.2173330Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-11T07:47:31.2250380Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-11T07:47:31.5989830Z test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+2026-10-11T07:48:00.8726710Z     Finished `release` profile [optimized] target(s) in 29.22s
+2026-10-11T07:48:22.8856760Z Finished uploading artifact content to blob storage!

@@ -1,0 +1,138 @@
+{
+  "task_id": "M-001",
+  "lane": "macos-x64",
+  "execution": "native",
+  "asset_source": "candidate",
+  "root_refusal": "native CI refusal",
+  "host": {
+    "system": "Darwin",
+    "release": "24.6.0",
+    "machine": "x86_64",
+    "uid": 501
+  },
+  "archive_sha256": "9077304ea2faf8d4a080c0f41b66343f98f99da826ee6c8407b80bd0f165baed",
+  "cases": [
+    {
+      "case": "oneliner_installs_embedded_version",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.1/install.sh | sh -s -- --yes",
+        "exit_code": 0,
+        "stdout_tail": "talled: generation install-0cd50596ebfaa993 recorded in <runner-home>/work/_temp/m001-boundaries/oneliner/data/axiom/installed.json\ntarget: macos-x64 (evidence target macos-x64)\nrelease set: <temporary-path> (sha256 f7c392e7381ba18fcd18e24db3fe1838deb71739ac9a1d1e10fefb7e28a4fe42)\nchannel: stable published=false\n  axiom-graphd 0.1.5 - artifact declared\n  axiom-mcp 0.1.5 - artifact declared\n  skills 0.1.5 - no artifact for this host\n  mcp runtime - provisioned from the release (posix-python-provision)\ninstall root: <runner-home>/work/_temp/m001-boundaries/oneliner/data/axiom (bin: <runner-home>/work/_temp/m001-boundaries/oneliner/data/axiom/bin)\nsize: 4.6 MB of verified artifacts\nPATH: add <runner-home>/work/_temp/m001-boundaries/oneliner/data/axiom/bin to the login profile <runner-home>/work/_temp/m001-boundaries/oneliner/.profile (undo: axiom-cli uninstall; skip: --no-modify-path)\nplan digest: 0cd50596ebfaa993289fd61d17568f8c7775fde078c62da2052bb528e51a09b4\naxiom-cli: the engine (`<temporary-path> sibling) placed the approved bundle: status `installed`\n",
+        "stderr_tail": "",
+        "installed": true,
+        "root_exists": true,
+        "path_record": true,
+        "profile": "# Added by axiom-cli install (ADR-0033); removed by axiom-cli uninstall\nexport PATH=\"<runner-home>/work/_temp/m001-boundaries/oneliner/data/axiom/bin:$PATH\"\n",
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "installed_version_answers",
+      "passed": true,
+      "stdout_tail": "n=install\n  bin/axiom  version=0.1.5 action=install\n  bin/axiom-graphd  version=0.1.5 action=install\n  bin/axm  version=0.1.5 action=install\navailable: channel=stable published=false updated_at=2026-10-11T07:48:09Z\n  axiom-graphd available=0.1.5 status=declared\n  axiom-mcp available=0.1.5 status=declared\n  skills available=0.1.5 status=declared\naxiom-cli: reported installed and available versions\n"
+    },
+    {
+      "case": "yes_and_no_modify_path_pass_through",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.1/install.sh | sh -s -- --yes --no-modify-path",
+        "exit_code": 0,
+        "stdout_tail": "xiom install: downloading v0.1.3-l004w.1 (axiom-0.1.3-l004w.1-macos-x64.tar.gz)\ninstalled: generation install-010e28ce2946c36a recorded in <runner-home>/work/_temp/m001-boundaries/switches/data/axiom/installed.json\ntarget: macos-x64 (evidence target macos-x64)\nrelease set: <temporary-path> (sha256 f7c392e7381ba18fcd18e24db3fe1838deb71739ac9a1d1e10fefb7e28a4fe42)\nchannel: stable published=false\n  axiom-graphd 0.1.5 - artifact declared\n  axiom-mcp 0.1.5 - artifact declared\n  skills 0.1.5 - no artifact for this host\n  mcp runtime - provisioned from the release (posix-python-provision)\ninstall root: <runner-home>/work/_temp/m001-boundaries/switches/data/axiom (bin: <runner-home>/work/_temp/m001-boundaries/switches/data/axiom/bin)\nsize: 4.6 MB of verified artifacts\nPATH: unchanged (--no-modify-path); run <runner-home>/work/_temp/m001-boundaries/switches/data/axiom/bin/axiom-cli directly\nplan digest: 010e28ce2946c36a967f1f43bed6f70cfeb550c243afb49f82234b59a3317147\naxiom-cli: the engine (`<temporary-path> sibling) placed the approved bundle: status `installed`\n",
+        "stderr_tail": "",
+        "installed": true,
+        "root_exists": true,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "version_pin_runs_that_tags_installer",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.1/install.sh | sh -s -- --yes --no-modify-path --version 0.1.3-l004w.2",
+        "exit_code": 0,
+        "stdout_tail": "axiom install: downloading v0.1.3-l004w.2 (axiom-0.1.3-l004w.2-macos-x64.tar.gz)\ninstalled: generation install-a8d8a2a5a9407875 recorded in <runner-home>/work/_temp/m001-boundaries/pin/data/axiom/installed.json\ntarget: macos-x64 (evidence target macos-x64)\nrelease set: <temporary-path> (sha256 f7c392e7381ba18fcd18e24db3fe1838deb71739ac9a1d1e10fefb7e28a4fe42)\nchannel: stable published=false\n  axiom-graphd 0.1.5 - artifact declared\n  axiom-mcp 0.1.5 - artifact declared\n  skills 0.1.5 - no artifact for this host\n  mcp runtime - provisioned from the release (posix-python-provision)\ninstall root: <runner-home>/work/_temp/m001-boundaries/pin/data/axiom (bin: <runner-home>/work/_temp/m001-boundaries/pin/data/axiom/bin)\nsize: 4.6 MB of verified artifacts\nPATH: unchanged (--no-modify-path); run <runner-home>/work/_temp/m001-boundaries/pin/data/axiom/bin/axiom-cli directly\nplan digest: a8d8a2a5a940787519472f2db8e36ac7be60d8beb3bfb799b7db688185e9b89d\naxiom-cli: the engine (`<temporary-path> sibling) placed the approved bundle: status `installed`\n",
+        "stderr_tail": "",
+        "installed": true,
+        "root_exists": true,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "no_terminal_without_yes_changes_nothing",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.1/install.sh | sh",
+        "exit_code": 4,
+        "stdout_tail": "axiom install: downloading v0.1.3-l004w.1 (axiom-0.1.3-l004w.1-macos-x64.tar.gz)\n",
+        "stderr_tail": "firm it. Re-run with `--yes` (or AXIOM_INSTALL_YES=1) to apply plan ca45dad060663fda9f432e08067415d5590632281ddbce712627dd53d0e08260, or use `--dry-run` / `--apply --approve-digest`\naxiom-cli: target: macos-x64 (evidence target macos-x64)\naxiom-cli: release set: <temporary-path> (sha256 f7c392e7381ba18fcd18e24db3fe1838deb71739ac9a1d1e10fefb7e28a4fe42)\naxiom-cli: channel: stable published=false\naxiom-cli:   axiom-graphd 0.1.5 - artifact declared\naxiom-cli:   axiom-mcp 0.1.5 - artifact declared\naxiom-cli:   skills 0.1.5 - no artifact for this host\naxiom-cli:   mcp runtime - provisioned from the release (posix-python-provision)\naxiom-cli: install root: <runner-home>/work/_temp/m001-boundaries/noyes/data/axiom (bin: <runner-home>/work/_temp/m001-boundaries/noyes/data/axiom/bin)\naxiom-cli: size: 4.6 MB of verified artifacts\naxiom-cli: PATH: add <runner-home>/work/_temp/m001-boundaries/noyes/data/axiom/bin to the login profile <runner-home>/work/_temp/m001-boundaries/noyes/.profile (undo: axiom-cli uninstall; skip: --no-modify-path)\naxiom-cli: plan digest: ca45dad060663fda9f432e08067415d5590632281ddbce712627dd53d0e08260\n",
+        "installed": false,
+        "root_exists": false,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "tampered_archive_refused",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.3/install.sh | sh -s -- --yes",
+        "exit_code": 1,
+        "stdout_tail": "axiom install: downloading v0.1.3-l004w.3 (axiom-0.1.3-l004w.3-macos-x64.tar.gz)\n",
+        "stderr_tail": "axiom install: SHA-256 mismatch for axiom-0.1.3-l004w.3-macos-x64.tar.gz (expected 9077304ea2faf8d4a080c0f41b66343f98f99da826ee6c8407b80bd0f165baed, got 9666f9b88d15ffdf49f7d635a150abf2015c45d4737a1d6763f29bc1bd7f454f); the archive was not extracted and nothing was changed\n",
+        "installed": false,
+        "root_exists": false,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "truncated_archive_refused",
+      "passed": true,
+      "run": {
+        "command": "curl -fsSL http://127.0.0.1:49196/v0.1.3-l004w.4/install.sh | sh -s -- --yes",
+        "exit_code": 1,
+        "stdout_tail": "axiom install: downloading v0.1.3-l004w.4 (axiom-0.1.3-l004w.4-macos-x64.tar.gz)\n",
+        "stderr_tail": "axiom install: SHA-256 mismatch for axiom-0.1.3-l004w.4-macos-x64.tar.gz (expected 9077304ea2faf8d4a080c0f41b66343f98f99da826ee6c8407b80bd0f165baed, got 8f48e23a7ccf8c1c2e398bf8bcd3dc2d3cae2deef9b7fa4437d780aae692ac75); the archive was not extracted and nothing was changed\n",
+        "installed": false,
+        "root_exists": false,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "network_failure_refused",
+      "passed": true,
+      "run": {
+        "command": "sh <runner-home>/work/_temp/m001-boundaries/dead/v0.1.3-l004w.9/install.sh --yes",
+        "exit_code": 1,
+        "stdout_tail": "axiom install: downloading v0.1.3-l004w.9 (axiom-0.1.3-l004w.9-macos-x64.tar.gz)\n",
+        "stderr_tail": "curl: (7) Failed to connect to 127.0.0.1:9 after 0 ms: Could not connect to server\naxiom install: download failed for http://127.0.0.1:9/v0.1.3-l004w.9/axiom-0.1.3-l004w.9-macos-x64.tar.gz; nothing was changed\n",
+        "installed": false,
+        "root_exists": false,
+        "path_record": false,
+        "profile": null,
+        "temp_leftovers": []
+      }
+    },
+    {
+      "case": "generator_is_deterministic",
+      "passed": true
+    },
+    {
+      "case": "native_root_refused_before_download",
+      "passed": true,
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "axiom install: refusing to run as root: Axiom installs per user. Re-run as your normal user without sudo.\n"
+    }
+  ],
+  "passed": true
+}
