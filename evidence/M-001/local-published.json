@@ -1,0 +1,123 @@
+{
+  "task_id": "M-001",
+  "lane": "macos-x64",
+  "execution": "native",
+  "asset_source": "published",
+  "clean_user_account": false,
+  "account_kind": "isolated-home-existing-user",
+  "manual_steps": [],
+  "release_tag": "v0.1.5",
+  "published_url": "https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh",
+  "asset_hashes": {
+    "install.sh": "37bc5e870ad5dbb250dfebb38f97aa4c2b5ac8e49da610d57395a718d15506a8",
+    "axiom-0.1.5-macos-x64.tar.gz": "d90fa7804d26b456dbdd822bd945164ae36042d9843f49251f0e07b91eb1f86b"
+  },
+  "published_sha256sums": {
+    "install.sh": "37bc5e870ad5dbb250dfebb38f97aa4c2b5ac8e49da610d57395a718d15506a8",
+    "axiom-0.1.5-macos-x64.tar.gz": "d90fa7804d26b456dbdd822bd945164ae36042d9843f49251f0e07b91eb1f86b"
+  },
+  "sha256sums_sha256": "694bed434db4905058b93094940dc4280caf175e738eb39bae89c7f56a9c0c2e",
+  "asset_hashes_match_sha256sums": true,
+  "host": {
+    "system": "Darwin",
+    "release": "25.6.0",
+    "machine": "x86_64",
+    "uid": 501
+  },
+  "environment": {
+    "axiom_variables_required": [],
+    "axiom_variables_set": [],
+    "prompt_method": "native-pty",
+    "home_redirected": true,
+    "elevated": false
+  },
+  "run_url": "//actions/runs/local",
+  "source_revision": null,
+  "steps": [
+    {
+      "step": "published one-liner",
+      "command": "sh -c 'curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh | sh'",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 1,
+      "answered": true,
+      "timed_out": false,
+      "output": "axiom install: downloading v0.1.5 (axiom-0.1.5-macos-x64.tar.gz)\ntarget: macos-x64 (evidence target macos-x64)\nrelease set: <temporary-path> (sha256 753366d9efcd48b4685a6a8cba5535a1da812f6b36d15b2ba645d05d9051a240)\nchannel: stable published=false\n  axiom-graphd 0.1.5 - artifact declared\n  axiom-mcp 0.1.5 - artifact declared\n  skills 0.1.5 - no artifact for this host\n  mcp runtime - provisioned from the release (posix-python-provision)\ninstall root: <published-test-home>/data/axiom (bin: <published-test-home>/data/axiom/bin)\nsize: 4.6 MB of verified artifacts\nPATH: add <published-test-home>/data/axiom/bin to the login profile <published-test-home>/.profile (undo: axiom-cli uninstall; skip: --no-modify-path)\nplan digest: 98aab23a489fd5eeaf57a6b4bb288bcfabbe088c47f062bf458cdc429b636d69\nProceed? [Y/n] y\nPATH: added <published-test-home>/data/axiom/bin for this user; open a new terminal to use `axiom-cli`\ninstalled: generation install-98aab23a489fd5ee recorded in <published-test-home>/data/axiom/installed.json\naxiom-cli: the engine (`<temporary-path> sibling) placed the approved bundle: status `installed`\n"
+    },
+    {
+      "step": "version",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli version",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 0,
+      "answered": false,
+      "timed_out": false,
+      "output": "installed: 0.1.5 channel=stable generation=install-98aab23a489fd5ee at=2026-10-11T07:45:11Z\nprevious generation: none retained\n  axiom-graphd 9736108ccb1f version=0.1.5 action=install needs_restart\n  axiom-mcp a2eed8875cfd version=0.1.5 action=install needs_restart\n  bin/axiom-cli  version=0.1.5 action=install\n  bin/axiom  version=0.1.5 action=install\n  bin/axiom-graphd  version=0.1.5 action=install\n  bin/axm  version=0.1.5 action=install\navailable: channel=stable published=false updated_at=2026-10-08T04:25:39Z\n  axiom-graphd available=0.1.5 status=declared\n  axiom-mcp available=0.1.5 status=declared\n  skills available=0.1.5 status=declared\naxiom-cli: reported installed and available versions\n"
+    },
+    {
+      "step": "doctor exit 0",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli doctor",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 0,
+      "answered": false,
+      "timed_out": false,
+      "output": "target: macos-x64 tier=finish-first evidence_target=macos-x64\ninstall root: <published-test-home>/data/axiom\ninstalled release: channel=stable generation=install-98aab23a489fd5ee components=6\nrecorded channel manifest: <published-test-home>/data/axiom/recorded-manifest.json verified sha256=753366d9efcd48b4685a6a8cba5535a1da812f6b36d15b2ba645d05d9051a240\nrecovery journal: 0 interrupted transaction(s)\ncoordinator lock: free\nprerequisites (distribution contract section 7):\n  rust toolchain: not required by an installed release (build-time only; observed: no `rustc` was found on PATH)\n  python interpreter: provisioned MCP runtime (<published-test-home>/data/axiom/mcp-runtime/current.json)\n  sqlite driver: unverified (non-blocking; owner task J-007): no owner manifest declares the bundled SQLite driver version\nengine: <published-test-home>/data/axiom/bin/axiom (sibling)\naxiom-cli: every reported check is satisfied\n"
+    },
+    {
+      "step": "update",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli update",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 0,
+      "answered": false,
+      "timed_out": false,
+      "output": "up to date: 0.1.5\naxiom-cli: up to date: installed 0.1.5; channel `stable` offers 0.1.5\n"
+    },
+    {
+      "step": "uninstall",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli uninstall",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 1,
+      "answered": true,
+      "timed_out": false,
+      "output": "uninstall from <published-test-home>/data/axiom\nremove: the installed ecosystem and its service registration (engine plan)\nremove: 4 executable(s) in <published-test-home>/data/axiom/bin\nPATH: remove <published-test-home>/data/axiom/bin from the user PATH\nkeep: user data, workspaces and graph output\nplan digest: efe57a8f414008cdad676af283ecf0fd5f1b750dcbab286114ca60ac1b5e2882\nProceed? [Y/n] y\nPATH: profile-deleted (recorded entry)\nremoved 4 owned executable(s)\nuser data, workspaces and graph output were kept\naxiom-cli: engine-owned uninstall completed; distribution approval efe57a8f414008cdad676af283ecf0fd5f1b750dcbab286114ca60ac1b5e2882 bound the request\n"
+    },
+    {
+      "step": "owned binaries removed",
+      "passed": true
+    },
+    {
+      "step": "reinstall",
+      "command": "sh -c 'curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh | sh'",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 1,
+      "answered": true,
+      "timed_out": false,
+      "output": "axiom install: downloading v0.1.5 (axiom-0.1.5-macos-x64.tar.gz)\ntarget: macos-x64 (evidence target macos-x64)\nrelease set: <temporary-path> (sha256 753366d9efcd48b4685a6a8cba5535a1da812f6b36d15b2ba645d05d9051a240)\nchannel: stable published=false\n  axiom-graphd 0.1.5 - artifact declared\n  axiom-mcp 0.1.5 - artifact declared\n  skills 0.1.5 - no artifact for this host\n  mcp runtime - provisioned from the release (posix-python-provision)\ninstall root: <published-test-home>/data/axiom (bin: <published-test-home>/data/axiom/bin)\nsize: 4.6 MB of verified artifacts\nPATH: add <published-test-home>/data/axiom/bin to the login profile <published-test-home>/.profile (undo: axiom-cli uninstall; skip: --no-modify-path)\nlegacy: unrecognised Axiom-like directory <published-test-home>/data/axiom; reported, not modified\nplan digest: 29a07f22ea8de3758eea840cfff763190e5f0bfa366bfba29ebf70d6bfc6f156\nProceed? [Y/n] y\nPATH: added <published-test-home>/data/axiom/bin for this user; open a new terminal to use `axiom-cli`\ninstalled: generation install-29a07f22ea8de375 recorded in <published-test-home>/data/axiom/installed.json\naxiom-cli: the engine (`<temporary-path> sibling) placed the approved bundle: status `installed`\n"
+    },
+    {
+      "step": "doctor after reinstall",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli doctor",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 0,
+      "answered": false,
+      "timed_out": false,
+      "output": "target: macos-x64 tier=finish-first evidence_target=macos-x64\ninstall root: <published-test-home>/data/axiom\ninstalled release: channel=stable generation=install-29a07f22ea8de375 components=6\nrecorded channel manifest: <published-test-home>/data/axiom/recorded-manifest.json verified sha256=753366d9efcd48b4685a6a8cba5535a1da812f6b36d15b2ba645d05d9051a240\nrecovery journal: 0 interrupted transaction(s)\ncoordinator lock: free\nprerequisites (distribution contract section 7):\n  rust toolchain: not required by an installed release (build-time only; observed: no `rustc` was found on PATH)\n  python interpreter: provisioned MCP runtime (<published-test-home>/data/axiom/mcp-runtime/current.json)\n  sqlite driver: unverified (non-blocking; owner task J-007): no owner manifest declares the bundled SQLite driver version\nengine: <published-test-home>/data/axiom/bin/axiom (sibling)\naxiom-cli: every reported check is satisfied\n"
+    },
+    {
+      "step": "cleanup uninstall",
+      "command": "<published-test-home>/data/axiom/bin/axiom-cli uninstall",
+      "exit_code": 0,
+      "passed": true,
+      "prompts": 1,
+      "answered": true,
+      "timed_out": false,
+      "output": "uninstall from <published-test-home>/data/axiom\nremove: the installed ecosystem and its service registration (engine plan)\nremove: 4 executable(s) in <published-test-home>/data/axiom/bin\nPATH: remove <published-test-home>/data/axiom/bin from the user PATH\nkeep: user data, workspaces and graph output\nplan digest: 66b64254713e22cc3a8ab0f86428510f3cd00625d4b4b318bff57d9520dca0e4\nProceed? [Y/n] y\nPATH: profile-deleted (recorded entry)\nremoved 4 owned executable(s)\nuser data, workspaces and graph output were kept\naxiom-cli: engine-owned uninstall completed; distribution approval 66b64254713e22cc3a8ab0f86428510f3cd00625d4b4b318bff57d9520dca0e4 bound the request\n"
+    }
+  ],
+  "passed": true
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""L-004 real-host harness (Linux x64 / WSL2 lane): the exact `curl -fsSL …/install.sh | sh` one-liner.
+"""L-004 / M-001 native POSIX bootstrap checks, including macOS Intel (ADR-0034).
 
-Serves a CI-built Linux archive (renamed to a staging tag) from a local HTTP server laid out like
+Serves a native archive (renamed to a staging tag) from a local HTTP server laid out like
 GitHub release downloads, generates `install.sh` with `--base-url`, and runs it through `sh` as a
 non-root user with `HOME` / `XDG_DATA_HOME` redirected into the work directory.
 
@@ -24,6 +24,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = ROOT / "packaging" / "oneline" / "generate_bootstrappers.py"
+LANE = ("macos-x64" if platform.system() == "Darwin" else
+        "wsl2-linux-x64" if "microsoft" in platform.release().lower() else "linux-x64")
+ASSET_PLATFORM = "macos-x64" if LANE == "macos-x64" else "linux-x64"
 
 
 def sha(data: bytes) -> str:
@@ -34,9 +37,10 @@ def publish(base: Path, tag: str, served: bytes, digest: str, base_url: str) -> 
     version = tag[1:]
     directory = base / tag
     directory.mkdir(parents=True, exist_ok=True)
-    asset = f"axiom-{version}-linux-x64.tar.gz"
+    asset = f"axiom-{version}-{ASSET_PLATFORM}.tar.gz"
     (directory / asset).write_bytes(served)
-    sums = f"{'0' * 64}  axiom-{version}-windows-x64.zip\n{digest}  {asset}\n{'0' * 64}  axiom-{version}-macos-x64.tar.gz\n"
+    sums = "".join(f"{digest if lane == ASSET_PLATFORM else '0' * 64}  axiom-{version}-{lane}.{ext}\n"
+                   for lane, ext in (("windows-x64", "zip"), ("linux-x64", "tar.gz"), ("macos-x64", "tar.gz")))
     (directory / "SHA256SUMS").write_text(sums)
     subprocess.run([sys.executable, str(GENERATOR), "--tag", tag, "--sums", str(directory / "SHA256SUMS"),
                     "--out", str(directory), "--base-url", base_url], check=True, capture_output=True)
@@ -48,9 +52,13 @@ def main() -> int:
     ap.add_argument("--archive", type=Path, required=True)
     ap.add_argument("--work", type=Path, required=True)
     args = ap.parse_args()
+    if platform.machine().lower() not in ("x86_64", "amd64") or os.getuid() == 0:
+        ap.error("requires a native x64 non-root user")
+    if not args.archive.name.endswith(f"-{ASSET_PLATFORM}.tar.gz"):
+        ap.error("archive platform must match the executing host")
     work = args.work.resolve()
     if work.exists():
-        shutil.rmtree(work)
+        ap.error("--work must be a new directory; existing work is preserved")
     srv = work / "srv"
     srv.mkdir(parents=True)
     good = args.archive.read_bytes()
@@ -120,8 +128,17 @@ def main() -> int:
     subprocess.run([sys.executable, str(GENERATOR), "--tag", T[1], "--sums", str(srv / T[1] / "SHA256SUMS"),
                     "--out", str(regen), "--base-url", base], check=True, capture_output=True)
     case("generator_is_deterministic", (regen / "install.sh").read_bytes() == (srv / T[1] / "install.sh").read_bytes())
+    if LANE == "macos-x64" and os.environ.get("GITHUB_ACTIONS") == "true":
+        # Only the early root-refusal branch is exercised; no elevated installation is allowed.
+        refused = subprocess.run(["sudo", "-n", "sh", str(dead), "--yes"], capture_output=True, text=True, timeout=15)
+        case("native_root_refused_before_download", refused.returncode == 1
+             and "refusing to run as root" in refused.stderr and "download" not in refused.stdout,
+             exit_code=refused.returncode, stdout=refused.stdout, stderr=refused.stderr)
     server.shutdown()
-    doc = {"task_id": "L-004", "lane": "wsl2-linux-x64" if "microsoft" in platform.release().lower() else "linux-x64",
+    doc = {"task_id": "M-001" if LANE == "macos-x64" else "L-004", "lane": LANE,
+           "execution": "native", "asset_source": "candidate",
+           "root_refusal": "native CI refusal" if os.environ.get("GITHUB_ACTIONS") == "true" and LANE == "macos-x64"
+                           else "unit identity fixture, not an elevated native execution",
            "host": {"system": platform.system(), "release": platform.release(), "machine": platform.machine(),
                     "uid": os.getuid()},
            "archive_sha256": sha(good), "cases": cases, "passed": all(c["passed"] for c in cases)}

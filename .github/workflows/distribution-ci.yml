@@ -78,7 +78,7 @@ jobs:
     # ADR-0033 / L-007: the exact documented one-liner on a fresh hosted runner against the
     # candidate built above, then version, doctor (exit 0), update, uninstall and reinstall, plus
     # the ADR-0035 / L-013 update one-liner (installed, leftover variable, nothing installed, 0.1.2 layout).
-    # macOS x64 is outside the current owner scope (2026-10-07) and is not run here.
+    # ADR-0034 / M-001 owns the macOS Intel candidate lane separately from L.
     name: one-line install (${{ matrix.platform }})
     needs: native
     strategy:
@@ -89,6 +89,8 @@ jobs:
             os: windows-2025
           - platform: linux-x64
             os: ubuntu-24.04
+          - platform: macos-x64
+            os: macos-15-intel
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     env:
@@ -108,8 +110,32 @@ jobs:
       - name: Documented install and update one-liners, version, doctor, update, uninstall, reinstall
         shell: bash
         run: python tests/l007_fresh_runner.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/oneliner-${{ matrix.platform }}.json"
+      - name: Native Mac Intel bootstrap options and digest/network refusals (M-001)
+        if: matrix.platform == 'macos-x64'
+        shell: bash
+        run: |
+          python tests/l004_posix_bootstrap.py --archive "$RUNNER_TEMP/candidate/axiom-0.1.5-macos-x64.tar.gz" --work "$RUNNER_TEMP/m001-boundaries" > "$RUNNER_TEMP/oneliner/m001-boundaries.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: oneliner-${{ matrix.platform }}-${{ github.sha }}
           path: ${{ runner.temp }}/oneliner/*.json
+  published-macos:
+    # M-001 AC1: the published embedded release through a real terminal on a clean account.
+    # M-002 may consume this separate published proof after M-001 closes; candidate logs never qualify.
+    name: published one-line install (macos-x64)
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Published bootstrapper, one confirmation and native lifecycle
+        run: python tests/m001_published_oneliner.py --out "$RUNNER_TEMP/published/published-macos-x64.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-oneliner-macos-x64-${{ github.sha }}
+          path: ${{ runner.temp }}/published/*.json
+          if-no-files-found: error

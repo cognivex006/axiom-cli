@@ -1,0 +1,12 @@
+{
+  "run_url": "https://github.com/orchex006/axiom-cli/actions/runs/38122497976",
+  "source_revision": "089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "artifact_id": 11695702829,
+  "artifact_name": "published-oneliner-macos-x64-089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "archive_url": "https://api.github.com/repos/orchex006/axiom-cli/actions/artifacts/11695702829/zip",
+  "github_archive_sha256": "2bc9eead79a7f7c733062439919f3b56a8a5060a7ce21fe10efe6ef8cf5e0475",
+  "downloaded_archive_sha256": "2bc9eead79a7f7c733062439919f3b56a8a5060a7ce21fe10efe6ef8cf5e0475",
+  "original_report_sha256": "0065a77ee3a4b6f0e701836e6c1a70b84e20ebaead3fb344b1b4852a26ae47fc",
+  "normalized_report_sha256": "c167105a3ab24628216b96bed602c14eda9a22334e6edd35e4812fc1fd5eacbe",
+  "normalization": "Runner home and temporary paths replaced with portable placeholders; no result, command verb, release or digest changed."
+}

@@ -1,0 +1,22 @@
+{
+  "run_url": "https://github.com/orchex006/axiom-cli/actions/runs/38122497976",
+  "source_revision": "089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "artifact_id": 11695573321,
+  "artifact_name": "oneliner-macos-x64-089e51745b63d5fd3b4810e8658ca93bb4848318",
+  "archive_url": "https://api.github.com/repos/orchex006/axiom-cli/actions/artifacts/11695573321/zip",
+  "github_archive_sha256": "0fba8d2d59921ca16242588652ddfbb46053924f93c6ddd2b6ce2d76463652d8",
+  "downloaded_archive_sha256": "0fba8d2d59921ca16242588652ddfbb46053924f93c6ddd2b6ce2d76463652d8",
+  "reports": [
+    {
+      "name": "m001-boundaries.json",
+      "original_report_sha256": "d83e99f96f6c44cb97d7605b2ddb2f88d12fbf25e7556629dd01b0929a218fb5",
+      "normalized_report_sha256": "c8c4998aa52bf0c04e54e43387d7b2bd0fd98b4c5329687131196ba21a25c8e8"
+    },
+    {
+      "name": "oneliner-macos-x64.json",
+      "original_report_sha256": "4cf6cce0670f2130b7ea51e318c59baf6e3b88e243a4ae74990bccddef82c2d2",
+      "normalized_report_sha256": "95f10c98334420d7f7c6466c70daf2aa9181515f7b0d6ae16a84d5864b465290"
+    }
+  ],
+  "normalization": "Runner home and temporary paths replaced with portable placeholders; all outcomes and hashes preserved."
+}
