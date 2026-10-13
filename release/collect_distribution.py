@@ -19,7 +19,7 @@ def collect(root, source, output):
             lane in lanes
             or data["source_revision"] != source
             or data["execution"] != "native"
-            or data["version"] != "0.1.5"
+            or data["version"] != "0.1.6"
         ):
             raise ValueError("native proof source/lane mismatch")
         if not data["cases"] or any(x["exit_code"] != 0 for x in data["cases"]):

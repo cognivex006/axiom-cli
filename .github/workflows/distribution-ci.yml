@@ -1,4 +1,4 @@
-name: Native 0.1.5 distribution CI
+name: Native 0.1.6 distribution CI
 on:
   push:
     branches: [main, 'feature/**']
@@ -49,7 +49,7 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python -m unittest discover -s tests/macos -p test_runtime_rollback_preflight.py
-      - name: Compose actual published 0.1.5 owner bytes and verify native payload
+      - name: Compose actual published 0.1.6 owner bytes and verify native payload
         shell: python
         env:
           GH_TOKEN: ${{ github.token }}
@@ -61,11 +61,11 @@ jobs:
           deadline = time.monotonic() + 600
           for repo in ('axiom-graphd', 'axiom-mcp', 'axiom-skills'):
             while True:
-              result = subprocess.run(['gh', 'release', 'view', 'v0.1.5', '--repo', 'orchex006/' + repo, '--json', 'isDraft'], capture_output=True, text=True)
+              result = subprocess.run(['gh', 'release', 'view', 'v0.1.6', '--repo', 'orchex006/' + repo, '--json', 'isDraft'], capture_output=True, text=True)
               if result.returncode == 0 and json.loads(result.stdout)['isDraft'] is False:
                 break
               assert time.monotonic() < deadline, 'verified owner Release unavailable: ' + repo
-              print('Waiting for published v0.1.5 owner: ' + repo, flush=True)
+              print('Waiting for published v0.1.6 owner: ' + repo, flush=True)
               time.sleep(10)
           output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'distribution-assets'
           subprocess.run([sys.executable, 'release/compose_012.py', '--platform', '${{ matrix.platform }}', '--out', str(output), '--source-revision', os.environ['GITHUB_SHA']], check=True)
@@ -119,7 +119,7 @@ jobs:
         if: matrix.platform == 'macos-x64'
         shell: bash
         run: |
-          python tests/l004_posix_bootstrap.py --archive "$RUNNER_TEMP/candidate/axiom-0.1.5-macos-x64.tar.gz" --work "$RUNNER_TEMP/m001-boundaries" > "$RUNNER_TEMP/oneliner/m001-boundaries.json"
+          python tests/l004_posix_bootstrap.py --archive "$RUNNER_TEMP/candidate/axiom-0.1.6-macos-x64.tar.gz" --work "$RUNNER_TEMP/m001-boundaries" > "$RUNNER_TEMP/oneliner/m001-boundaries.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

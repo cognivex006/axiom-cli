@@ -1575,11 +1575,15 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
                 .get("version")
                 .and_then(Json::as_text)
                 .unwrap_or("undeclared");
-            let artifact = object
-                .get("artifact")
-                .and_then(Json::as_object)
-                .map(|_| "artifact declared")
-                .unwrap_or("no artifact for this host");
+            let artifact = if component == "skills" {
+                "portable skills bundle (verified during install)"
+            } else {
+                object
+                    .get("artifact")
+                    .and_then(Json::as_object)
+                    .map(|_| "artifact declared")
+                    .unwrap_or("no artifact for this host")
+            };
             lines.push(format!("  {component} {version} - {artifact}"));
         }
     }

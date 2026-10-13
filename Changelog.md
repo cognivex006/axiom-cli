@@ -4,6 +4,19 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.6
+
+### New Features
+
+- Include ten agent skills, with `graph-build` for initial indexing and `graph-watch` for automatic graph refresh on source saves through the graph daemon.
+- Align the CLI, graph engine, MCP and skills at version 0.1.6. Publish refreshed shell and PowerShell installation and update scripts with pinned downloads and checksums.
+
+### Bug Fixes
+
+- Repair an installed ecosystem using its verified active skills bundle when the original release archive is no longer present.
+- Show a short diagnostic summary with clear missing prerequisites and next steps. Retain detailed checks with `doctor --verbose` or `--json`.
+- Show the CLI, graph engine, MCP and skills versions separately. Explain that `axiom` and `axiom-graphd` belong to the same engine release and distinguish recorded versions from an update check.
+
 ### Documentation
 
 - Rewrite CLI guides and release notes around commands, supported platforms and user-visible changes. Remove internal development identifiers from public documentation and generated installer descriptions.
@@ -18,6 +31,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 - Add an automated check for internal identifiers in public documents, installer templates, generated release metadata and CLI text.
 - Extend fresh-runner installation checks to Intel Macs, including update checks, uninstall and reinstall. These checks do not establish upgrades between different released versions.
+
+Full Changelog: [v0.1.5…v0.1.6](https://github.com/orchex006/axiom-cli/compare/v0.1.5...v0.1.6)
 
 ## 0.1.5
 

@@ -1020,6 +1020,30 @@ fn version_succeeds_with_nothing_installed() {
 }
 
 #[test]
+fn version_plain_distinguishes_aliases_and_recorded_versions_from_updates() {
+    let fx = Fixture::new("version-plain", Mode::Present);
+    fx.seed_installed(SEED_GENERATION, "install");
+    let out = Run::new(&fx.root).out(&["version"]);
+    assert_eq!(out.code, SUCCESS, "{}", out.stdout);
+    assert!(out
+        .stdout
+        .contains(&format!("Axiom CLI {VERSION} (axm / axiom-cli)")));
+    assert!(out
+        .stdout
+        .contains("Graph engine (axiom / axiom-graphd): not recorded"));
+    assert!(out
+        .stdout
+        .contains("use axm update check for newer releases"));
+    assert!(!out.stdout.contains(SEED_GENERATION));
+    assert!(!out.stdout.contains("up to date"));
+    assert!(!out.stdout.contains("action="));
+    let verbose = Run::new(&fx.root).out(&["version", "--verbose"]);
+    assert_eq!(verbose.code, SUCCESS);
+    assert!(verbose.stdout.contains(SEED_GENERATION));
+    assert!(verbose.stdout.contains("action="));
+}
+
+#[test]
 fn version_all_reports_the_cli_host_and_engine_blocks() {
     let fx = Fixture::new("version-all", Mode::Present);
     let out = Run::new(&fx.root).out(&["version", "--all", "--json"]);
@@ -2068,7 +2092,9 @@ fn uninstall_apply_with_an_installed_release_refuses_honestly_and_preserves_data
     std::fs::write(&data, b"user data that a removal must not touch\n")
         .expect("user data must be creatable");
 
-    let run = Run::new(&fx.root).with_candidate_manifest(&fx.manifest, &fx.cache);
+    let run = Run::new(&fx.root)
+        .without_engine()
+        .with_candidate_manifest(&fx.manifest, &fx.cache);
     let dry = run.out(&["uninstall", "--dry-run", "--json"]);
     assert_refusal(&dry, NOT_FOUND, "not_found", "engine_not_found");
     assert!(
@@ -2085,7 +2111,9 @@ fn uninstall_apply_with_an_installed_release_refuses_honestly_and_preserves_data
 fn uninstall_without_an_engine_reports_not_found_and_removes_nothing() {
     let fx = Fixture::new("uninstall-no-engine", Mode::Present);
     fx.seed_installed(SEED_GENERATION, "install");
-    let run = Run::new(&fx.root).with_candidate_manifest(&fx.manifest, &fx.cache);
+    let run = Run::new(&fx.root)
+        .without_engine()
+        .with_candidate_manifest(&fx.manifest, &fx.cache);
     let dry = run.out(&["uninstall", "--dry-run", "--json"]);
     assert_refusal(&dry, NOT_FOUND, "not_found", "engine_not_found");
     assert!(fx.root.join("installed.json").is_file());

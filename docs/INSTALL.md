@@ -251,3 +251,13 @@ Most people should keep this default. If you would rather turn the 0.1.2 bootstr
 If repair from the installed CLI reports a missing skills bundle, rerun the [installation URL](#install) to supply verified release content. An `up to date` message means no upgrade was applied; it does not establish that every advanced update path is ready.
 
 For the meaning of every exit code, run `axm --help`. For details on how installation, updates and verification work, see [Distribution and installers](30-DISTRIBUTION-AND-INSTALLERS.md).
+
+## Repair and inspect an installation
+
+`axm install` installs the complete pinned ecosystem or repairs that set. It includes the CLI, graph engine, MCP runtime and skills bundle; it does not take a component name such as `cli` or `axiom-graphd`. Review the plan and answer `Y`, or use `axm install --yes` to approve it directly.
+
+An existing installation can supply its verified active skills bundle for repair even after the downloaded archive has been removed. If that bundle is missing or corrupt, reinstall from the release installer to obtain verified payloads.
+
+`axm version` summarizes the running CLI and installed graph engine, MCP and skills. `axiom` is the engine's operator command, and `axiom-graphd` is its daemon. `axm` and `axiom-cli` are aliases of the installation manager. For update availability run `axm update check`; recorded channel information alone does not establish that the installed release is current.
+
+`axm doctor` prints a short summary and actionable findings. Use `axm doctor --verbose` for paths, transaction details and prerequisite evidence, or `--json` for automation. Project graph registration and host plugin discovery remain separate checks.

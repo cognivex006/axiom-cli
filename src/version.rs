@@ -28,7 +28,7 @@ use crate::update::state::{self, State};
 
 /// Run the `version` verb and return its process exit code.
 pub fn run_version(all: bool, json: bool, verbose: bool) -> i32 {
-    match collect(all) {
+    match collect(all, !json && !verbose) {
         Ok(report) => report.emit(json, verbose),
         Err(refusal) => refusal_report(&refusal).emit(json, verbose),
     }
@@ -49,10 +49,14 @@ fn refusal_report(refusal: &Refusal) -> Report {
     report
 }
 
-fn collect(all: bool) -> Result<Report, Refusal> {
+fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
     let mut report =
         Report::ok("ok", "reported installed and available versions").subject("version");
     report.detail("cli", cli_block());
+    report.line(format!(
+        "Axiom CLI {} (axm / axiom-cli)",
+        crate::cli::VERSION
+    ));
     report.detail("host", host_block());
     report.detail("all", Json::bool(all));
 
@@ -105,7 +109,7 @@ fn collect(all: bool) -> Result<Report, Refusal> {
                     "installed",
                     installed_block(&installed, &generation, &loaded.manifest, all),
                 );
-                for line in installed_lines(&installed, &generation) {
+                for line in installed_lines(&installed, &generation, concise) {
                     report.line(line);
                 }
             }
@@ -133,15 +137,24 @@ fn collect(all: bool) -> Result<Report, Refusal> {
             report.detail("available_source", Json::text(&available_source));
             report.detail("available_note", Json::text(&available_note));
             report.detail("available", manifest_block(manifest, all));
-            for line in manifest_lines(manifest, all) {
-                report.line(line);
+            if concise {
+                report.line(format!(
+                    "Recorded channel: {} (use axm update check for newer releases)",
+                    manifest.channel
+                ));
+            } else {
+                for line in manifest_lines(manifest, all) {
+                    report.line(line);
+                }
             }
         }
         None => {
             report.detail("available_source", Json::text(&available_source));
             report.detail("available_note", Json::text(&available_note));
             report.detail("available", Json::null());
-            report.line(format!("available: unresolved ({available_note})"));
+            if !concise {
+                report.line(format!("available: unresolved ({available_note})"));
+            }
         }
     }
 
@@ -328,7 +341,31 @@ fn release_version(generation: &Generation) -> Option<&str> {
         .then_some(first)
 }
 
-fn installed_lines(installed: &state::Installed, generation: &Generation) -> Vec<String> {
+fn installed_lines(
+    installed: &state::Installed,
+    generation: &Generation,
+    concise: bool,
+) -> Vec<String> {
+    if concise {
+        let mut lines = vec![format!(
+            "installed: {}",
+            release_version(generation).unwrap_or("mixed")
+        )];
+        for (component, label) in [
+            ("axiom-graphd", "Graph engine (axiom / axiom-graphd)"),
+            ("axiom-mcp", "MCP"),
+            ("skills", "Skills"),
+        ] {
+            let version = generation
+                .entries
+                .iter()
+                .find(|entry| entry.component == component)
+                .map(|entry| entry.version.as_str())
+                .unwrap_or("not recorded");
+            lines.push(format!("{label}: {version}"));
+        }
+        return lines;
+    }
     let mut lines = vec![
         format!(
             "installed: {} channel={} generation={} at={}",

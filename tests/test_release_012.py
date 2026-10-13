@@ -49,7 +49,7 @@ class ReleaseTests(unittest.TestCase):
                         "platform": lane,
                         "source_revision": "a" * 40,
                         "execution": "native",
-                        "version": "0.1.5",
+                        "version": composer.VERSION,
                         "cases": [{"exit_code": 0}],
                         "archive": archive.name,
                         "archive_sha256": hashlib.sha256(

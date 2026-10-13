@@ -99,9 +99,9 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
     if let Some((code, reason, message)) = integrity_failure {
         let mut failure = Report::new(code, class_status(code), message).subject("doctor");
         failure.detail("reason_code", Json::text(&reason));
-        failure.detail("findings", Json::array(findings));
+        failure.detail("findings", Json::array(findings.clone()));
         failure.lines(lines);
-        return failure.emit(json, verbose);
+        return emit_doctor(failure, &findings, json, verbose);
     }
 
     if worst != crate::cli::exit::SUCCESS {
@@ -112,16 +112,113 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
         .subject("doctor")
         .retryable();
         failure.detail("worst_code", Json::int(i64::from(worst)));
-        failure.detail("findings", Json::array(findings));
+        failure.detail("findings", Json::array(findings.clone()));
         failure.lines(lines);
-        return failure.emit(json, verbose);
+        return emit_doctor(failure, &findings, json, verbose);
     }
 
-    let mut report = Report::ok("ok", "every reported check is satisfied").subject("doctor");
+    let mut report = Report::ok(
+        "ok",
+        "installation checks passed; project and host setup are not checked",
+    )
+    .subject("doctor");
     report.detail("all", Json::bool(all));
-    report.detail("findings", Json::array(findings));
+    report.detail("findings", Json::array(findings.clone()));
     report.lines(lines);
-    report.emit(json, verbose)
+    emit_doctor(report, &findings, json, verbose)
+}
+
+fn emit_doctor(report: Report, findings: &[Json], json: bool, verbose: bool) -> i32 {
+    if json || verbose {
+        return report.emit(json, verbose);
+    }
+    let code = report.code();
+    for line in summary_lines(findings, code) {
+        if code == 0 {
+            println!("{line}");
+        } else {
+            eprintln!("{line}");
+        }
+    }
+    code
+}
+
+/// Present only what a user needs to know; technical evidence stays in verbose/JSON.
+fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
+    let mut lines = vec![format!(
+        "Axiom installation: {}",
+        if code == 0 { "OK" } else { "needs attention" }
+    )];
+    let mut flat = Vec::new();
+    for row in findings {
+        if row.get("check").and_then(Json::as_text) == Some("prerequisites") {
+            if let Some(items) = row.get("items").and_then(Json::as_array) {
+                flat.extend(items.iter());
+            }
+        } else {
+            flat.push(row);
+        }
+    }
+    for row in flat {
+        let check = row.get("check").and_then(Json::as_text).unwrap_or("");
+        let status = row.get("status").and_then(Json::as_text).unwrap_or("");
+        let message = row
+            .get("message")
+            .and_then(Json::as_text)
+            .unwrap_or("check unavailable");
+        if check == "installed_release"
+            && row.get("installed").and_then(Json::as_bool) == Some(false)
+        {
+            lines[0] = "Axiom: not installed".to_string();
+            lines.push("Next: axm install".to_string());
+        } else if status == "fail" {
+            match check {
+                "engine" => lines.push(
+                    "Engine: unavailable. Reinstall Axiom using the install URL.".to_string(),
+                ),
+                "python-interpreter" => lines.push(
+                    "MCP Python: missing or incompatible. Reinstall Axiom using the install URL."
+                        .to_string(),
+                ),
+                "installed_release" => lines.push(format!(
+                    "Installation: {message}. Restore it using the install URL."
+                )),
+                _ => lines.push(format!("{check}: {message}")),
+            }
+        } else if status == "unverified" {
+            lines.push(if check == "sqlite-driver" {
+                "Note: bundled SQLite version is unverified (non-blocking).".to_string()
+            } else {
+                format!("Unverified: {check}. {message}")
+            });
+        } else if status == "warn" {
+            lines.push(
+                "Warning: an older install, PATH conflict or leftover AXIOM_* setting was found."
+                    .to_string(),
+            );
+        } else if check == "installed_release" {
+            if row
+                .get("journal_entries")
+                .and_then(Json::as_int)
+                .unwrap_or(0)
+                > 0
+            {
+                lines.push(
+                    "Warning: an interrupted transaction needs inspection; see --verbose."
+                        .to_string(),
+                );
+            }
+            if row.get("lock_held").and_then(Json::as_bool) == Some(true) {
+                lines.push(
+                    "Warning: another installation operation may be running; see --verbose."
+                        .to_string(),
+                );
+            }
+        }
+    }
+    lines.push("Project and AI-host setup: not checked.".to_string());
+    lines.push("Details: axm doctor --verbose".to_string());
+    lines
 }
 
 /// L-006: name every legacy layout, every `axiom-cli` that shadows this root's `bin` on PATH and
@@ -745,6 +842,73 @@ fn engine_finding(lines: &mut Vec<String>, worst: &mut i32) -> Json {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compact_success_keeps_unverified_checks_visible_without_internal_paths() {
+        let findings = vec![
+            finding(
+                "installed_release",
+                "ok",
+                "verified",
+                vec![("installed", Json::bool(true))],
+            ),
+            finding(
+                "prerequisites",
+                "ok",
+                "checked",
+                vec![(
+                    "items",
+                    Json::array(vec![finding(
+                        "sqlite-driver",
+                        "unverified",
+                        "unknown",
+                        vec![],
+                    )]),
+                )],
+            ),
+        ];
+        let lines = summary_lines(&findings, 0);
+        assert_eq!(lines[0], "Axiom installation: OK");
+        assert!(lines.iter().any(|line| line.contains("non-blocking")));
+        assert!(lines.iter().any(|line| line.contains("not checked")));
+        assert!(lines.len() <= 5);
+    }
+
+    #[test]
+    fn compact_failure_names_the_missing_prerequisite_and_the_next_step() {
+        let findings = vec![finding(
+            "prerequisites",
+            "fail",
+            "missing",
+            vec![(
+                "items",
+                Json::array(vec![finding(
+                    "python-interpreter",
+                    "fail",
+                    "missing",
+                    vec![],
+                )]),
+            )],
+        )];
+        let lines = summary_lines(&findings, crate::cli::exit::NOT_READY);
+        assert!(lines[0].contains("needs attention"));
+        assert!(lines
+            .iter()
+            .any(|line| line.contains("MCP Python: missing") && line.contains("install URL")));
+    }
+
+    #[test]
+    fn compact_clean_host_does_not_claim_an_installed_ecosystem() {
+        let findings = vec![finding(
+            "installed_release",
+            "ok",
+            "clean",
+            vec![("installed", Json::bool(false))],
+        )];
+        let lines = summary_lines(&findings, 0);
+        assert_eq!(lines[0], "Axiom: not installed");
+        assert!(lines.iter().any(|line| line == "Next: axm install"));
+    }
 
     #[test]
     fn a_version_string_parses_into_major_and_minor() {

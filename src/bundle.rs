@@ -470,7 +470,7 @@ fn core_artifacts(request: &Request<'_>) -> Result<Vec<CoreArtifact>, Refusal> {
 /// Assemble `skills/`, from an engine-format subtree when the release set provides one.
 fn assemble_skills(request: &Request<'_>) -> Result<Json, Refusal> {
     let Some(release) = request.release_root.as_deref() else {
-        return Err(skills_missing(None));
+        return assemble_installed_skills(request);
     };
     let provided = release.join(SKILLS_DIRECTORY);
     if provided.join(SKILLS_MANIFEST_FILE).is_file() {
@@ -519,6 +519,118 @@ fn assemble_skills(request: &Request<'_>) -> Result<Json, Refusal> {
         return convert_skills(request, release);
     }
     Err(skills_missing(Some(release)))
+}
+
+/// Repair from the active owner bundle when the extracted release no longer exists.
+fn assemble_installed_skills(request: &Request<'_>) -> Result<Json, Refusal> {
+    let store = request.install_root.join("installs/ecosystem/skills");
+    let read = |path: &Path| -> Result<Json, Refusal> {
+        if path.is_symlink() {
+            return Err(Refusal::validation(
+                "skills_bundle_symlink",
+                "the installed skills record is a symbolic link",
+            ));
+        }
+        let bytes = std::fs::read(path).map_err(|_| Refusal::not_ready("installed_skills_missing", "installed skills are missing; run the install URL again to restore the complete release"))?;
+        json::parse(&String::from_utf8_lossy(&bytes))
+            .map_err(|error| Refusal::validation("installed_skills_invalid", error))
+    };
+    let pointer = read(&store.join("current"))?;
+    let version = pointer.get("version").and_then(Json::as_text).unwrap_or("");
+    if version.is_empty()
+        || !version
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b".-+".contains(&b))
+        || version == "."
+        || version == ".."
+    {
+        return Err(Refusal::validation(
+            "installed_skills_invalid",
+            "the installed skills version is invalid",
+        ));
+    }
+    let planned = request
+        .plan_components
+        .iter()
+        .find(|row| row.get("component").and_then(Json::as_text) == Some(SKILLS_CHANNEL_COMPONENT));
+    let source = store.join(version);
+    // Refuse linked ancestors as well as linked payload files.
+    let mut ancestor = source.as_path();
+    while ancestor != request.install_root {
+        if ancestor.is_symlink() {
+            return Err(Refusal::validation(
+                "skills_bundle_symlink",
+                "the installed skills path is a symbolic link",
+            ));
+        }
+        ancestor = ancestor.parent().ok_or_else(|| {
+            Refusal::validation(
+                "installed_skills_invalid",
+                "the installed skills path escapes its root",
+            )
+        })?;
+    }
+    let manifest_path = source.join(SKILLS_MANIFEST_FILE);
+    let manifest = read(&manifest_path)?;
+    let expected = pointer
+        .get("manifest_sha256")
+        .and_then(Json::as_text)
+        .unwrap_or("");
+    let digest = sha256::file_hex(&manifest_path)
+        .map_err(|e| Refusal::io("skills_bundle_unreadable", "installed skills manifest", &e))?;
+    if !is_lowercase_hex64(expected)
+        || digest != expected
+        || planned.is_none()
+        || ["version", "revision"].iter().any(|key| {
+            let wanted = planned.and_then(|p| p.get(key)).and_then(Json::as_text);
+            wanted.is_none()
+                || wanted != pointer.get(key).and_then(Json::as_text)
+                || wanted != manifest.get(key).and_then(Json::as_text)
+        })
+    {
+        return Err(Refusal::validation("installed_skills_mismatch", "installed skills do not match the approved release or manifest hash; run the install URL again"));
+    }
+    let destination = request.staging_root.join(SKILLS_DIRECTORY);
+    let payload = destination.join(SKILLS_PAYLOAD_DIRECTORY);
+    std::fs::create_dir_all(&payload)
+        .map_err(|e| Refusal::io("skills_bundle_unwritable", "skills repair staging", &e))?;
+    let mut count = 0;
+    copy_tree(&source, &payload, &mut count)?;
+    std::fs::remove_file(payload.join(SKILLS_MANIFEST_FILE))
+        .map_err(|e| Refusal::io("skills_bundle_unwritable", "skills repair manifest", &e))?;
+    std::fs::copy(&manifest_path, destination.join(SKILLS_MANIFEST_FILE))
+        .map_err(|e| Refusal::io("skills_bundle_unwritable", "skills repair manifest", &e))?;
+    let copied = read(&destination.join(SKILLS_MANIFEST_FILE))?;
+    if sha256::file_hex(&destination.join(SKILLS_MANIFEST_FILE))
+        .ok()
+        .as_deref()
+        != Some(expected)
+    {
+        return Err(Refusal::validation(
+            "installed_skills_mismatch",
+            "the skills manifest changed during repair",
+        ));
+    }
+    verify_skills_payload(&destination, &copied)?;
+    Ok(Json::from_pairs(vec![
+        ("source", Json::text("installed_bundle")),
+        ("component", Json::text(SKILLS_COMPONENT)),
+        ("version", Json::text(version)),
+        (
+            "revision",
+            pointer.get("revision").cloned().unwrap_or(Json::Null),
+        ),
+        ("manifest_sha256", Json::text(expected)),
+        (
+            "entries",
+            Json::int(
+                copied
+                    .get("entries")
+                    .and_then(Json::as_array)
+                    .map_or(0, |e| e.len()) as i64,
+            ),
+        ),
+    ]))
 }
 
 /// Re-hash every payload an engine-format skills manifest declares.

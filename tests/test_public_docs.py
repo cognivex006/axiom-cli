@@ -109,7 +109,7 @@ class PublicDocumentationTests(unittest.TestCase):
             self.assertEqual((ROOT / "release" / f"{tag}-notes.md").read_text(), notes.render(tag))
 
     def test_unknown_and_moving_tags_are_refused(self):
-        for tag in ("latest", "main", "v0.1.6", "v0.1.5-beta", "0.1.5"):
+        for tag in ("latest", "main", "v0.1.99", "v0.1.5-beta", "0.1.5"):
             with self.subTest(tag=tag), self.assertRaises(ValueError):
                 notes.render(tag)
 
