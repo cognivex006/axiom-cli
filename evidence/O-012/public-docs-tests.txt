@@ -4,6 +4,7 @@ test_missing_assets_and_duplicate_unreleased_are_refused (tests.test_public_docs
 test_nested_document_and_installer_leaks_fail (tests.test_public_docs.PublicDocumentationTests.test_nested_document_and_installer_leaks_fail) ... ok
 test_normal_versions_exit_codes_and_public_prs_are_allowed (tests.test_public_docs.PublicDocumentationTests.test_normal_versions_exit_codes_and_public_prs_are_allowed) ... ok
 test_notes_select_only_requested_release_and_pin_install_links (tests.test_public_docs.PublicDocumentationTests.test_notes_select_only_requested_release_and_pin_install_links) ... ok
+test_prepared_version_notes_match_the_renderer (tests.test_public_docs.PublicDocumentationTests.test_prepared_version_notes_match_the_renderer) ... ok
 test_real_public_surfaces_are_clean (tests.test_public_docs.PublicDocumentationTests.test_real_public_surfaces_are_clean) ... ok
 test_unknown_and_moving_tags_are_refused (tests.test_public_docs.PublicDocumentationTests.test_unknown_and_moving_tags_are_refused) ... ok
 test_moving_tags_and_missing_assets_are_refused (tests.test_bootstrappers.GeneratorTests.test_moving_tags_and_missing_assets_are_refused) ... ok
@@ -20,6 +21,6 @@ test_nothing_installed_refuses_without_change (tests.test_bootstrappers.UpdateSh
 test_unknown_option_is_refused (tests.test_bootstrappers.UpdateShBehaviourTests.test_unknown_option_is_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 20 tests in 1.583s
+Ran 21 tests in 1.433s
 
 OK

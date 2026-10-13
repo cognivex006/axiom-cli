@@ -101,6 +101,10 @@ class PublicDocumentationTests(unittest.TestCase):
         self.assertIn("axiom-cli update", old)
         self.assertIn("runtime/bootstrap.sh", notes.render("v0.1.1"))
 
+    def test_prepared_version_notes_match_the_renderer(self):
+        for tag in ("v0.1.3", "v0.1.4", "v0.1.5"):
+            self.assertEqual((ROOT / "release" / f"{tag}-notes.md").read_text(), notes.render(tag))
+
     def test_unknown_and_moving_tags_are_refused(self):
         for tag in ("latest", "main", "v0.1.6", "v0.1.5-beta", "0.1.5"):
             with self.subTest(tag=tag), self.assertRaises(ValueError):
