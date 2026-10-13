@@ -147,7 +147,13 @@ fn emit_doctor(report: Report, findings: &[Json], json: bool, verbose: bool) -> 
 fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
     let mut lines = vec![format!(
         "Axiom installation: {}",
-        if code == 0 { "OK" } else { "needs attention" }
+        if code == 0 {
+            "OK"
+        } else if code == crate::cli::exit::NOT_READY {
+            "NotReady - needs attention"
+        } else {
+            "needs attention"
+        }
     )];
     let mut flat = Vec::new();
     for row in findings {
@@ -169,7 +175,12 @@ fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
         if check == "installed_release"
             && row.get("installed").and_then(Json::as_bool) == Some(false)
         {
-            lines[0] = "Axiom: not installed".to_string();
+            lines[0] = if code == crate::cli::exit::NOT_READY {
+                "Axiom: NotReady - not installed"
+            } else {
+                "Axiom: not installed"
+            }
+            .to_string();
             lines.push("Next: axm install".to_string());
         } else if status == "fail" {
             match check {

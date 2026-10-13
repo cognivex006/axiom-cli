@@ -1251,6 +1251,18 @@ fn doctor_exits_four_when_the_engine_is_absent_and_states_the_searched_places() 
 }
 
 #[test]
+fn doctor_plain_names_not_ready_and_the_missing_engine() {
+    let fx = Fixture::new("doctor-plain-no-engine", Mode::Absent);
+    let out = Run::new(&fx.root).without_engine().out(&["doctor"]);
+    assert_eq!(out.code, NOT_READY);
+    assert!(out.stdout.is_empty());
+    assert!(out.stderr.contains("NotReady"));
+    assert!(out.stderr.contains("not installed"));
+    assert!(out.stderr.contains("engine"));
+    assert!(out.stderr.contains("Next: axm install"));
+}
+
+#[test]
 fn doctor_detects_a_tampered_installed_generation() {
     let fx = Fixture::new("doctor-tampered", Mode::Present);
     fx.seed_installed(SEED_GENERATION, "install");
