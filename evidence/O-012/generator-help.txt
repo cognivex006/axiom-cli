@@ -1,0 +1,12 @@
+usage: generate_bootstrappers.py [-h] --tag TAG --sums SUMS --out OUT
+                                 [--base-url BASE_URL]
+
+Generate the per-release one-line bootstrappers `install.ps1`/`install.sh` and
+`update.ps1`/`update.sh`.
+
+options:
+  -h, --help           show this help message and exit
+  --tag TAG
+  --sums SUMS
+  --out OUT
+  --base-url BASE_URL

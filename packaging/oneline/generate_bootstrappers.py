@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the per-release one-line bootstrappers `install.ps1`/`install.sh` and `update.ps1`/`update.sh` (ADR-0033 L-004, ADR-0035 L-013).
+"""Generate the per-release one-line bootstrappers `install.ps1`/`install.sh` and `update.ps1`/`update.sh`.
 
 The generator fills `installers/oneline/{install,update}.{ps1,sh}.in` with one release's exact tag, archive
 names and SHA-256 values taken from that release's `SHA256SUMS`. It is deterministic: the same

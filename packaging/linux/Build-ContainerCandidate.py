@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble an unsigned K-405 Linux x64 candidate from pinned owner bytes."""
+"""Assemble an unsigned Linux x64 candidate from pinned owner bytes."""
 
 from __future__ import annotations
 

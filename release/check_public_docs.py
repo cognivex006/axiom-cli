@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import re
 from pathlib import Path
 
@@ -55,6 +56,24 @@ def check(root: Path, assets: Path | None = None, notes: Path | None = None) -> 
             errors.append(f"missing public document: {path.relative_to(root)}")
             continue
         errors.extend(findings(str(path.relative_to(root)), path.read_text(encoding="utf-8-sig")))
+    for directory in ("release", "packaging"):
+        for path in sorted((root / directory).rglob("*.py")):
+            tree = ast.parse(path.read_text())
+            calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)]
+            for call in calls:
+                if not isinstance(call.func, ast.Attribute):
+                    continue
+                for keyword in call.keywords:
+                    if keyword.arg not in ("description", "help"):
+                        continue
+                    value = keyword.value
+                    if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                        text = value.value
+                    elif any(isinstance(node, ast.Name) and node.id == "__doc__" for node in ast.walk(value)):
+                        text = ast.get_docstring(tree) or ""
+                    else:
+                        continue
+                    errors.extend(findings(str(path.relative_to(root)) + " (tool help)", text))
     for path in sorted((root / "src").rglob("*.rs")):
         errors.extend(findings(str(path.relative_to(root)) + " (product strings)", rust_strings(path.read_text())))
     for path in sorted((root / ".github/workflows").glob("*.yml")):

@@ -1,4 +1,4 @@
-"""Compose an unsigned Windows channel from exact K-301/302/303/304 inputs."""
+"""Compose an unsigned Windows channel from verified skills, core, MCP and Python inputs."""
 
 from __future__ import annotations
 

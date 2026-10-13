@@ -21,6 +21,6 @@ test_nothing_installed_refuses_without_change (tests.test_bootstrappers.UpdateSh
 test_unknown_option_is_refused (tests.test_bootstrappers.UpdateShBehaviourTests.test_unknown_option_is_refused) ... ok
 
 ----------------------------------------------------------------------
-Ran 21 tests in 1.433s
+Ran 21 tests in 1.988s
 
 OK

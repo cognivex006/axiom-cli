@@ -48,8 +48,11 @@ class PublicDocumentationTests(unittest.TestCase):
             workflow = root / ".github/workflows/test.yml"
             workflow.parent.mkdir(parents=True)
             workflow.write_text("name: N-001 release check\n")
+            helper = root / "packaging/new/tool.py"
+            helper.parent.mkdir(parents=True)
+            helper.write_text('"""J-003 packaging helper."""\nimport argparse\nparser = argparse.ArgumentParser(description=__doc__)\n')
             errors = guard.check(root)
-            for identifier in ("K-001", "ADR-0033", "R22", "O-012", "N-001"):
+            for identifier in ("K-001", "ADR-0033", "R22", "O-012", "N-001", "J-003"):
                 self.assertTrue(any(identifier in item for item in errors), errors)
 
     def test_normal_versions_exit_codes_and_public_prs_are_allowed(self):
