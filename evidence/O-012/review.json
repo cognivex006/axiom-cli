@@ -1,0 +1,16 @@
+{
+  "task_id": "O-012",
+  "scope": "CLI consumer docs, release-note rendering, published annotations and product explanations",
+  "checks": {
+    "rust_tests_passed": 224,
+    "python_tests_passed": 20,
+    "native_help_and_diagnostic_cases": 7,
+    "public_text_assets_checked": 5,
+    "local_links_checked": 73
+  },
+  "compatibility": "No command, exit-code, wire-plan or transaction behavior changed. SQLite diagnostic metadata replaces private owner_task with owner_component. Recorded PATH append bytes still drive removal; legacy-comment regression preserves user edits. Existing immutable release tags/assets untouched.",
+  "limitations": "Read-only MacIntel output checks only; no native Windows/Linux lifecycle run or new release. Current release assets and remote release descriptions remain unchanged. The existing repair/concise-doctor runtime feature branch is retained separately.",
+  "reference": "https://github.com/openai/codex/releases/tag/rust-v0.162.0",
+  "negative_cases": "Nested public docs/scripts/workflow labels; channel/script contamination; missing generated assets; duplicate Unreleased; moving/unknown tags. Bootstrap tests isolated from real installed CLI paths.",
+  "historical_traceability": "Original public documents retained as internal .snapshot files; canonical completion uses an internal changelog receipt because public IDs are explicitly forbidden by the owner."
+}

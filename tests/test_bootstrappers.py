@@ -156,6 +156,16 @@ class UpdateShBehaviourTests(unittest.TestCase):
         env.update({"HOME": str(self.home), "XDG_DATA_HOME": str(self.home / "data"),
                     "PATH": os.environ.get("PATH", "")})
         env.update(extra or {})
+        # Fixture homes must never dispatch to a real installation on the caller's PATH.
+        # Keep the explicitly selected fixture bin and ordinary host utilities.
+        names = ("axiom-cli", "axm", "axiom-cli.exe", "axm.exe")
+        fixture = self.home.resolve()
+        entries = []
+        for entry in env["PATH"].split(os.pathsep):
+            path = Path(entry).resolve()
+            if path.is_relative_to(fixture) or not any((path / name).is_file() for name in names):
+                entries.append(entry)
+        env["PATH"] = os.pathsep.join(entries)
         return subprocess.run([shutil.which("sh"), str(self.script), *args], env=env, capture_output=True,
                               text=True, stdin=subprocess.DEVNULL, timeout=60)
 

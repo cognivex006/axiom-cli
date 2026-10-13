@@ -1,6 +1,6 @@
 #!/bin/sh
 # AxiomCli.Linux.Common.sh - shared helpers for the axiom-cli Linux x64 per-user
-# distribution scripts (task J-008).
+# distribution scripts.
 #
 # POSIX shell only. Sourced by Install-AxiomCli.sh and Uninstall-AxiomCli.sh.
 # It MUST NOT use bashisms (`[[`, `function`, arrays, `$'...'`) so the install

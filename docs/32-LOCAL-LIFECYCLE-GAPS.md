@@ -1,49 +1,23 @@
-# Local lifecycle status
+# Installation and readiness
 
-Reviewed 2026-09-22 against the current feature working trees. Native scope is
-Mac x64; no released distribution or other platform is certified.
+`axm` manages the installed release. `axiom` manages graph projects and services; MCP connects graph queries to an AI host, and skills/plugins provide agent instructions.
 
-## Verified implementation
+## What the installation commands establish
 
-The engine composes persistent `serve`, repository-root graph publication,
-exact-generation solution catalogs, and SIGINT/SIGTERM shutdown. MCP queries
-the exact catalog vector and refuses missing members instead of using newer
-project pointers.
+- `install` verifies and places the release's pinned component set.
+- `version` reports the installation record and available release information.
+- `doctor` checks installation integrity, prerequisites, locks, interrupted transactions and engine discovery.
+- `update` verifies a release offer and applies an approved transaction, retaining rollback state.
+- `uninstall` removes owned programs and service entrypoints while retaining user data.
 
-The native combined fixture installs real graphd bytes, registers its per-user
-LaunchAgent, queries actual analyzed source through the installed MCP wheel,
-observes a source edit, updates the engine/skills pointers, checks the running
-service, rolls both pointers back byte-for-byte, and removes the owned service
-and runtime while preserving user data. The two graphd generations deliberately
-use the same runnable development build in different version directories; this
-is transaction evidence, not two certified releases.
+A successful `doctor` result is limited to the checks it ran. It does not establish that a project is registered, graph data is current, an MCP caller has permissions or an AI host has discovered its skills.
 
-The canonical uninstall plan/apply interface is declared in ADR-0014. The
-distribution wrapper embeds the engine plan before computing its own approval
-digest. Apply invokes that exact plan and only clears an unchanged distribution
-marker. It exposes no user-data purge. Service identity, ownership verification,
-file removal and recovery remain in the engine.
+## After installation
 
-Evidence: `axiom-graphd/evidence/local-lifecycle-20260922/combined-native-lifecycle.json`
-and its adjacent reproducible Python script; distribution-only proof and full CLI
-gates are under `evidence/J-005/local-lifecycle-20260922/`.
+Use the [graph engine guide](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) to register and analyze a project, the [MCP guide](https://github.com/orchex006/axiom-mcp#run) to configure transport and permissions, and the [skills/plugin guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) to install into your host.
 
-## Remaining J-005 acceptance work
+## Troubleshooting boundaries
 
-The scoped fixture supplies the distribution CLI and installation-engine CLI
-from their build directories and uses an already prepared CPython dependency
-environment. It does not prove a clean-machine installation of those entrypoints
-or provision a dedicated versioned MCP virtual environment. The current macOS
-wrappers do not place `axiom-cli` itself or manage the user's shell PATH. These
-are local engineering items, not reasons to wait for a server or another OS.
+A plan is not an applied transaction. If confirmation is declined, a digest is stale or required skills/runtime content is absent, the CLI should report the refusal rather than claim installation succeeded. On releases where installed repair cannot find its original skills bundle, rerun the verified installation URL to supply the release content.
 
-`axiom-cli update` still addresses its separate delivery generation store. The
-new local `axiom update plan --to <version> --bundle <dir> --out <file>` path
-updates the actual engine ecosystem. An adapter is still required before the
-distribution update channel can claim the same end-to-end behavior.
-
-## Deferred release evidence
-
-Windows x64, Linux x64 and macOS arm64 have not been run on the final bytes.
-Released-core fixtures, signed/notarized artifacts and final release-gate evidence
-remain unavailable. None is inferred from the local development tests.
+Use `axm doctor --verbose` or `--json` when reporting a problem, and include `axm version`. Keep release archives, candidate update kits and project/host configuration distinct. Apple silicon, Linux arm64 and external host runtime behavior require their own verification; current x64 checks do not prove them.

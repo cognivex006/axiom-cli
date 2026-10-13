@@ -32,6 +32,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Public documentation and release-note checks
+        shell: bash
+        run: |
+          python release/check_public_docs.py
+          python -m unittest tests.test_public_docs -v
       - name: Required owner Rust checks
         shell: bash
         run: |
@@ -104,13 +109,13 @@ jobs:
         with:
           name: distribution-${{ matrix.platform }}-${{ github.sha }}
           path: ${{ runner.temp }}/candidate
-      - name: Bootstrapper generator and update.sh behaviour tests (L-004, L-013)
+      - name: Bootstrapper generator and update.sh behaviour tests
         shell: bash
         run: python -m unittest tests.test_bootstrappers -v
       - name: Documented install and update one-liners, version, doctor, update, uninstall, reinstall
         shell: bash
         run: python tests/l007_fresh_runner.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/oneliner-${{ matrix.platform }}.json"
-      - name: Native Mac Intel bootstrap options and digest/network refusals (M-001)
+      - name: Native Mac Intel bootstrap options and digest/network refusals
         if: matrix.platform == 'macos-x64'
         shell: bash
         run: |

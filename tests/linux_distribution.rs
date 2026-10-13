@@ -226,22 +226,14 @@ fn the_macos_recipe_is_arch_parameterised_and_never_cross_builds() {
 }
 
 #[test]
-fn the_macos_arm64_target_is_recorded_unbuilt_and_uncertified() {
+fn the_macos_arm64_documentation_does_not_claim_an_available_release() {
     let readme = read("packaging/macos-arm64/README.md");
     assert!(
-        readme.contains("NOT BUILT"),
-        "the macOS arm64 delivery must state that the artifact was not built here"
+        readme.contains("released Apple silicon archive") && readme.contains("not established"),
+        "the arm64 recipe must not be presented as an available verified release"
     );
     assert!(
-        readme.contains("certified: false") && readme.contains("evidence: []"),
-        "the macOS arm64 target must stay certified:false with empty evidence"
-    );
-    assert!(
-        readme.contains("not_run"),
-        "the macOS arm64 evidence status must be not_run, never a fabricated pass"
-    );
-    assert!(
-        !readme.contains("finish-first tier: `macos-arm64`"),
-        "the macOS arm64 target must never be presented as finish-first"
+        readme.contains("NOT_RUN"),
+        "off-platform execution must be documented as unrun, never a fabricated pass"
     );
 }

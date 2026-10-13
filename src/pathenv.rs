@@ -26,8 +26,7 @@ pub const RECORD_FILE: &str = "path-change.json";
 #[cfg_attr(not(windows), allow(dead_code))]
 pub const TEST_KEY_ENV: &str = "AXIOM_CLI_TEST_USER_ENV_KEY";
 /// The marker comment written above the POSIX profile line.
-pub const PROFILE_MARKER: &str =
-    "# Added by axiom-cli install (ADR-0033); removed by axiom-cli uninstall";
+pub const PROFILE_MARKER: &str = "# Added by axiom-cli install; removed by axiom-cli uninstall";
 
 /// What the plan announces for the PATH.
 pub fn plan_block(bin: &Path, modify: bool) -> Json {
@@ -693,6 +692,31 @@ mod tests {
             .contains(PROFILE_MARKER));
         revert(&root).unwrap();
         assert_eq!(std::fs::read(home.join(".profile")).unwrap(), b"umask 022");
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn removal_accepts_a_recorded_legacy_profile_comment() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("axiom-profile-legacy-{unique}"));
+        std::fs::create_dir_all(&root).unwrap();
+        let profile = root.join(".profile");
+        let legacy = "# Added by axiom-cli install (ADR-0033); removed by axiom-cli uninstall\nexport PATH=owned-bin:$PATH\n";
+        std::fs::write(&profile, format!("umask 022\n{legacy}# user edit\n")).unwrap();
+        let record = Json::from_pairs(vec![
+            ("profile", Json::text(&profile.display().to_string())),
+            ("appended", Json::text(legacy)),
+            ("profile_existed", Json::bool(true)),
+        ]);
+        posix::remove(&record).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&profile).unwrap(),
+            "umask 022\n# user edit\n"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

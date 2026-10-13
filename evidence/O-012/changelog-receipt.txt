@@ -1,0 +1,3 @@
+O-012: Public Changelog rewritten by version and user impact, with all internal identifiers removed.
+Public Changelog SHA256: f9b08f33ce7f86202f8c49a525474b05e5c4334338c264ae7a198f559ac5f2db
+The public snapshot and internal history retain provenance without leaking task identifiers.

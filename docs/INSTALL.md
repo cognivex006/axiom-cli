@@ -8,6 +8,10 @@ One command installs Axiom for your user account:
 
 You do not need Administrator or root rights, and you do not copy any checksums by hand.
 
+`axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
+
+`axm` and `axiom-cli` are the same manager. `axiom` is a separate graph operations CLI, and `axiom-graphd` is the daemon. The installed skills payload still needs [plugin registration in your AI host](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+
 - [Before you start](#before-you-start)
 - [Install](#install)
 - [Check that it worked](#check-that-it-worked)
@@ -24,7 +28,7 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 |---|---|---|
 | Windows 10/11 x64 | Windows PowerShell 5.1 (built in) | Supported and tested |
 | Linux x64, including WSL2 | `curl` or `wget`, `sha256sum` or `shasum`, `tar`, `python3` | Supported and tested |
-| macOS Intel (x64) | Same as Linux | Published but not yet tested |
+| macOS Intel (x64) | Same as Linux | Published; native installation checks run in CI |
 | macOS Apple silicon, Linux arm64 | — | Not available yet |
 
 - **Run as your normal user.** The installer refuses to run as Administrator (Windows) or root (`sudo`).
@@ -96,7 +100,7 @@ The first line shows the installed version, for example `installed: 0.1.3 channe
 axm doctor
 ```
 
-The exit code is `0` when everything is fine. The line `sqlite driver: unverified (non-blocking ...)` is expected and is not an error.
+The exit code is `0` when the reported installation checks pass. Project registration, graph freshness, MCP permissions and host plugin discovery require separate setup. The line `sqlite driver: unverified (non-blocking ...)` is expected and is not an error.
 
 ## Install options
 
@@ -243,5 +247,7 @@ Most people should keep this default. If you would rather turn the 0.1.2 bootstr
 | The installer exits with code `4` without asking | No terminal is attached (CI or a pipe) | Set `AXIOM_INSTALL_YES=1`, or add `--yes` on Linux / macOS. |
 | Exit code `5` | You answered `n` | Run it again and answer `Y`. |
 | `the install root ... holds entries no Axiom install writes` (exit code `6`) | The install folder contains files that Axiom did not create | Remove a leftover `AXIOM_CLI_INSTALL_ROOT`, or move those files out. |
+
+If repair from the installed CLI reports a missing skills bundle, rerun the [installation URL](#install) to supply verified release content. An `up to date` message means no upgrade was applied; it does not establish that every advanced update path is ready.
 
 For the meaning of every exit code, run `axm --help`. For details on how installation, updates and verification work, see [Distribution and installers](30-DISTRIBUTION-AND-INSTALLERS.md).

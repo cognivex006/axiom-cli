@@ -973,7 +973,7 @@ pub fn build(input: &Planning) -> Result<Built, Refusal> {
                 "rollback restores the recorded previous generation and its reported \
                  needs_restart state; how an owning component activates its payload into its \
                  canonical executable path is that component's service lifecycle, owned by \
-                 axiom-graphd (I-003/I-004), not by this distribution layer",
+                 axiom-graphd, not by this distribution layer",
                 "user data, the graph output root and portable workspace state are never \
                  modified by this transaction, so they are not part of the rollback set",
                 "generations retained beyond the active and previous one are pruned when a new \

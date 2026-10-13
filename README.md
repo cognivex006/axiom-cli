@@ -18,7 +18,6 @@ Axiom builds a graph of your code and makes it available to your existing AI too
 | **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | Rust graph engine: source analysis, file watching, indexing and graph publication; `axiom-graphd` and the `axiom` operations CLI | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
 | **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
 | **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
-| **[axiom-specs](https://github.com/orchex006/axiom-specs)** | Shared architecture, contracts, compatibility decisions and development tasks | [Start here](https://github.com/orchex006/axiom-specs/blob/main/START-HERE.md) · [Task index](https://github.com/orchex006/axiom-specs/blob/main/tasks/INDEX.md) — repository access required |
 
 The CLI distributes the components together. The engine produces graph data, MCP exposes that data to an AI host, and skills describe how an agent should use it. Component guides own their setup instructions and compatibility details.
 
@@ -69,6 +68,10 @@ The update script finds your installation and runs its `axm update`, which shows
 | `axm doctor` | Check the installation; changes nothing |
 | `axm update` | Update to the newest release (asks once; keeps a rollback) |
 | `axm uninstall` | Remove the programs and PATH entry; keeps your data |
+
+`install` and `update` operate on the complete pinned release set. They do not accept a component name (`cli`, `axiom-graphd`, `mcp` or `skills`). For AI-host skill discovery, use the [skills/plugin installation guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+
+`axiom` in the release is the graph engine's operations CLI. It is separate from the manager; `axm` and `axiom-cli` are the two names for the manager.
 
 Run `axm --help` for every option and exit code. `axm` is installed from 0.1.5; on 0.1.4 or older use `axiom-cli` (same verbs), or run the update script once to get `axm`.
 

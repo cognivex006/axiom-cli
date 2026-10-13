@@ -4,7 +4,7 @@
     Install or repair the axiom-cli Windows x64 distribution into a per-user location.
 
 .DESCRIPTION
-    Owner: axiom-cli. Task J-004. Windows x64 is the finish-first distribution target and this
+    Owner: axiom-cli. Windows x64 is the finish-first distribution target and this
     script is its installer.
 
     It consumes a release set produced by packaging/windows/Build-ReleaseSet.ps1: a directory

@@ -1,51 +1,19 @@
-# macOS x64 distribution boundary
+# Intel Mac distribution
 
-J-005 packages native x86_64 Mach-O bytes and routes lifecycle requests through
-`axiom-cli` to the `axiom` installation engine. The distribution adapters do not
-copy payloads, implement a second uninstaller, or invent a service/update
-protocol: they pass verified inputs and approval-bound plans to the owning engine
-with argv, never an interpolated shell command.
+Intel Macs use the `macos-x64` release archive and the [one-line installer](INSTALL.md#macos-linux-and-wsl2-not-as-root). Apple silicon is a separate target and is not available through that installer.
 
-The local macOS x64 lifecycle has been exercised against a temporary home and
-install root. The combined run installed the graph daemon and MCP wheel, verified
-that query code loaded from the installed wheel, registered the per-user
-`com.axiom.axiom-graphd` LaunchAgent, applied and rolled back the engine/skills
-pointers, and removed the owned service and runtime while retaining a user file.
-It recorded every command with exit code 0; after uninstall, `launchctl` reported
-the canonical label absent. See
-`axiom-graphd/evidence/local-lifecycle-20260922/combined-native-lifecycle.json`.
+The CLI verifies native x86_64 Mach-O inputs and invokes `axiom` for approved ecosystem placement and removal. The graph engine owns the per-user `com.axiom.axiom-graphd` LaunchAgent; distribution adapters do not implement a second service protocol.
 
-The verified local interface uses approval-bound engine plans:
+## Verification and placement
 
-```text
-axiom install plan --bundle <verified-local-bundle> --out <engine-plan.json>
-axiom install apply --plan <engine-plan.json> --approve-digest <engine-plan-digest>
-```
+A declared engine artifact must have the expected size and SHA-256 and be an executable regular file. An invalid declared artifact stops installation rather than falling back to another engine on PATH. The engine's approved plan declares core read/execute permissions, and activation enforces them.
 
-The reviewed engine plan declares executable core rows with `read` and `execute`
-permissions. The installer enforces that declared mode after activation. The same
-engine owns per-user launchd registration/removal and ownership-scoped uninstall;
-the distribution wrapper supplies verified bytes and invokes its documented argv
-forms.
+Current installation places the owned entrypoints in `<root>/bin` and uses a hash-bound per-user MCP runtime. Earlier test archives used a separate `runtime/bootstrap.sh` workflow and `~/.local/bin` entrypoints. Follow the instructions for the version you downloaded; do not mix those layouts.
 
-K-001 preparation: if the local channel manifest declares an `axiom` artifact
-for macOS x64, the distribution verifies its size and SHA-256 with the rest of
-the release set and invokes that executable for engine planning and apply. A
-declared artifact that is missing, a directory, or not executable is refused;
-the install cannot fall back to an unrelated engine on the developer PATH.
+## Native checks and limits
 
-The separate clean-user bootstrap now places `axiom-cli` and `axiom` in
-`~/.local/bin` from the digest-verified Intel Mac candidate, records both
-versions and digests, and owns a narrow shell PATH block. The native test uses
-an isolated home, confirms discovery in a login shell, checks idempotent rerun,
-unowned-file refusal, injected install/uninstall rollback, human-edited block
-refusal and data-preserving removal. This is entrypoint placement only; it does
-not provision MCP or register the graph daemon service.
+Native Intel Mac CI exercises the one-line install, version and installation diagnostics, update checks, uninstall and reinstall. Local lifecycle checks also cover launchd registration/removal, installed MCP loading, generation activation, rollback and retained user files.
 
-The earlier combined development fixture uses prepared CPython 3.13 dependencies
-and the same runnable development graphd bytes in two version directories to
-exercise transaction semantics. The new entrypoint test supplies native
-candidate binaries from an isolated temporary release set. Neither proves a
-dedicated versioned MCP environment, a single final distribution update flow,
-signing/notarization, or a published immutable channel. Gatekeeper/quarantine
-actions remain explicit operator actions and are never performed silently.
+An isolated test home is not a fresh operating-system account. An update check against the same version does not prove a newer-version upgrade. Native binaries are unsigned and not notarized; packaging does not silently change Gatekeeper or quarantine settings.
+
+See [macOS packaging](../packaging/macos/README.md) for candidate composition and [update and rollback](50-UPDATE-CHANNEL.md) for transaction boundaries.

@@ -1,0 +1,13 @@
+# Axiom 0.1.2 test release
+
+This native distribution contains the exact published 0.1.2 core (`axiom`, `axiom-graphd`), `axiom-cli`, portable MCP wheel, portable skills payload and pinned per-user CPython/dependency inputs. See `RELEASE-SOURCES.json`, `DISTRIBUTION-FILES.json` and the GitHub Release checksum/source records. No certification, signing or attestation prerequisite applies. Mac ARM is excluded.
+
+Extract the archive into a new directory, verify its SHA256SUMS against the GitHub Release, and select a fresh per-user test root. Preserve existing projects and installations. Do not run as root or elevate.
+
+- Windows: `powershell -NoProfile -File .\bootstrap_windows.ps1 -Root <NEW-ROOT> -DryRun`, review the plan, then repeat with `-Apply -ApproveDigest <DIGEST>`.
+- Mac Intel: `sh runtime/bootstrap.sh install --release-set <EXTRACTED-DIR> --dry-run`, review, then repeat with `--apply --approve-digest <DIGEST>`.
+- Linux / WSL2: `python3 runtime/bootstrap.py --root <NEW-ROOT> --dry-run`, review, then repeat with `--apply --approve-digest <DIGEST>`. The bootstrap uses the bundled Python 3.13 runtime for MCP; system Python is only the distribution coordinator.
+
+The installed engine owns service registration and transactional activation. MCP stdio is an AI host child process; optional HTTP stays foreground. Host configuration needs scoped credential references; a bare gateway grants no tool authority. Actual native/WSL checks and limitations are linked in the Release receipt. Existing signed network update-channel protocols are unchanged; the embedded local channel is a checksum-bound offline payload description, not a newly signed automatic update feed.
+
+For Windows/Linux management, run the verified `axiom-cli`/`axiom` from the extracted distribution. Optional per-user entrypoint installers are included; their PATH changes are explicit operator actions, not performed by the fresh-root bootstrap. Fresh installation refuses an existing nonempty root; use the retained-generation CLI workflows for an existing installation.

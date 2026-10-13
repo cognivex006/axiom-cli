@@ -2,7 +2,7 @@
 <#
     Shared helpers for the axiom-cli Windows x64 distribution helpers.
 
-    Owner: axiom-cli. Task J-004.
+    Owner: axiom-cli.
 
     This file is dot-sourced by Install-AxiomCli.ps1, Uninstall-AxiomCli.ps1 and the
     Windows harness. It is deliberately written for the Windows shell that ships with

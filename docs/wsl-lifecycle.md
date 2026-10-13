@@ -1,7 +1,9 @@
-# Native WSL2 lifecycle (K-408)
+# Native WSL2 lifecycle verification
 
-The owner-authorized Ubuntu 24.04.5 instance runs a Microsoft WSL2 kernel on x86_64 with glibc 2.39. Product tests use fresh non-root users and ext4-local per-user homes; the Docker/container proof remains a separate lane. The Ubuntu image URL/hash and signing-key fingerprints are in the coordination host-setup receipt; machine-local rootfs/VHDX files are never committed.
+Use an isolated WSL2 distro and a normal non-root user. Bootstrap from verified Linux archives without a prepared development virtual environment. A complete run checks installation, MCP runtime provisioning, queries, file watching, restart, updates, failure recovery, rollback and removal while preserving project files and user data.
 
-Run tests/linux/test_mcp_runtime.py with the pinned K-404 runtime and K-403 wheel/lock inputs, then tests/linux/test_wsl_lifecycle.py --full with exact K-406 A/B kit archives extracted by a checked regular-file-only extractor. The --full run starts without an installed engine/CLI or prepared development virtual environment. Resume flags are diagnostic only; completion uses a fresh user run. Installer boundaries execute the actual Linux installer and systemd-user registration when available. Public update verbs consume the exact kit and engine transaction; negative tests retain approved inactive bytes and do not require their deletion.
+The runtime checks are in `tests/linux/test_mcp_runtime.py`; the lifecycle harness is `tests/linux/test_wsl_lifecycle.py`. Use each script's `--help` for its exact archived inputs and options. The complete lifecycle uses `--full`; resume options are diagnostic and do not replace a fresh run.
 
-The final CLI removal preserves current C# source, bindings and user data by hash. Native report records kernel/UID/script digest/base revision and exact sanitized argv/exit codes. Component checks and Git delivery remain separate. There is no root product prerequisite, Windows/container evidence substitution, signing/publication/certification claim or completion of K-409.
+Check `systemd --user` where available and report its absence explicitly. Retained inactive payloads after rollback are valid retry inputs, so validation should check their hashes rather than require their deletion.
+
+Record kernel, distribution, UID, source and input hashes, sanitized argv and exit codes. WSL execution is separate from native Windows and container execution. Packaging, signing and release publication are independent outcomes.

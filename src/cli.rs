@@ -181,7 +181,7 @@ NOTES:
     code is 4. --dry-run reports the plan; --apply needs --approve-digest <sha256> bound
     to the canonical plan digest; supplying --plan or --from is not approval.
     axm is the short name of axiom-cli: the same program, installed next to it in the
-    same bin (ADR-0036). Every verb, option and exit code is identical.
+    same bin. Every verb, option and exit code is identical.
     The installation engine stays owned by {ENGINE_OWNER}; this layer wraps it.
 "
     )

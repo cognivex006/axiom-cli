@@ -1,0 +1,42 @@
+{
+  "kind": "synthetic archive inputs; no release publication",
+  "generated_text_assets_checked": 5,
+  "files": [
+    {
+      "name": "SHA256SUMS",
+      "sha256": "1202a72beb956d2417a9226b8268af953e26c2f884c506dd6457b8b3cf5d4a60"
+    },
+    {
+      "name": "axiom-0.1.5-linux-x64.tar.gz",
+      "sha256": "7cb4f4a6100e03584dbe22d3e5856404f1093a711a34f38b29b176dc1ceb6851"
+    },
+    {
+      "name": "axiom-0.1.5-macos-x64.tar.gz",
+      "sha256": "7cb4f4a6100e03584dbe22d3e5856404f1093a711a34f38b29b176dc1ceb6851"
+    },
+    {
+      "name": "axiom-0.1.5-windows-x64.zip",
+      "sha256": "7cb4f4a6100e03584dbe22d3e5856404f1093a711a34f38b29b176dc1ceb6851"
+    },
+    {
+      "name": "channel.json",
+      "sha256": "24e0c1f91b3e4147e5476c76689502120c59a655412017fdb7a34137c56545df"
+    },
+    {
+      "name": "install.ps1",
+      "sha256": "f8b66c9b837752e599a1958a5b5be584a57c6acfae7ca2587e5c186559c3db94"
+    },
+    {
+      "name": "install.sh",
+      "sha256": "9c05f35d1a954fbcf2c272d5be70ff6a10e132370f81cfea741279457ded5696"
+    },
+    {
+      "name": "update.ps1",
+      "sha256": "4d4eb70c87c2c4448186f42e10ffb05e6ac4722e8ec53a5f67db425d3937b9e3"
+    },
+    {
+      "name": "update.sh",
+      "sha256": "1a00b8c8f290516e94c5068261805107a96ccc1cdc6aac0096ed5b24c2a350ea"
+    }
+  ]
+}

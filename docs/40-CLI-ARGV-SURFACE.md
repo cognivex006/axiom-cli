@@ -1,14 +1,10 @@
 # CLI argv surface — axiom-cli
 
-Owner: axiom-cli. Frozen by task `J-003`. The normative rules stay in
-`axiom-specs/contracts/axiom-cli-distribution-contract.md`
-section 2 and `axiom-specs/docs/16-CLI-AND-CONTROL-API.md` sections 1, 6
-and 7 of the pinned `axiom-specs` revision. This guide is the owner-side description of the
-implemented surface and must not restate a shared schema as an alternative edition.
+The command reference covers the distribution manager. For normal setup, start with [Installing Axiom](INSTALL.md).
 
 ## One executable, five verbs
 
-`axiom-cli` (`axiom-cli.exe` on Windows) is the single distribution entrypoint. It exposes
+`axm` and `axiom-cli` (`.exe` on Windows) are two names for the same distribution manager. It exposes
 `install`, `update`, `doctor`, `version` and `uninstall`. Every documented verb is reachable from
 argv and listed by `--help`; the usage text and the dispatcher are pinned against each other by
 `tests/argv_surface.rs`, so removing a verb from either one alone fails the suite.
@@ -18,7 +14,9 @@ verifies every artifact's length and sha256, builds and seals the canonical appr
 validates the channel manifest, and runs the transactional update. The installation engine,
 bootstrap rules, service lifecycle and per-component placement stay owned by `axiom-graphd` and are
 invoked through their published argv surface; this repository re-implements none of them.
-`install` and `uninstall` hand placement and removal to the engine and report its result (L-002).
+`install` and `uninstall` hand placement and removal to the engine and report its result.
+
+`install` manages the complete pinned release set; component-name positional arguments are not supported. Installing the portable skills payload does not register an AI-host plugin.
 
 ## Invocation
 
@@ -34,7 +32,7 @@ axiom-cli [GLOBAL OPTIONS] <verb> [verb options]
 | `version` | `[--all]` |
 | `uninstall` | `[--yes]` \| `--dry-run` \| `--apply`, `--approve-digest <sha256>`, `[--purge-data]` |
 
-A bare `install`, `uninstall` or `update` is the interactive human path (ADR-0033, L-003/L-005). It
+A bare `install`, `uninstall` or `update` is the interactive human path. It
 prints the plan and asks `Proceed? [Y/n]` once, and the answer approves exactly that plan's canonical
 digest. `--yes` (`-y`, or `AXIOM_INSTALL_YES=1`) approves without a prompt. Without a terminal (or
 with `--json`) and without `--yes`, it prints the plan, changes nothing and exits `4`
@@ -90,7 +88,7 @@ Every documented verb now dispatches to real work; `NotReady` is a conditional r
 universal answer. No verb returns `0` when it could not complete, and no refusal is an empty success
 envelope. What remains is the engine handoff:
 
-- `install --apply` (L-002): assembles the engine bundle, provisions the release's MCP runtime,
+- `install --apply`: assembles the engine bundle, provisions the release's MCP runtime,
   delegates placement to the engine (`install plan --bundle` / `install apply`), then places
   `axiom-cli`, `axiom` and `axiom-graphd` in `<root>/bin` and writes `installed.json` last. Refusals:
   `3` `engine_not_found` when no engine binary is present (nothing placed), `6`
@@ -102,7 +100,7 @@ envelope. What remains is the engine handoff:
 - `install --dry-run` or `install --apply` with no release set: `4` `no_release_set`.
 
 An engine refusal means nothing was installed, updated or removed. The engine stays owned by
-`axiom-graphd` (`I-003`/`I-004`); this layer resolves and verifies the release set and reports the
+`axiom-graphd`; this layer resolves and verifies the release set and reports the
 refusal rather than placing bytes itself.
 
 ## Engine discovery
@@ -162,13 +160,13 @@ src/update/       the update channel: check / plan / apply / rollback
 
 | Verb | Behaviour | Exit codes today |
 |---|---|---|
-| `install` (bare) | Interactive (L-003): prints version, components, root, PATH change and size, asks `Proceed? [Y/n]` once, applies that plan's digest; `--yes` / `AXIOM_INSTALL_YES=1` skips the prompt; `--no-modify-path` skips the PATH change | `0` installed; `4` `confirmation_required` (no terminal, no `--yes`, nothing changed); `5` `confirmation_declined`; install refusals as `--apply` |
+| `install` (bare) | Interactive: prints version, components, root, PATH change and size, asks `Proceed? [Y/n]` once, applies that plan's digest; `--yes` / `AXIOM_INSTALL_YES=1` skips the prompt; `--no-modify-path` skips the PATH change | `0` installed; `4` `confirmation_required` (no terminal, no `--yes`, nothing changed); `5` `confirmation_declined`; install refusals as `--apply` |
 | `install --dry-run` | Resolves the release set, verifies artifacts, changes nothing | `0` resolved; `4` `no_release_set`; `2` validation |
 | `install --apply` | Requires `--approve-digest`; verifies, provisions the MCP runtime, delegates placement to the engine, fills `<root>/bin` and writes `installed.json` | `2` missing or invalid digest / unverified artifact; `3` `engine_not_found`; `4` `no_release_set`; `6` conflict on a stale or mismatched approval or a foreign root |
 | `uninstall` (bare) | Interactive: prints what is removed and kept, asks once (`--yes` skips); removes the engine install, the owned `bin` files and exactly the recorded PATH entry, keeps user data | `0`; `4` `confirmation_required`; `5` `confirmation_declined`; uninstall refusals as `--apply` |
 | `uninstall --dry-run` | Reports the removal plan, changes nothing | `0`; `2` |
 | `uninstall --apply` | Requires `--approve-digest`; runs the embedded engine removal plan, removes owned `bin` files and the recorded PATH entry, keeps user data | `3` `nothing_installed` / `engine_not_found`; `6` conflict on a stale or mismatched approval |
-| `update` | `check` / `plan` / `apply` / `rollback` through the update channel | see `docs/50-UPDATE-CHANNEL.md` |
+| `update` | `check` / `plan` / `apply` / `rollback` through the update channel | see [Update and rollback](50-UPDATE-CHANNEL.md) |
 | `doctor` | Runs target, install root, integrity, prerequisite and engine checks | `0` clean; `4` a required check is unverified; `2` an installed generation fails integrity |
 | `version` | Reports installed and available versions | always `0`; `installed:false` and `available:null` with nothing installed |
 | any | Unknown verb, missing option value, invalid flag combination | `2` |
@@ -192,6 +190,4 @@ cargo test --offline
 ```
 
 The pinned toolchain records `rust-version = "1.85"` in `Cargo.toml`; `Cargo.lock` pins the resolved
-graph. The `J-003` slice's recorded run was Windows x64 with `rustc 1.98.1`; no evidence exists for
-the lifecycle verbs added later. The current development host is `macos-x64`, which is
-finish-first by declaration but not `certified`. No platform is certified by this document.
+graph. Required checks run in native CI for Windows x64, Linux x64 and Intel Mac. This reference does not establish native arm64 execution.

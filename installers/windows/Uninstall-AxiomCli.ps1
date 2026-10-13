@@ -4,7 +4,7 @@
     Remove the axiom-cli Windows x64 distribution from a per-user location.
 
 .DESCRIPTION
-    Owner: axiom-cli. Task J-004.
+    Owner: axiom-cli.
 
     The counterpart of Install-AxiomCli.ps1. It removes only what the distribution owns: the
     installed entrypoint, the recorded generation, the recorded per-user PATH entry and the
