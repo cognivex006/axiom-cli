@@ -1033,7 +1033,7 @@ fn version_plain_distinguishes_aliases_and_recorded_versions_from_updates() {
         .contains("Graph engine (axiom / axiom-graphd): not recorded"));
     assert!(out
         .stdout
-        .contains("use axm update check for newer releases"));
+        .contains("use axm update --dry-run for newer releases"));
     assert!(!out.stdout.contains(SEED_GENERATION));
     assert!(!out.stdout.contains("up to date"));
     assert!(!out.stdout.contains("action="));

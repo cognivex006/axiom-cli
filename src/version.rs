@@ -152,7 +152,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
             report.detail("available", manifest_block(manifest, all));
             if concise {
                 report.line(format!(
-                    "Recorded channel: {} (use axm update check for newer releases)",
+                    "Recorded channel: {} (use axm update --dry-run for newer releases)",
                     manifest.channel
                 ));
             } else {

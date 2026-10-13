@@ -36,7 +36,7 @@ jobs:
         shell: bash
         run: |
           python release/check_public_docs.py
-          python -m unittest tests.test_public_docs -v
+          python -m unittest tests.test_public_docs tests.test_release_012 -v
       - name: Required owner Rust checks
         shell: bash
         run: |

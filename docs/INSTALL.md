@@ -258,6 +258,6 @@ For the meaning of every exit code, run `axm --help`. For details on how install
 
 An existing installation can supply its verified active skills bundle for repair even after the downloaded archive has been removed. If that bundle is missing or corrupt, reinstall from the release installer to obtain verified payloads.
 
-`axm version` summarizes the running CLI and installed graph engine, MCP and skills. `axiom` is the engine's operator command, and `axiom-graphd` is its daemon. `axm` and `axiom-cli` are aliases of the installation manager. For update availability run `axm update check`; recorded channel information alone does not establish that the installed release is current.
+`axm version` summarizes the running CLI and installed graph engine, MCP and skills. `axiom` is the engine's operator command, and `axiom-graphd` is its daemon. `axm` and `axiom-cli` are aliases of the installation manager. To inspect the live update offer without applying it, run `axm update --dry-run`. The advanced `axm update check` examines recorded channel metadata; it does not fetch the latest public offer.
 
 `axm doctor` prints a short summary and actionable findings. Use `axm doctor --verbose` for paths, transaction details and prerequisite evidence, or `--json` for automation. Project graph registration and host plugin discovery remain separate checks.

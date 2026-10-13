@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -50,14 +51,17 @@ def main():
     digest = hashlib.sha256(
         json.dumps(seal, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+    manifest = json.loads((release / "runtime/manifest.json").read_bytes())
+    version = manifest["version"]
+    if not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise ValueError("invalid pinned release version")
     if args.dry_run:
         print(
-            json.dumps({"status": "planned", "plan_digest": digest, "version": "0.1.5"})
+            json.dumps({"status": "planned", "plan_digest": digest, "version": version})
         )
         return 0
     if args.approve_digest != digest:
         raise ValueError("exact reviewed distribution approval required")
-    manifest = json.loads((release / "runtime/manifest.json").read_bytes())
     env = dict(
         os.environ,
         AXIOM_HOME=str(root),
@@ -71,14 +75,14 @@ def main():
         "--root",
         root / "mcp-runtime",
         "--version",
-        "0.1.5",
+        version,
         "--source-revision",
         manifest["mcp_revision"],
     ]
     for key, name in [
         ("runtime", "python.tar.gz"),
         ("wheelhouse", "wheelhouse.tar.gz"),
-        ("wheel", "axiom_mcp-0.1.5-py3-none-any.whl"),
+        ("wheel", f"axiom_mcp-{version}-py3-none-any.whl"),
         ("lock", "requirements.txt"),
     ]:
         runtime_args += [
@@ -111,7 +115,7 @@ def main():
         json.dumps(
             {
                 "status": "installed",
-                "version": "0.1.5",
+                "version": version,
                 "root": str(root),
                 "runtime": runtime,
                 "engine": applied,

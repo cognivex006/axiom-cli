@@ -13,6 +13,7 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Read the pinned package version in Windows/Linux runtime bootstrap instead of an older hard-coded MCP version. This keeps fresh installation consistent with the release payload.
 - Repair an installed ecosystem using its verified active skills bundle when the original release archive is no longer present.
 - Show a short diagnostic summary with clear missing prerequisites and next steps. Retain detailed checks with `doctor --verbose` or `--json`.
 - Show the CLI, graph engine, MCP and skills versions separately. Explain that `axiom` and `axiom-graphd` belong to the same engine release and distinguish recorded versions from an update check.
