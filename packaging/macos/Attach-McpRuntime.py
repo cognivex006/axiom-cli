@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Attach the pinned K-104 runtime inputs to an unpublished Mac candidate set."""
+"""Attach the pinned runtime inputs to an unpublished Mac candidate set."""
 
 from __future__ import annotations
 

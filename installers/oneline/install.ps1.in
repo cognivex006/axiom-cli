@@ -1,4 +1,4 @@
-# Axiom one-line installer for Windows x64 (ADR-0033). Generated for @@TAG@@; do not edit.
+# Axiom one-line installer for Windows x64. Generated for @@TAG@@; do not edit.
 #
 #   powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/install.ps1 | iex"
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/install.ps1))) -Yes -NoModifyPath

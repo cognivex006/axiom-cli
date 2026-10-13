@@ -1,5 +1,5 @@
 #!/bin/sh
-# Per-user Intel Mac bootstrap for the two public CLI entrypoints (K-001).
+# Per-user Intel Mac bootstrap for the two public CLI entrypoints.
 # Core lifecycle, service control and data removal remain owned by `axiom`.
 set -eu
 

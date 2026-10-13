@@ -289,7 +289,7 @@ fn installed_version(st: &State) -> Result<(state::Installed, String), Refusal> 
             Refusal::not_ready(
                 "installed_version_unknown",
                 "installed.json does not record the core release version (an install made \
-                 before ADR-0033); run the one-line installer once to record it",
+                 by an older installer); run the one-line installer once to record it",
             )
         })?;
     Ok((installed, version))

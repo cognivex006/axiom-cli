@@ -4,7 +4,7 @@
 The engine owns its ecosystem transaction. This coordinator binds its approval
 to the verified candidate and the exact installed CLI/engine generation, moves
 the distribution entrypoint only after engine activation, and restores both on
-a failed second phase. It is for the K-406 container candidate, not a release
+a failed second phase. It is for local container candidates, not a release
 channel or a signature verifier.
 """
 

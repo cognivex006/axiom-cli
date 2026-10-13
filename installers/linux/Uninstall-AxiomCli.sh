@@ -1,5 +1,5 @@
 #!/bin/sh
-# Uninstall-AxiomCli.sh - axiom-cli Linux x64 per-user uninstaller (task J-008).
+# Uninstall-AxiomCli.sh - axiom-cli Linux x64 per-user uninstaller.
 #
 # Removes only artifacts this distribution owns: the entrypoint it placed, its
 # generations, its ownership record and the systemd user unit it generated.

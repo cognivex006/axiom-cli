@@ -1,0 +1,69 @@
+{
+  "checks": [
+    {
+      "argv": [
+        "axiom-cli",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "install",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "update",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "doctor",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "version",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "uninstall",
+        "--help"
+      ],
+      "exit_code": 0,
+      "internal_ids": []
+    },
+    {
+      "argv": [
+        "axiom-cli",
+        "doctor",
+        "--json"
+      ],
+      "exit_code": 4,
+      "internal_ids": []
+    }
+  ],
+  "binary_sha256": "c66bd75b0616df9e6d739d4019d6f5a0e10eae56f541054aed04e57b232b89bf",
+  "native_target": "macos-x64",
+  "scope": "read-only help and isolated no-engine diagnostic output; no installation or upgrade executed"
+}

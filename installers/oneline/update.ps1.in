@@ -1,4 +1,4 @@
-# Axiom one-line updater for Windows x64 (ADR-0035). Generated for @@TAG@@; do not edit.
+# Axiom one-line updater for Windows x64. Generated for @@TAG@@; do not edit.
 #
 #   powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/update.ps1 | iex"
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
@@ -60,7 +60,7 @@ if ($leftover.Count -gt 0) {
 
 function Get-AxiomInstalledRoot {
     $candidates = @()
-    # `axm` is the short name of axiom-cli from 0.1.5 (ADR-0036); either one on PATH names its root.
+    # `axm` is the short name of axiom-cli from 0.1.5; either one on PATH names its root.
     foreach ($command in 'axiom-cli', 'axm') {
         $onPath = Get-Command $command -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($onPath) { $candidates += (Split-Path -Parent (Split-Path -Parent $onPath.Source)) }

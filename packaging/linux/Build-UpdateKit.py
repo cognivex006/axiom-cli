@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package a pinned, unsigned K-406 local update kit for Linux x64."""
+"""Package a pinned, unsigned local update kit for Linux x64."""
 
 from __future__ import annotations
 

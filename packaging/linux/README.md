@@ -1,17 +1,12 @@
-# Linux x64 MCP runtime candidate
+# Linux MCP runtime packaging
 
-`Provision-McpRuntime.py` accepts only local runtime, wheelhouse, MCP wheel and
-dependency lock inputs with explicit SHA-256 values. K-404 uses uv managed
-CPython 3.13.15 for Linux x86_64, repacked as regular files. The input choice
-and exact archive digest are in `evidence/K-404/runtime-input.json`. The wheel
-and lock are the K-403 bytes. Provisioning installs offline into
-`mcp-runtime/versions/<generation>`, checks the installed entrypoint and
-publishes `current.json` after validation. A prior generation remains for
-rollback. `remove` deletes only owned generations and pointers and preserves
-sibling user data. No developer venv, compiler, or package download is used
-by the installed user flow.
+`Provision-McpRuntime.py` accepts local Python runtime, wheelhouse, MCP wheel and dependency-lock inputs with explicit SHA-256 values. It provisions offline into `mcp-runtime/versions/<generation>`, verifies the installed entrypoint and writes `current.json` after validation. Prior generations remain available for rollback.
 
-Run `python3 packaging/linux/Provision-McpRuntime.py --help` for the input
-surface. The native proof is `tests/linux/test_mcp_runtime.py --help` with the
-four K-404 candidate inputs. K-405 composes this runtime with the CLI, core and
-skills distribution; the candidate here is unsigned and unpublished.
+The retained Linux candidate uses CPython 3.13.15 for x86_64. Inputs are regular-file archives bound to the owner wheel and lock. The installed flow needs no developer virtual environment or compiler and does not download Python dependencies.
+
+```sh
+python3 packaging/linux/Provision-McpRuntime.py --help
+python3 tests/linux/test_mcp_runtime.py --help
+```
+
+Removal deletes owned generations and pointers while preserving sibling user data. Local candidate composition and runtime checks are separate from public release publication. See [Linux and WSL2 delivery](../../docs/60-LINUX-AND-MACOS-ARM64.md).

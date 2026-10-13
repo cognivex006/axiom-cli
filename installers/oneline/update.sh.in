@@ -1,5 +1,5 @@
 #!/bin/sh
-# Axiom one-line updater for macOS x64, Linux x64 and WSL2 (ADR-0035). Generated for @@TAG@@; do not edit.
+# Axiom one-line updater for macOS x64, Linux x64 and WSL2. Generated for @@TAG@@; do not edit.
 #
 #   curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/update.sh | sh
 #   curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
@@ -54,7 +54,7 @@ fi
 
 data="${XDG_DATA_HOME:-$HOME/.local/share}"
 root=''
-# `axm` is the short name of axiom-cli from 0.1.5 (ADR-0036); either one on PATH names its root.
+# `axm` is the short name of axiom-cli from 0.1.5; either one on PATH names its root.
 for candidate in "$(command -v axiom-cli 2>/dev/null | sed 's#/bin/[^/]*$##')" "$(command -v axm 2>/dev/null | sed 's#/bin/[^/]*$##')" "$data/axiom" "$HOME/axiom"; do
     [ -n "$candidate" ] || continue
     if [ -f "$candidate/installed.json" ] && [ -x "$candidate/bin/$AXIOM_CLI" ]; then

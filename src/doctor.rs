@@ -156,7 +156,7 @@ fn legacy_finding(lines: &mut Vec<String>) -> Json {
     }
     for (name, value) in &env {
         lines.push(format!(
-            "leftover environment: {name}={value} (not needed by an ADR-0033 install)"
+            "leftover environment: {name}={value} (not needed by a current installation)"
         ));
     }
     let clean = layouts.is_empty() && shadows.iter().all(|s| !s.before_root_bin) && env.is_empty();
@@ -431,9 +431,9 @@ fn prerequisites(all: bool, installed: Option<&std::path::Path>) -> (Json, Vec<S
     // channel manifest declares a SQLite driver today, so the honest state is `unverified` (recorded
     // as undeclared), never `ok`: merely locating a binary named `axiom-graphd` proves nothing about
     // the driver it bundles. ADR-0033 / spec L goal: a remaining `unverified` item is non-blocking
-    // and named with the task that owns its declaration.
+    // and attributed to the component that owns its declaration.
     lines.push(
-        "  sqlite driver: unverified (non-blocking; owner task J-007): no owner manifest declares the bundled SQLite driver version"
+        "  sqlite driver: unverified (non-blocking): no owner manifest declares the bundled SQLite driver version"
             .to_string(),
     );
     items.push(finding(
@@ -446,7 +446,7 @@ fn prerequisites(all: bool, installed: Option<&std::path::Path>) -> (Json, Vec<S
             ("satisfied", Json::bool(false)),
             ("version_source", Json::text("undeclared")),
             ("blocking", Json::bool(false)),
-            ("owner_task", Json::text("J-007")),
+            ("owner_component", Json::text("axiom-graphd")),
             ("observed", Json::text("owner release manifest / update channel declares no SQLite driver")),
         ],
     ));

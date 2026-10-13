@@ -1,16 +1,16 @@
-# axiom-cli documentation
+# Axiom CLI documentation
 
-**Installing Axiom?** Start with [INSTALL](INSTALL.md). It covers the one-line install, update, uninstall, upgrading from 0.1.0/0.1.2 and troubleshooting.
+Start with [Installing Axiom](INSTALL.md) for installation, update, removal and troubleshooting.
 
-These guides are owned and released with `axiom-cli`. They describe what this repository implements today.
+| Guide | Contents |
+|---|---|
+| [Command reference](40-CLI-ARGV-SURFACE.md) | Commands, options, automation and exit codes |
+| [Distribution and installers](30-DISTRIBUTION-AND-INSTALLERS.md) | Verified downloads, installation records, PATH and legacy adoption |
+| [Update and rollback](50-UPDATE-CHANNEL.md) | Channel selection, approval, transactions and recovery boundaries |
+| [Intel Mac distribution](31-MACOS-X64-DISTRIBUTION.md) | Native packaging and service ownership |
+| [Lifecycle status](32-LOCAL-LIFECYCLE-GAPS.md) | Installation checks versus project and host readiness |
+| [Linux, WSL2 and Apple silicon](60-LINUX-AND-MACOS-ARM64.md) | Platform availability and packaging recipes |
+| [Native WSL2 verification](wsl-lifecycle.md) | Real WSL checks and service differences |
+| [Container distribution](50-CONTAINER-CHANNEL.md) | Local image builds, non-root execution and offline delivery |
 
-| Guide | For | Contents |
-|---|---|---|
-| [INSTALL](INSTALL.md) | Users | Install, check, update, uninstall, upgrade, troubleshooting |
-| [30-DISTRIBUTION-AND-INSTALLERS](30-DISTRIBUTION-AND-INSTALLERS.md) | Maintainers | How install, PATH, bootstrappers and legacy adoption work; test harnesses; the historical J-004 Windows runbook |
-| [40-CLI-ARGV-SURFACE](40-CLI-ARGV-SURFACE.md) | Maintainers | Every verb, option, exit code and environment override |
-| [50-UPDATE-CHANNEL](50-UPDATE-CHANNEL.md) | Maintainers | The update channel and transaction |
-| [50-CONTAINER-CHANNEL](50-CONTAINER-CHANNEL.md) | Maintainers | The container and air-gapped channel (separate publication status) |
-| [60-LINUX-AND-MACOS-ARM64](60-LINUX-AND-MACOS-ARM64.md) | Maintainers | Linux and macOS arm64 delivery |
-
-The distribution contract and the platform matrix are canonical in `axiom-specs`; resolve cross-component normative references through the pinned `axiom-specs` revision. Do not create a local editable copy of them. A published site can aggregate documentation from immutable revisions without an extra repository.
+For graph commands, MCP and AI-host plugins, use the [ecosystem directory](../README.md#explore-the-ecosystem). [Changelog](../Changelog.md) describes user-facing release changes. Contributors can find the workflow in [Development](../Development.md).

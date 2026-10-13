@@ -1,0 +1,7 @@
+# Native WSL2 lifecycle (K-408)
+
+The owner-authorized Ubuntu 24.04.5 instance runs a Microsoft WSL2 kernel on x86_64 with glibc 2.39. Product tests use fresh non-root users and ext4-local per-user homes; the Docker/container proof remains a separate lane. The Ubuntu image URL/hash and signing-key fingerprints are in the coordination host-setup receipt; machine-local rootfs/VHDX files are never committed.
+
+Run tests/linux/test_mcp_runtime.py with the pinned K-404 runtime and K-403 wheel/lock inputs, then tests/linux/test_wsl_lifecycle.py --full with exact K-406 A/B kit archives extracted by a checked regular-file-only extractor. The --full run starts without an installed engine/CLI or prepared development virtual environment. Resume flags are diagnostic only; completion uses a fresh user run. Installer boundaries execute the actual Linux installer and systemd-user registration when available. Public update verbs consume the exact kit and engine transaction; negative tests retain approved inactive bytes and do not require their deletion.
+
+The final CLI removal preserves current C# source, bindings and user data by hash. Native report records kernel/UID/script digest/base revision and exact sanitized argv/exit codes. Component checks and Git delivery remain separate. There is no root product prerequisite, Windows/container evidence substitution, signing/publication/certification claim or completion of K-409.

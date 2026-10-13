@@ -1,5 +1,5 @@
 #!/bin/sh
-# macOS x64 distribution wrapper (J-005).
+# macOS x64 distribution wrapper.
 #
 # The entrypoint bootstrap consumes an Intel Mac release-set.json without a
 # preinstalled CLI. The historical --cli/--from path delegates ecosystem install.

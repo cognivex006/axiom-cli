@@ -153,7 +153,7 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
                     "adopt_target_not_legacy",
                     format!(
                         "{} is not a legacy Axiom installation (absent, empty or already an \
-                         ADR-0033 root); nothing was changed",
+                         current installation root); nothing was changed",
                         path.display()
                     ),
                 ))

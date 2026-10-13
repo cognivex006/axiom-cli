@@ -397,10 +397,6 @@ fn owner_documentation_covers_the_channel_and_the_air_gapped_variant() {
         "the documentation index must link the container channel guide"
     );
     assert!(
-        read("Changelog.md").contains("J-006"),
-        "Changelog.md must record J-006"
-    );
-    assert!(
         read("README.md").contains("50-CONTAINER-CHANNEL.md"),
         "the repository README must link the container channel guide"
     );

@@ -1,0 +1,36 @@
+# axiom-cli 0.1.1 — MacIntel test release
+
+Published at the owner's explicit request from current development code.
+Source baseline: `7c8b1a7a32983baacdce62e5af5926c9d9802296`. The release tag pins the final packaging commit.
+Scope: native macOS x86_64 testing; no Windows, Linux or MacArm certification is claimed.
+Native binaries are unsigned and not notarized. End-user testing follows publication.
+Spec contract remains `2.0.0-draft.1`; this tag does not ratify the draft specification.
+
+Each downloadable asset is covered by SHA256SUMS. Source code is available from the tag.
+Release branches preserve current task code without claiming integration into main.
+
+## Download and test on Intel Mac
+
+Download `axiom-0.1.1-macos-x64.tar.gz` and `SHA256SUMS` from this release.
+The archive includes CLI, daemon, engine, MCP 0.1.1, skills 0.1.1, CPython 3.13.15,
+and the pinned offline Python dependency wheelhouse. No system Python is needed.
+
+```sh
+shasum -a 256 -c SHA256SUMS --ignore-missing
+tar -xzf axiom-0.1.1-macos-x64.tar.gz
+cd axiom-0.1.1-macos-x64
+sh runtime/bootstrap.sh install --release-set "$PWD" --dry-run
+```
+
+Review the plan, then use its approval digest:
+
+```sh
+sh runtime/bootstrap.sh install --release-set "$PWD" --apply --approve-digest <PLAN_DIGEST>
+"$HOME/.local/bin/axiom-cli" version --all --json
+```
+
+Use `uninstall` with the same dry-run/apply flow for owned installation removal.
+The archive uses the existing local candidate installer and development trust
+metadata (`published: false` inside the channel). The GitHub release is published;
+this flag means the payload is not a signed production update channel.
+Gatekeeper handling for these unsigned/not-notarized binaries is an explicit user action.

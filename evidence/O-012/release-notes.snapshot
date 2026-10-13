@@ -1,0 +1,46 @@
+# Axiom 0.1.5
+
+## New Features
+
+- Add `axm` as the short command for `axiom-cli`. Both names run the same program and support the same commands; installation, update, rollback and uninstall manage both entrypoints.
+- Bundle core, MCP and skills version 0.1.5. MCP and agent skills can expose the installation manager's commands.
+
+Full Changelog: [v0.1.4…v0.1.5](https://github.com/orchex006/axiom-cli/compare/v0.1.4...v0.1.5)
+
+## Installation
+
+Install the CLI, graph engine, MCP runtime and skills bundle for your user account. The scripts verify this release's archive SHA-256 before extraction; installation shows its plan and asks once.
+
+Windows (PowerShell 5.1+):
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/download/v0.1.5/install.ps1 | iex"
+```
+
+macOS Intel, Linux x64 and WSL2:
+
+```sh
+curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/v0.1.5/install.sh | sh
+```
+
+## Update
+
+Run `axm update`, or use the release's update script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/download/v0.1.5/update.ps1 | iex"
+```
+
+```sh
+curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/v0.1.5/update.sh | sh
+```
+
+The script uses an existing installation's update command; recognized older layouts upgrade through the installer. With nothing installed, it prints the installation command. Check the reported installed/offered version and any refusal before assuming an upgrade succeeded.
+
+## Commands and setup
+
+`axm` and `axiom-cli` run the same program. `axiom` is the graph engine's separate operations CLI. Use `axm version`, `axm doctor` and `axm --help` to inspect the installation. `axm uninstall` retains user data.
+
+`install` manages the complete pinned component set; it does not accept a component name. Project registration, MCP permissions and host plugin discovery need their own setup. See the [installation guide](https://github.com/orchex006/axiom-cli/blob/main/docs/INSTALL.md) and [skills/plugin guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+
+Every release asset is listed in `SHA256SUMS`. `channel.json` pins archive downloads; use `download/<tag>` instead of `latest/download` to select a particular release. Apple silicon and Linux arm64 are unavailable through these scripts.
