@@ -50,6 +50,7 @@ def main():
         assert 'installed_bundle' in result.stdout
         run('compact_doctor', [cli, 'doctor'], check=lambda p: len(p.stdout.splitlines()) <= 5
             and 'Axiom installation: OK' in p.stdout and 'sha256' not in p.stdout)
+        run('compact_version_includes_actual_skills', [cli, 'version'], check=lambda p: 'Skills: 0.1.5' in p.stdout and 'not recorded' not in p.stdout)
         run('verbose_doctor', [cli, 'doctor', '--verbose'], check=lambda p: 'sha256=' in p.stdout)
         run('json_doctor', [cli, 'doctor', '--json'], check=lambda p: 'findings' in json.loads(p.stdout)['details'])
         skills = root / 'installs/ecosystem/skills'
@@ -67,6 +68,7 @@ def main():
         pointer_path.write_text(json.dumps(pointer))
         run('tampered_manifest_pointer_refused', [cli, 'install', '--yes', '--no-modify-path', '--json'], expected=2)
         assert (root / 'installed.json').read_bytes() == record
+        run('version_refuses_tampered_skills_metadata', [cli, 'version', '--json'], expected=2)
         pointer_path.write_bytes(original_pointer)
         pointer_path.rename(skills / 'linked-current-target')
         pointer_path.symlink_to(skills / 'linked-current-target')

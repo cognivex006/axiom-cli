@@ -17,6 +17,8 @@
 //! Unlike `update check`, a successful `version` is not contingent on anything being installed:
 //! "nothing is installed" is a fact this verb exists to report, so it is data and exits `0`.
 
+use std::path::Path;
+
 use crate::engine::{self, Located};
 use crate::target;
 use crate::update::channel::{self, Manifest};
@@ -82,6 +84,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
         None => {
             report.line("install root: unavailable on this host");
             report.detail("installed", Json::bool(false));
+            report.detail("installed_skills", Json::null());
             report.detail(
                 "install_root_reason",
                 Json::text(
@@ -97,6 +100,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                     state.installed_path().display()
                 ));
                 report.detail("installed", Json::bool(false));
+                report.detail("installed_skills", Json::null());
             } else {
                 let installed = state.read_installed()?;
                 let generation = Generation::read(&state, &installed.current_generation)?;
@@ -112,6 +116,15 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                 for line in installed_lines(&installed, &generation, concise) {
                     report.line(line);
                 }
+                let skills = installed_skills_block(path, &loaded.manifest)?;
+                report.line(format!(
+                    "Skills: {}",
+                    skills
+                        .get("version")
+                        .and_then(Json::as_text)
+                        .unwrap_or("not installed")
+                ));
+                report.detail("installed_skills", skills);
             }
         }
     }
@@ -160,6 +173,102 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
 
     report.detail("engine", engine_block());
     Ok(report)
+}
+
+/// Skills are installed by the engine outside the binary generation inventory.
+/// Read their active owner metadata instead of inferring installation from channel availability.
+fn installed_skills_block(root: &Path, manifest: &Manifest) -> Result<Json, Refusal> {
+    let store = root.join("installs/ecosystem/skills");
+    let current = store.join("current");
+    if !current.exists() && !current.is_symlink() {
+        return Ok(Json::from_pairs(vec![
+            ("status", Json::text("not_installed")),
+            ("version", Json::null()),
+        ]));
+    }
+    let read = |path: &Path| -> Result<Json, Refusal> {
+        if path.is_symlink() {
+            return Err(Refusal::validation(
+                "skills_metadata_linked",
+                "installed skills metadata is linked; restore it using the install URL",
+            ));
+        }
+        let bytes = std::fs::read(path).map_err(|e| {
+            Refusal::io(
+                "skills_metadata_unreadable",
+                &path.display().to_string(),
+                &e,
+            )
+        })?;
+        crate::update::json::parse(&String::from_utf8_lossy(&bytes))
+            .map_err(|e| Refusal::validation("skills_metadata_invalid", e))
+    };
+    let pointer = read(&current)?;
+    let version = pointer.get("version").and_then(Json::as_text).unwrap_or("");
+    if version.is_empty()
+        || version == "."
+        || version == ".."
+        || !version
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b".-+".contains(&b))
+    {
+        return Err(Refusal::validation(
+            "skills_version_invalid",
+            "installed skills version is invalid",
+        ));
+    }
+    let source = store.join(version);
+    let mut ancestor = source.as_path();
+    while ancestor != root {
+        if ancestor.is_symlink() {
+            return Err(Refusal::validation(
+                "skills_metadata_linked",
+                "installed skills path is linked",
+            ));
+        }
+        ancestor = ancestor.parent().ok_or_else(|| {
+            Refusal::validation(
+                "skills_path_invalid",
+                "installed skills path escapes its root",
+            )
+        })?;
+    }
+    let path = source.join("bundle.json");
+    let owner = read(&path)?;
+    let expected = pointer
+        .get("manifest_sha256")
+        .and_then(Json::as_text)
+        .unwrap_or("");
+    let observed = crate::update::sha256::file_hex(&path).map_err(|e| {
+        Refusal::io(
+            "skills_metadata_unreadable",
+            &path.display().to_string(),
+            &e,
+        )
+    })?;
+    let declared = manifest.component("skills");
+    if expected.len() != 64
+        || observed != expected
+        || ["version", "revision"].iter().any(|key| {
+            pointer.get(key).and_then(Json::as_text).is_none() || pointer.get(key) != owner.get(key)
+        })
+        || declared.is_none_or(|d| {
+            d.version.as_deref() != Some(version)
+                || d.revision.as_deref() != pointer.get("revision").and_then(Json::as_text)
+        })
+    {
+        return Err(Refusal::validation("skills_metadata_mismatch", "installed skills metadata does not match the recorded release; restore it using the install URL"));
+    }
+    Ok(Json::from_pairs(vec![
+        ("status", Json::text("installed")),
+        ("version", Json::text(version)),
+        (
+            "revision",
+            pointer.get("revision").cloned().unwrap_or(Json::Null),
+        ),
+        ("manifest_sha256", Json::text(expected)),
+        ("manifest_verified", Json::bool(true)),
+    ]))
 }
 
 fn cli_block() -> Json {
@@ -354,7 +463,6 @@ fn installed_lines(
         for (component, label) in [
             ("axiom-graphd", "Graph engine (axiom / axiom-graphd)"),
             ("axiom-mcp", "MCP"),
-            ("skills", "Skills"),
         ] {
             let version = generation
                 .entries
