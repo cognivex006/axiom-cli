@@ -195,7 +195,7 @@ NOTES:
 pub fn verb_help(verb: Verb) -> String {
     let options = match verb {
         Verb::Install => concat!(
-            "    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
+            "    Installs the complete set: CLI (axm / axiom-cli), graph engine, MCP and skills.\n    Component names such as cli or axiom-graphd are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
             "    --yes, -y                  Approve the printed plan without a prompt (AXIOM_INSTALL_YES=1)\n",
             "    --no-modify-path           Do not add the install's bin to the user PATH\n",
             "    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",

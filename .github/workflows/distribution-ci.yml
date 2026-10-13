@@ -58,7 +58,7 @@ jobs:
         run: |
           import os, pathlib, subprocess, sys
           import json, time
-          deadline = time.monotonic() + 600
+          deadline = time.monotonic() + 1800
           for repo in ('axiom-graphd', 'axiom-mcp', 'axiom-skills'):
             while True:
               result = subprocess.run(['gh', 'release', 'view', 'v0.1.6', '--repo', 'orchex006/' + repo, '--json', 'isDraft'], capture_output=True, text=True)

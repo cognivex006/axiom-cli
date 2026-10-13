@@ -28,7 +28,7 @@ use crate::update::state::{self, State};
 
 /// Run the `version` verb and return its process exit code.
 pub fn run_version(all: bool, json: bool, verbose: bool) -> i32 {
-    match collect(all, !json && !verbose) {
+    match collect(all, !json && !verbose && !all) {
         Ok(report) => report.emit(json, verbose),
         Err(refusal) => refusal_report(&refusal).emit(json, verbose),
     }
