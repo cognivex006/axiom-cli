@@ -3,6 +3,9 @@
 import importlib.util
 import hashlib
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -36,6 +39,42 @@ class ReleaseTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     composer.unpack(archive, root / "out")
                 self.assertFalse((root / "outside").exists())
+
+    @unittest.skipUnless(hasattr(os, "getuid") and os.getuid() != 0, "non-root POSIX bootstrap")
+    def test_bootstrap_binds_future_package_version_before_provision(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            release = Path(temporary) / "release"
+            runtime = release / "runtime"
+            runtime.mkdir(parents=True)
+            root = Path(temporary) / "fresh-root"
+            version = "0.2.7"
+            wheel = f"axiom_mcp-{version}-py3-none-any.whl"
+            for name in ("python.tar.gz", "wheelhouse.tar.gz", wheel, "requirements.txt"):
+                (runtime / name).write_bytes(b"isolated fixture input")
+            (runtime / "bootstrap.py").write_bytes((ROOT / "release/bootstrap_linux.py").read_bytes())
+            provision = "import json,sys\nfrom pathlib import Path\nPath(__file__).with_name('observed-argv.json').write_text(json.dumps(sys.argv[1:]))\nprint(json.dumps({'python':sys.executable}))\n"
+            (runtime / "provision.py").write_text(provision)
+            manifest = {"version": version, "mcp_revision": "a" * 40,
+                        "files": {name: hashlib.sha256((runtime / name).read_bytes()).hexdigest()
+                                  for name in ("python.tar.gz", "wheelhouse.tar.gz", wheel, "requirements.txt")}}
+            (runtime / "manifest.json").write_text(json.dumps(manifest))
+            cli = release / "axiom-cli"
+            cli.write_text("#!/usr/bin/env python3\nimport json\nprint(json.dumps({'details':{'plan_digest':'a'*64},'code':0}))\n")
+            cli.chmod(0o755)
+            inventory = {"files": [{"path": f.relative_to(release).as_posix(),
+                                    "sha256": hashlib.sha256(f.read_bytes()).hexdigest()}
+                                   for f in release.rglob("*") if f.is_file()]}
+            (release / "DISTRIBUTION-FILES.json").write_text(json.dumps(inventory))
+            argv = [sys.executable, str(runtime / "bootstrap.py"), "--root", str(root)]
+            planned = subprocess.run([*argv, "--dry-run"], capture_output=True, text=True, check=True)
+            plan = json.loads(planned.stdout)
+            self.assertEqual(plan["version"], version)
+            self.assertFalse(root.exists())
+            applied = subprocess.run([*argv, "--apply", "--approve-digest", plan["plan_digest"]], capture_output=True, text=True, check=True)
+            self.assertEqual(json.loads(applied.stdout)["version"], version)
+            observed = json.loads((runtime / "observed-argv.json").read_text())
+            self.assertEqual(observed[observed.index("--version") + 1], version)
+            self.assertEqual(Path(observed[observed.index("--wheel") + 1]).name, wheel)
 
     def inputs(self, root):
         for lane in ["windows-x64", "linux-x64", "macos-x64"]:
