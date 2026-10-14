@@ -723,6 +723,66 @@ fn restore(
         return Err(Refusal::conflict("previous_manifest_changed", "retained channel manifest does not match the previous installation; nothing was restored"));
     }
     let st = State::new(root);
+    let generation = super::generation::Generation::read(&st, &before_record.current_generation)?;
+    let directory = st.generation_dir(&before_record.current_generation);
+    generation.verify(&directory)?;
+    let active = st.read_installed().ok().and_then(|record| {
+        super::generation::Generation::read(&st, &record.current_generation).ok()
+    });
+    let mut added = Vec::new();
+    if let Some(active) = &active {
+        for entry in &active.entries {
+            let Some(name) = entry.component.strip_prefix("bin/") else {
+                continue;
+            };
+            if generation
+                .entries
+                .iter()
+                .any(|old| old.component == entry.component)
+            {
+                continue;
+            }
+            if !crate::update::rules::is_relative_path(name) {
+                return Err(Refusal::conflict(
+                    "rollback_bin_invalid",
+                    "recorded executable path is invalid; nothing was restored",
+                ));
+            }
+            let path = crate::layout::bin_dir(root).join(crate::layout::program_file(name));
+            let mut ancestor = path.as_path();
+            while ancestor != root {
+                if ancestor.is_symlink() {
+                    return Err(Refusal::conflict(
+                        "rollback_bin_linked",
+                        "added executable path is linked; nothing was restored",
+                    ));
+                }
+                ancestor = ancestor.parent().ok_or_else(|| {
+                    Refusal::conflict(
+                        "rollback_bin_invalid",
+                        "added executable path escapes its root",
+                    )
+                })?;
+            }
+            if !path.exists() {
+                continue;
+            }
+            if !path.is_file()
+                || crate::update::sha256::file_hex(&path).ok().as_deref()
+                    != Some(entry.artifact_sha256.as_str())
+            {
+                return Err(Refusal::conflict(
+                    if name == "graphd-engine/axiom" {
+                        "rollback_engine_changed"
+                    } else {
+                        "rollback_bin_changed"
+                    },
+                    "added executable changed; nothing was restored",
+                ));
+            }
+            added.push(path);
+        }
+    }
     if let Some(id) = transaction {
         let bin = crate::layout::bin_dir(root);
         let private = ["graphd-engine/axiom", ".internal/axiom", "axiom"]
@@ -758,8 +818,6 @@ fn restore(
             ));
         }
     }
-    let generation = super::generation::Generation::read(&st, &before_record.current_generation)?;
-    let directory = st.generation_dir(&before_record.current_generation);
     let mut sources = Vec::new();
     for entry in &generation.entries {
         let Some(program) = entry.component.strip_prefix("bin/") else {
@@ -791,45 +849,46 @@ fn restore(
             });
         }
     }
-    // A rollback to an older folder must not leave a newer engine ahead of it in discovery.
-    let new_name = "graphd-engine/axiom";
-    let retired_engine = if !sources.iter().any(|source| source.name == new_name) {
-        st.read_installed()
-            .ok()
-            .and_then(|current| {
-                super::generation::Generation::read(&st, &current.current_generation).ok()
-            })
-            .and_then(|active| {
-                active
-                    .entries
-                    .into_iter()
-                    .find(|entry| entry.component == format!("bin/{new_name}"))
-            })
-    } else {
-        None
-    };
-    let new_path = crate::layout::bin_dir(root).join(crate::layout::program_file(new_name));
-    if let Some(entry) = &retired_engine {
-        if new_path.is_symlink()
-            || new_path.parent().is_some_and(Path::is_symlink)
-            || crate::update::sha256::file_hex(&new_path).ok().as_deref()
-                != Some(entry.artifact_sha256.as_str())
-        {
-            return Err(Refusal::conflict(
-                "rollback_engine_changed",
-                "new engine runtime changed; nothing was restored",
-            ));
-        }
-    }
     crate::layout::place_bin(root, &sources)?;
-    if retired_engine.is_some() {
-        std::fs::remove_file(&new_path).map_err(|error| {
-            Refusal::io(
-                "rollback_engine_remove_failed",
-                &new_path.display().to_string(),
-                &error,
-            )
-        })?;
+    for path in added {
+        if let Err(error) = std::fs::remove_file(&path) {
+            // A running Windows entrypoint can be renamed, but not deleted until it exits.
+            let running = std::env::current_exe()
+                .ok()
+                .and_then(|p| p.canonicalize().ok());
+            if running.is_some() && path.canonicalize().ok() == running {
+                let staging = root.join("staging");
+                if staging.is_symlink() {
+                    return Err(Refusal::conflict(
+                        "rollback_retirement_linked",
+                        "rollback retirement directory is linked",
+                    ));
+                }
+                std::fs::create_dir_all(&staging)
+                    .map_err(|e| Refusal::io("rollback_retirement_failed", "staging", &e))?;
+                let stamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos();
+                let retired = staging.join(format!(
+                    "rollback-retired-{}-{stamp}.exe",
+                    std::process::id()
+                ));
+                std::fs::rename(&path, &retired).map_err(|e| {
+                    Refusal::io(
+                        "rollback_retirement_failed",
+                        &path.display().to_string(),
+                        &e,
+                    )
+                })?;
+            } else {
+                return Err(Refusal::io(
+                    "rollback_bin_remove_failed",
+                    &path.display().to_string(),
+                    &error,
+                ));
+            }
+        }
     }
     if let Some(bytes) = manifest_snapshot {
         st.record_manifest_bytes(bytes)?;
@@ -1014,15 +1073,19 @@ mod tests {
             let source = root.join(format!("source-{}", bytes.len()));
             std::fs::write(&source, bytes).unwrap();
             let sha = digest_of(bytes);
-            let bin = crate::layout::place_bin(
-                root,
-                &[crate::layout::BinSource {
-                    name,
+            let mut sources = vec![crate::layout::BinSource {
+                name,
+                source: source.clone(),
+                sha256: sha.clone(),
+            }];
+            if name == "graphd-engine/axiom" {
+                sources.push(crate::layout::BinSource {
+                    name: "axge",
                     source,
                     sha256: sha.clone(),
-                }],
-            )
-            .unwrap();
+                });
+            }
+            let bin = crate::layout::place_bin(root, &sources).unwrap();
             crate::layout::record(
                 root,
                 &crate::layout::Record {
@@ -1032,14 +1095,20 @@ mod tests {
                     manifest_sha256: &digest_of(b"{}"),
                     plan_digest: plan,
                     bin,
-                    components: vec![(
-                        format!("bin/{name}"),
-                        "0.1.6".into(),
-                        String::new(),
-                        sha,
-                        crate::layout::bin_dir(root).join(crate::layout::program_file(name)),
-                        false,
-                    )],
+                    components: sources
+                        .iter()
+                        .map(|item| {
+                            (
+                                format!("bin/{}", item.name),
+                                "0.1.6".into(),
+                                String::new(),
+                                sha.clone(),
+                                crate::layout::bin_dir(root)
+                                    .join(crate::layout::program_file(item.name)),
+                                false,
+                            )
+                        })
+                        .collect(),
                 },
             )
             .unwrap()
@@ -1085,8 +1154,22 @@ mod tests {
         assert!(!old_path.exists());
         assert_eq!(std::fs::read(&new_path).unwrap(), b"modified engine");
         std::fs::write(&new_path, b"new verified engine bytes").unwrap();
+        let added_command = crate::layout::bin_dir(&root).join(crate::layout::program_file("axge"));
+        std::fs::write(&added_command, b"human edit").unwrap();
+        assert_eq!(
+            restore(&root, &before, &old, None, Some(b"{}"))
+                .unwrap_err()
+                .reason,
+            "rollback_bin_changed"
+        );
+        assert!(!old_path.exists());
+        assert_eq!(std::fs::read(&added_command).unwrap(), b"human edit");
+        std::fs::write(&added_command, b"new verified engine bytes").unwrap();
         restore(&root, &before, &old, None, Some(b"{}")).unwrap();
         assert!(!new_path.exists());
+        assert!(!crate::layout::bin_dir(&root)
+            .join(crate::layout::program_file("axge"))
+            .exists());
         assert_eq!(
             std::fs::read(state.recorded_manifest_path()).unwrap(),
             b"{}"

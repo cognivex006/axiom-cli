@@ -5,8 +5,10 @@
 #   curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
 #
 # This script contains no update logic:
-#   * Axiom installed (an installed.json root): run that installation's own `axm update`,
+#   * Current layout: run that installation's own `axm update`,
 #     which reads the recorded channel, prints the plan and asks once.
+#   * Older installed.json layouts: run `update` through the checksum-verified new CLI,
+#     so migration and health checks use the current command layout.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.sh -
 #     download the @@TAG@@ archive for this host, check its SHA-256, extract it to a temporary
 #     directory and run `axm install`, which shows the adoption plan and asks once.
@@ -81,7 +83,7 @@ run_cli() {
     return "$status"
 }
 
-if [ -n "$root" ]; then
+if [ -n "$root" ] && [ -x "$root/bin/axm" ] && [ -f "$root/bin/graphd-engine/axiom" ]; then
     echo "axiom update: found the installation at $root; running its axm update"
     status=0
     run_cli "$installed_cli" update || status=$?
@@ -95,10 +97,14 @@ fi
 if [ -f "$HOME/axiom/installs/ecosystem/current" ]; then
     legacy="${legacy:+$legacy and }Axiom 0.1.2 bootstrap root at $HOME/axiom"
 fi
-if [ -z "$legacy" ]; then
+if [ -z "$root" ] && [ -z "$legacy" ]; then
     fail "Axiom is not installed for this user, so there is nothing to update; nothing was changed. Install it with: curl -fsSL $AXIOM_BASE_URL/$AXIOM_TAG/install.sh | sh"
 fi
-echo "axiom update: found $legacy (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AXIOM_TAG installer"
+if [ -n "$root" ]; then
+    echo "axiom update: found an older command layout at $root; upgrading through the verified $AXIOM_TAG CLI"
+else
+    echo "axiom update: found $legacy (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AXIOM_TAG installer"
+fi
 
 case "$(uname -s) $(uname -m)" in
     'Linux x86_64'|'Linux amd64') asset='@@LINUX_ASSET@@'; expected='@@LINUX_SHA256@@' ;;
@@ -135,5 +141,9 @@ tar -xzf "$tmp/$asset" -C "$tmp/release" ||
 [ -f "$tmp/release/$AXIOM_CLI" ] || fail "the archive does not contain $AXIOM_CLI; nothing was changed"
 
 status=0
-run_cli "$tmp/release/$AXIOM_CLI" install ${modify_path:+"$modify_path"} || status=$?
+if [ -n "$root" ]; then
+    AXIOM_CLI_INSTALL_ROOT="$root" run_cli "$tmp/release/$AXIOM_CLI" update || status=$?
+else
+    run_cli "$tmp/release/$AXIOM_CLI" install ${modify_path:+"$modify_path"} || status=$?
+fi
 exit "$status"

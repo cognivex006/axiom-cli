@@ -264,3 +264,5 @@ An existing installation can supply its verified active skills bundle for repair
 `axm doctor` prints a short summary and actionable findings. Use `axm doctor --verbose` for paths, transaction details and prerequisite evidence, or `--json` for automation. Project graph registration and host plugin discovery remain separate checks.
 
 The current command layout migrates recorded, unchanged legacy entrypoints into private storage. If an old executable was edited or is unowned, installation stops and names the file; move it aside and retry. Verified previous generation payloads remain available for rollback. Existing published releases retain their original layout until you install a release containing this change.
+
+For an installation made by an older command layout, the update URL verifies and runs the current release CLI before starting the update transaction. This avoids the previous updater's obsolete executable health checks. Current installations use their own `axm update`; both paths retain the normal approval and rollback behavior.

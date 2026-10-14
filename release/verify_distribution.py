@@ -1,4 +1,4 @@
-"""Verify native 0.1.6 composed payload bytes and launch its real entrypoints."""
+"""Verify version-pinned native composed payload bytes and launch its real entrypoints."""
 
 import argparse
 import hashlib
@@ -10,10 +10,12 @@ import tempfile
 import zipfile
 import email
 
+VERSION = (Path(__file__).resolve().parents[1] / "VERSION").read_text(encoding="utf-8").strip()
+
 
 def verify(root, output):
     manifest = json.loads((root / "DISTRIBUTION-FILES.json").read_bytes())
-    if manifest["version"] != "0.1.6":
+    if manifest["version"] != VERSION:
         raise ValueError("distribution version mismatch")
     for row in manifest["files"]:
         path = root / row["path"]
@@ -34,7 +36,7 @@ def verify(root, output):
         version = body.get("version") or body.get("details", {}).get("cli", {}).get(
             "version"
         )
-        if version != "0.1.6":
+        if version != VERSION:
             raise ValueError("native version differs: " + binary)
         cases.append(
             {
@@ -43,17 +45,17 @@ def verify(root, output):
                 "stdout_sha256": hashlib.sha256(result.stdout.encode()).hexdigest(),
             }
         )
-    wheel = root / "axiom_mcp-0.1.6-py3-none-any.whl"
+    wheel = root / f"axiom_mcp-{VERSION}-py3-none-any.whl"
     with zipfile.ZipFile(wheel) as archive:
         metadata = [x for x in archive.namelist() if x.endswith(".dist-info/METADATA")]
         if (
             len(metadata) != 1
-            or email.message_from_bytes(archive.read(metadata[0]))["Version"] != "0.1.6"
+            or email.message_from_bytes(archive.read(metadata[0]))["Version"] != VERSION
         ):
             raise ValueError("MCP wheel version mismatch")
     if (
         json.loads((root / "skills-manifest.json").read_bytes())["component_version"]
-        != "0.1.6"
+        != VERSION
     ):
         raise ValueError("skills version mismatch")
     # Fresh install approval preparation must remain bounded and non-mutating.
@@ -133,7 +135,7 @@ def verify(root, output):
             )
     archives = [
         p
-        for p in root.parent.glob("axiom-0.1.6-*")
+        for p in root.parent.glob(f"axiom-{VERSION}-*")
         if p.is_file() and (p.name.endswith(".zip") or p.name.endswith(".tar.gz"))
     ]
     if len(archives) != 1:
@@ -146,7 +148,7 @@ def verify(root, output):
                 "execution": "native",
                 "arch": platform.machine(),
                 "source_revision": manifest["source_revision"],
-                "version": "0.1.6",
+                "version": VERSION,
                 "cases": cases,
                 "owners": manifest["owners"],
                 "archive": archive.name,

@@ -4,8 +4,10 @@
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
 #
 # This script contains no update logic:
-#   * Axiom installed (an installed.json root): run that installation's own `axm update`,
+#   * Current layout: run that installation's own `axm update`,
 #     which reads the recorded channel, prints the plan and asks once.
+#   * Older installed.json layouts: run update through the checksum-verified new CLI,
+#     so migration and health checks use the current command layout.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.ps1 -
 #     download the @@TAG@@ archive, check its SHA-256, extract it to a temporary directory and run
 #     `axm install`, which shows the adoption plan and asks once.
@@ -95,7 +97,8 @@ function Get-AxiomLegacyLayouts {
 }
 
 $root = Get-AxiomInstalledRoot
-if ($root) {
+if ($root -and (Test-Path -LiteralPath (Join-Path $root 'bin\axm.exe') -PathType Leaf) -and
+    (Test-Path -LiteralPath (Join-Path $root 'bin\graphd-engine\axiom.exe') -PathType Leaf)) {
     $cli = Join-Path $root 'bin\axm.exe'
     if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { $cli = Join-Path (Join-Path $root 'bin') $AxiomCli }
     Write-Host "axiom update: found the installation at $root; running its axm update"
@@ -109,11 +112,15 @@ if ($root) {
 }
 
 $legacy = Get-AxiomLegacyLayouts
-if ($legacy.Count -eq 0) {
+if (-not $root -and $legacy.Count -eq 0) {
     Stop-AxiomUpdate ("Axiom is not installed for this user, so there is nothing to update; nothing was changed. " +
         "Install it with: powershell -ExecutionPolicy Bypass -c `"irm $AxiomBaseUrl/$AxiomTag/install.ps1 | iex`"")
 }
-Write-Host ("axiom update: found " + ($legacy -join ' and ') + " (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AxiomTag installer")
+if ($root) {
+    Write-Host "axiom update: found an older command layout at $root; upgrading through the verified $AxiomTag CLI"
+} else {
+    Write-Host ("axiom update: found " + ($legacy -join ' and ') + " (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AxiomTag installer")
+}
 
 $arch = $env:PROCESSOR_ARCHITEW6432
 if (-not $arch) { $arch = $env:PROCESSOR_ARCHITECTURE }
@@ -123,9 +130,9 @@ if ($arch -ne 'AMD64') {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-$cliArgs = @('install')
+$cliArgs = if ($root) { @('update') } else { @('install') }
 if ($Yes) { $cliArgs += '--yes' }
-if ($NoModifyPath) { $cliArgs += '--no-modify-path' }
+if ($NoModifyPath -and -not $root) { $cliArgs += '--no-modify-path' }
 
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('axiom-update-' + [Guid]::NewGuid().ToString('N').Substring(0, 12))
 $code = 1
@@ -147,11 +154,13 @@ try {
     if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) {
         Stop-AxiomUpdate "the archive does not contain $AxiomCli; nothing was changed"
     }
+    if ($root) { $env:AXIOM_CLI_INSTALL_ROOT = $root }
     & $cli @cliArgs
     $code = $LASTEXITCODE
 }
 finally {
+    if ($root) { Remove-Item Env:AXIOM_CLI_INSTALL_ROOT -ErrorAction SilentlyContinue }
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
 }
 $global:LASTEXITCODE = $code
-if ($code -ne 0) { Stop-AxiomUpdate "axm install exited $code" }
+if ($code -ne 0) { Stop-AxiomUpdate "axm $($cliArgs[0]) exited $code" }

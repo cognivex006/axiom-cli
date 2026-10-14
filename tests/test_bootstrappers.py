@@ -187,16 +187,18 @@ class UpdateShBehaviourTests(unittest.TestCase):
             self.assertIn("leftover variables", result.stderr)
             self.assertIn(name + "=/somewhere", result.stderr)
 
-    def test_installed_root_runs_its_own_axiom_cli_update(self):
+    def test_current_layout_runs_its_own_axm_update(self):
         root = self.home / "data" / "axiom"
         (root / "bin").mkdir(parents=True)
         (root / "installed.json").write_text("{}", encoding="utf-8")
-        stub = root / "bin" / "axiom-cli"
-        stub.write_bytes(b'#!/bin/sh\necho "stub axiom-cli $*"\nexit 7\n')
+        stub = root / "bin" / "axm"
+        stub.write_bytes(b'#!/bin/sh\necho "stub axm $*"\nexit 7\n')
         stub.chmod(0o755)
+        (root / "bin/graphd-engine").mkdir()
+        (root / "bin/graphd-engine/axiom").write_bytes(b"owned current layout fixture")
         result = self.run_update("--yes")
         self.assertIn("running its axm update", result.stdout)
-        self.assertIn("stub axiom-cli update --yes", result.stdout)
+        self.assertIn("stub axm update --yes", result.stdout)
         self.assertEqual(result.returncode, 7, "the installed CLI's exit code is passed through")
 
     def test_canonical_command_root_wins_over_a_separate_legacy_installation(self):
@@ -209,11 +211,32 @@ class UpdateShBehaviourTests(unittest.TestCase):
             stub = root / "bin" / command
             stub.write_text('#!/bin/sh\necho "' + marker + ' $*"\n')
             stub.chmod(0o755)
+            if command == "axm":
+                (root / "bin/graphd-engine").mkdir()
+                (root / "bin/graphd-engine/axiom").write_bytes(b"owned current layout fixture")
             roots.append(str(root / "bin"))
         result = self.run_update("--yes", extra={"PATH": os.pathsep.join([*roots, os.environ.get("PATH", "")])})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("current-root update --yes", result.stdout)
         self.assertNotIn("legacy-root", result.stdout)
+
+    def test_older_command_layout_uses_verified_new_cli_and_preserves_it_on_download_failure(self):
+        root = self.home / "data/axiom"
+        (root / "bin").mkdir(parents=True)
+        record = root / "installed.json"
+        record.write_text("{}")
+        legacy = root / "bin/axiom-cli"
+        legacy.write_text('#!/bin/sh\necho "unexpected legacy updater"\nexit 99\n')
+        legacy.chmod(0o755)
+        before = self.tree()
+        result = self.run_update("--yes")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("older command layout", result.stdout)
+        self.assertIn("downloading v1.2.3", result.stdout)
+        self.assertNotIn("unexpected legacy updater", result.stdout)
+        self.assertIn("download failed", result.stderr)
+        self.assertEqual(record.read_text(), "{}")
+        self.assertEqual(self.tree(), before)
 
     def test_legacy_bootstrap_root_takes_the_verified_install_path(self):
         current = self.home / "axiom" / "installs" / "ecosystem" / "current"

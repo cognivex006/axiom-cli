@@ -4,11 +4,17 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.7
+
 ### New Features
 
 - Provide canonical native commands `axm`, `axsk`, `axge` and `axmp` with owned, verified placement. Route skills to the engine and MCP to its provisioned runtime without a shell.
 
 ### Bug Fixes
+
+- Remove verified commands added during an upgrade when rolling back to an older layout. Refuse changed or linked files before rollback and retain the previous manifest and generation.
+
+- Upgrade older command layouts through a checksum-verified current CLI, so the previous updater does not apply its obsolete executable health checks after migration. Both shell and PowerShell keep the normal single approval and preserve the detected install root.
 
 - Restore the exact recorded channel manifest with the previous generation after a failed update or explicit rollback, keeping doctor integrity checks valid. Refuse changed rollback snapshots before mutation.
 
