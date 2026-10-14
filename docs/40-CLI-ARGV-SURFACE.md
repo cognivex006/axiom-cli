@@ -4,7 +4,7 @@ The command reference covers the distribution manager. For normal setup, start w
 
 ## One executable, five verbs
 
-`axm` and `axiom-cli` (`.exe` on Windows) are two names for the same distribution manager. It exposes
+`axm` (`.exe` on Windows) is the distribution manager. It exposes
 `install`, `update`, `doctor`, `version` and `uninstall`. Every documented verb is reachable from
 argv and listed by `--help`; the usage text and the dispatcher are pinned against each other by
 `tests/argv_surface.rs`, so removing a verb from either one alone fails the suite.
@@ -90,7 +90,7 @@ envelope. What remains is the engine handoff:
 
 - `install --apply`: assembles the engine bundle, provisions the release's MCP runtime,
   delegates placement to the engine (`install plan --bundle` / `install apply`), then places
-  `axiom-cli`, `axiom` and `axiom-graphd` in `<root>/bin` and writes `installed.json` last. Refusals:
+  `axm`, `axsk`, `axge` and `axmp` in `<root>/bin`, with the private installation engine in `<root>/bin/.internal` and writes `installed.json` last. Refusals:
   `3` `engine_not_found` when no engine binary is present (nothing placed), `6`
   `install_root_foreign` for a nonempty root holding non-Axiom entries, `2` `artifact_unverified:*`
   for a tampered artifact (before any placement), and the engine's own code when it refuses.
@@ -108,7 +108,7 @@ refusal rather than placing bytes itself.
 The engine binary is resolved, most explicit first, from:
 
 1. `AXIOM_ENGINE_BIN`, an absolute or relative path to the engine executable;
-2. the directory of the running `axiom-cli` executable, which is where a release set places the
+2. the private runtime beside the running `axm` executable, which is where a release set places the
    engine beside the distribution entrypoint;
 3. `PATH`.
 

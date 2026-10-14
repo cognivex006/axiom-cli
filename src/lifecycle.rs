@@ -1,4 +1,4 @@
-//! `axiom-cli install` and `axiom-cli uninstall` - the distribution transaction.
+//! `axm install` and `axm uninstall` - the distribution transaction.
 //!
 //! The distribution contract makes this repository the owner of *what is distributed and how it
 //! is delivered, verified and updated*, while the installation engine, the bootstrap rules, the
@@ -474,7 +474,7 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
         report.detail("path_change", change);
         if block.get("action").and_then(Json::as_text) == Some("add") {
             report.line(format!(
-                "PATH: added {} for this user; open a new terminal to use `axiom-cli`",
+                "PATH: added {} for this user; open a new terminal to use `axm`",
                 crate::layout::bin_dir(&request.install_root).display()
             ));
         }
@@ -554,7 +554,10 @@ fn record_layout(
     // ADR-0036: `axm` is the short name of `axiom-cli`, a verified copy of the same bytes.
     layout::with_short_command(&mut sources);
     layout::with_public_commands(&mut sources);
-    let bin = layout::place_bin(root, &sources)?;
+    let mut bin = layout::place_bin(root, &sources)?;
+    let retired = layout::retire_legacy_commands(root)?;
+    bin.extend(layout::place_bin(root, &retired)?);
+    sources.extend(retired);
     let bin_payloads: Vec<(String, PathBuf, String)> = sources
         .iter()
         .map(|item| {
@@ -735,16 +738,25 @@ pub(crate) fn provisioned_mcp_runtime_bin(root: &Path) -> Result<Option<PathBuf>
             "MCP runtime path escapes its owned generation",
         ));
     }
+    // Canonical wheels expose axmp; older verified runtimes remain private rollback inputs.
+    let launcher = if bin.join(crate::layout::program_file("axmp")).exists() {
+        if cfg!(windows) {
+            "axmp.exe"
+        } else {
+            "axmp"
+        }
+    } else if cfg!(windows) {
+        "axiom-mcp.exe"
+    } else {
+        "axiom-mcp"
+    };
     let programs = if cfg!(windows) {
         [
             ("python.exe", "python_sha256"),
-            ("axiom-mcp.exe", "executable_sha256"),
+            (launcher, "executable_sha256"),
         ]
     } else {
-        [
-            ("python", "python_sha256"),
-            ("axiom-mcp", "executable_sha256"),
-        ]
+        [("python", "python_sha256"), (launcher, "executable_sha256")]
     };
     for (name, key) in programs {
         let file = bin.join(name);
@@ -1636,7 +1648,7 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
                 "legacy: adopt the {version} bootstrap root at {path} in place (engine ecosystem and MCP runtime reused, nothing reinstalled)"
             ),
             Some("side-by-side") => format!(
-                "legacy: {kind} {version} at {path} is left untouched (side by side); to adopt it instead run `axiom-cli install --adopt {path}`"
+                "legacy: {kind} {version} at {path} is left untouched (side by side); to adopt it instead run `axm install --adopt {path}`"
             ),
             _ => format!("legacy: unrecognised Axiom-like directory {path}; reported, not modified"),
         });
@@ -1645,7 +1657,7 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
         for shadow in crate::legacy::shadows(&crate::layout::bin_dir(Path::new(root))) {
             if shadow.before_root_bin {
                 lines.push(format!(
-                    "warning: {} ({}) comes earlier on PATH and will shadow the new axiom-cli until it is removed",
+                    "warning: {} ({}) comes earlier on PATH and will shadow the new axm until it is removed",
                     shadow.path.display(),
                     shadow.version
                 ));

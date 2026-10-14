@@ -1,4 +1,4 @@
-//! `axiom-cli version` - report installed and available versions.
+//! `axm version` - report installed and available versions.
 //!
 //! Owner: `axiom-cli`. The distribution contract (section 2) requires this verb to "report
 //! installed and available versions per component and per target". The data it reports is

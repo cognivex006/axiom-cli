@@ -10,6 +10,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Install only `axm`, `axsk`, `axge` and `axmp` on PATH. Keep installation helpers private and migrate only unchanged, recorded legacy executables; preserve verified rollback payloads.
+
 - Show four component/command/version rows in `axm version`; remove the redundant installed summary, legacy command labels, channel hint and success footer.
 
 ## 0.1.6

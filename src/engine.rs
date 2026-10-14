@@ -169,6 +169,15 @@ pub fn locate() -> Located {
     }
 
     if let Some(directory) = executable_directory() {
+        let private = directory
+            .join(".internal")
+            .join(crate::layout::program_file(ENGINE_PROGRAM));
+        if is_executable_file(&private) {
+            return Located::Found(Engine {
+                program: private,
+                source: "private_runtime",
+            });
+        }
         for name in program_names() {
             let candidate = directory.join(name);
             if is_executable_file(&candidate) {
@@ -178,13 +187,13 @@ pub fn locate() -> Located {
                 });
             }
             searched.push(Searched {
-                description: "beside the axiom-cli executable".to_string(),
+                description: "beside axm (legacy migration input)".to_string(),
                 path: candidate.display().to_string(),
             });
         }
     } else {
         searched.push(Searched {
-            description: "the axiom-cli executable directory".to_string(),
+            description: "the axm executable directory".to_string(),
             path: "(unresolved)".to_string(),
         });
     }
@@ -214,10 +223,7 @@ pub fn missing_refusal(searched: &[Searched]) -> Refusal {
         Class::NotFound,
         "engine_not_found",
         format!(
-            "the `{}` installation engine owned by axiom-graphd was not found, so no installation \
-             or removal could run. Searched {places}. Place the engine beside the `axiom-cli` \
-             executable, install it on PATH, or name it with {ENGINE_ENV}.",
-            ENGINE_PROGRAM
+            "Graph Engine installation runtime was not found; no installation or removal could run. Searched {places}. Run the Axiom installation script to repair axm, or name a verified runtime with {ENGINE_ENV}."
         ),
     )
 }

@@ -5,11 +5,11 @@
 #   curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
 #
 # This script contains no update logic:
-#   * Axiom installed (an installed.json root): run that installation's own `axiom-cli update`,
+#   * Axiom installed (an installed.json root): run that installation's own `axm update`,
 #     which reads the recorded channel, prints the plan and asks once.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.sh -
 #     download the @@TAG@@ archive for this host, check its SHA-256, extract it to a temporary
-#     directory and run `axiom-cli install`, which shows the adoption plan and asks once.
+#     directory and run `axm install`, which shows the adoption plan and asks once.
 #   * Nothing installed: change nothing and print the install command.
 # It never resolves `latest` itself, never runs as root and stops while leftover AXIOM_* variables
 # from the 0.1.2 procedure are set. Options: --yes, --no-modify-path (also AXIOM_INSTALL_YES=1,
@@ -42,24 +42,31 @@ if [ "$(id -u)" = 0 ]; then
     fail 'refusing to run as root: Axiom installs per user. Re-run as your normal user without sudo; nothing was changed.'
 fi
 
-# Leftover variables from the 0.1.2 procedure send axiom-cli to another root or an old engine.
+# Leftover variables from the 0.1.2 procedure send axm to another root or an old engine.
 leftover=''
 for name in AXIOM_CLI_INSTALL_ROOT AXIOM_ENGINE_BIN AXIOM_HOME; do
     eval "value=\${$name:-}"
     [ -n "$value" ] && leftover="$leftover $name=$value"
 done
 if [ -n "$leftover" ]; then
-    fail "leftover variables from the 0.1.2 procedure are set:$leftover. They redirect axiom-cli to another folder or an old engine, so nothing was changed. Remove their export lines from your shell profile, open a new terminal (or run: unset AXIOM_CLI_INSTALL_ROOT AXIOM_ENGINE_BIN AXIOM_HOME) and run this command again."
+    fail "leftover variables from the 0.1.2 procedure are set:$leftover. They redirect axm to another folder or an old engine, so nothing was changed. Remove their export lines from your shell profile, open a new terminal (or run: unset AXIOM_CLI_INSTALL_ROOT AXIOM_ENGINE_BIN AXIOM_HOME) and run this command again."
 fi
 
 data="${XDG_DATA_HOME:-$HOME/.local/share}"
 root=''
-# `axm` is the short name of axiom-cli from 0.1.5; either one on PATH names its root.
+installed_cli=''
+# Prefer axm; older names are read-only migration inputs.
 for candidate in "$(command -v axiom-cli 2>/dev/null | sed 's#/bin/[^/]*$##')" "$(command -v axm 2>/dev/null | sed 's#/bin/[^/]*$##')" "$data/axiom" "$HOME/axiom"; do
     [ -n "$candidate" ] || continue
-    if [ -f "$candidate/installed.json" ] && [ -x "$candidate/bin/$AXIOM_CLI" ]; then
-        root="$candidate"
-        break
+    if [ -f "$candidate/installed.json" ]; then
+        for executable in axm "$AXIOM_CLI"; do
+            if [ -x "$candidate/bin/$executable" ]; then
+                root="$candidate"
+                installed_cli="$candidate/bin/$executable"
+                break
+            fi
+        done
+        [ -z "$root" ] || break
     fi
 done
 
@@ -75,9 +82,9 @@ run_cli() {
 }
 
 if [ -n "$root" ]; then
-    echo "axiom update: found the installation at $root; running its axiom-cli update"
+    echo "axiom update: found the installation at $root; running its axm update"
     status=0
-    run_cli "$root/bin/$AXIOM_CLI" update || status=$?
+    run_cli "$installed_cli" update || status=$?
     exit "$status"
 fi
 

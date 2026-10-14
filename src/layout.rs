@@ -137,10 +137,131 @@ pub fn with_public_commands(sources: &mut Vec<BinSource>) {
             });
         }
     }
+    for source in sources.iter_mut() {
+        if source.name == "axiom" {
+            source.name = ".internal/axiom";
+        }
+    }
+    sources.retain(|source| !matches!(source.name, "axiom-cli" | "axiom-graphd"));
+}
+
+/// Read unchanged, recorded legacy public files before any installation mutation.
+fn legacy_public_sources(root: &Path) -> Result<Vec<BinSource>, Refusal> {
+    let state = State::new(root);
+    let entries = if state.has_installed() {
+        let installed = state.read_installed()?;
+        Generation::read(&state, &installed.current_generation)?.entries
+    } else {
+        Vec::new()
+    };
+    let mut sources = Vec::new();
+    for (old, private) in [
+        ("axiom-cli", ".internal/retired-axiom-cli"),
+        ("axiom", ".internal/retired-axiom"),
+        ("axiom-graphd", ".internal/retired-axiom-graphd"),
+        ("axiom-mcp", ".internal/retired-axiom-mcp"),
+        (
+            "axiom-mcp-entrypoints",
+            ".internal/retired-axiom-mcp-entrypoints",
+        ),
+    ] {
+        let path = bin_dir(root).join(program_file(old));
+        if !path.exists() && !path.is_symlink() {
+            let destination = bin_dir(root).join(program_file(private));
+            if let Some(entry) = entries
+                .iter()
+                .find(|entry| entry.component == format!("bin/{private}"))
+            {
+                if destination.is_symlink()
+                    || !destination.is_file()
+                    || file_digest(&destination)? != entry.artifact_sha256
+                {
+                    return Err(Refusal::conflict(
+                        "legacy_backup_changed",
+                        "owned private migration file changed; nothing was installed",
+                    ));
+                }
+                sources.push(BinSource {
+                    name: private,
+                    source: destination,
+                    sha256: entry.artifact_sha256.clone(),
+                });
+            }
+            continue;
+        }
+        let tracked = entries
+            .iter()
+            .find(|entry| entry.component == format!("bin/{old}"));
+        let expected = tracked.map(|entry| entry.artifact_sha256.as_str());
+        if path.is_symlink() || !path.is_file() || Some(file_digest(&path)?.as_str()) != expected {
+            return Err(Refusal::conflict("legacy_command_foreign", format!("{} is unowned, linked or modified; move it aside before running axm install; nothing was changed", path.display())));
+        }
+        let destination = bin_dir(root).join(program_file(private));
+        if destination.parent().is_some_and(Path::is_symlink)
+            || destination.is_symlink()
+            || (destination.exists()
+                && (!destination.is_file()
+                    || Some(file_digest(&destination)?.as_str()) != expected))
+        {
+            return Err(Refusal::conflict(
+                "legacy_backup_foreign",
+                "private migration destination is occupied; nothing was changed",
+            ));
+        }
+        sources.push(BinSource {
+            name: private,
+            source: path,
+            sha256: expected.unwrap().to_string(),
+        });
+    }
+    Ok(sources)
+}
+
+/// Retire only verified legacy names into an owned private location (also works for a running Windows executable).
+pub fn retire_legacy_commands(root: &Path) -> Result<Vec<BinSource>, Refusal> {
+    let mut sources = legacy_public_sources(root)?;
+    for source in &mut sources {
+        let destination = bin_dir(root).join(program_file(source.name));
+        if source.source == destination {
+            continue;
+        }
+        std::fs::create_dir_all(destination.parent().unwrap()).map_err(|error| {
+            Refusal::io(
+                "legacy_retirement_failed",
+                &destination.display().to_string(),
+                &error,
+            )
+        })?;
+        if destination.exists() {
+            std::fs::remove_file(&destination).map_err(|error| {
+                Refusal::io(
+                    "legacy_retirement_failed",
+                    &destination.display().to_string(),
+                    &error,
+                )
+            })?;
+        }
+        std::fs::rename(&source.source, &destination).map_err(|error| {
+            Refusal::io(
+                "legacy_retirement_failed",
+                &source.source.display().to_string(),
+                &error,
+            )
+        })?;
+        source.source = destination;
+    }
+    Ok(sources)
 }
 
 /// Refuse a new command slot occupied by user data or a modified owned executable.
 pub fn public_command_conflict(root: &Path, verified: &[Json]) -> Result<(), Refusal> {
+    if bin_dir(root).is_symlink() || bin_dir(root).join(".internal").is_symlink() {
+        return Err(Refusal::conflict(
+            "bin_path_link",
+            "executable directory is linked; nothing was installed",
+        ));
+    }
+    legacy_public_sources(root)?;
     let state = State::new(root);
     let owned = if state.has_installed() {
         let installed = state.read_installed()?;
@@ -149,6 +270,8 @@ pub fn public_command_conflict(root: &Path, verified: &[Json]) -> Result<(), Ref
         Vec::new()
     };
     for (name, component) in [
+        (".internal/axiom", "axiom"),
+        ("axm", "axiom-cli"),
         ("axsk", "axiom-cli"),
         ("axmp", "axiom-cli"),
         ("axge", "axiom-graphd"),
@@ -199,13 +322,37 @@ pub fn place_bin(root: &Path, sources: &[BinSource]) -> Result<Vec<Json>, Refusa
         .map_err(|error| Refusal::io("bin_unwritable", &bin.display().to_string(), &error))?;
     let mut placed = Vec::new();
     for item in sources {
+        if !rules::is_relative_path(item.name) {
+            return Err(Refusal::validation(
+                "bin_path_invalid",
+                "invalid executable destination",
+            ));
+        }
         let destination = bin.join(program_file(item.name));
+        let parent = destination.parent().unwrap_or(&bin);
+        let mut ancestor = Some(parent);
+        while let Some(directory) = ancestor {
+            if directory.is_symlink() {
+                return Err(Refusal::conflict(
+                    "bin_path_link",
+                    "executable directory is linked; nothing was placed",
+                ));
+            }
+            if directory == bin {
+                break;
+            }
+            ancestor = directory.parent();
+        }
+        std::fs::create_dir_all(parent).map_err(|error| {
+            Refusal::io("bin_unwritable", &parent.display().to_string(), &error)
+        })?;
+        let filename = destination.file_name().unwrap().to_string_lossy();
         let action = if destination.is_file()
             && state::digest_file(&destination, "bin_unreadable")? == item.sha256
         {
             "unchanged"
         } else {
-            let temporary = bin.join(format!(".{}.tmp", program_file(item.name)));
+            let temporary = parent.join(format!(".{filename}.tmp"));
             std::fs::copy(&item.source, &temporary).map_err(|error| {
                 Refusal::io("bin_copy_failed", &temporary.display().to_string(), &error)
             })?;
@@ -225,7 +372,7 @@ pub fn place_bin(root: &Path, sources: &[BinSource]) -> Result<Vec<Json>, Refusa
                 ));
             }
             if destination.exists() && std::fs::rename(&temporary, &destination).is_err() {
-                let aside = bin.join(format!(".{}.old", program_file(item.name)));
+                let aside = parent.join(format!(".{filename}.old"));
                 let _ = std::fs::remove_file(&aside);
                 std::fs::rename(&destination, &aside).map_err(|error| {
                     Refusal::io(
@@ -280,7 +427,10 @@ pub struct Record<'a> {
 
 /// The generation id a plan digest maps to; stable, so a re-run reuses the same generation.
 pub fn generation_id(plan_digest: &str) -> String {
-    format!("install-{}", &plan_digest[..plan_digest.len().min(16)])
+    format!(
+        "install-{}-commands",
+        &plan_digest[..plan_digest.len().min(16)]
+    )
 }
 
 /// Copy the verified artifacts into the generation, record the manifest, then write
@@ -448,6 +598,11 @@ mod tests {
         with_short_command(&mut sources);
         with_public_commands(&mut sources);
         with_public_commands(&mut sources);
+        assert_eq!(sources.len(), 4, "no legacy public entrypoints");
+        place_bin(&root, &sources).unwrap();
+        for old in ["axiom-cli", "axiom", "axiom-graphd"] {
+            assert!(!bin_dir(&root).join(program_file(old)).exists());
+        }
         assert_eq!(
             sources
                 .iter()
@@ -457,10 +612,19 @@ mod tests {
         );
         let user_file = bin_dir(&root).join(program_file("axsk"));
         std::fs::write(&user_file, b"human data").unwrap();
-        let verified = vec![Json::from_pairs(vec![
-            ("component", Json::text("axiom-cli")),
-            ("sha256", Json::text(&file_digest(&cli).unwrap())),
-        ])];
+        let verified = vec![
+            Json::from_pairs(vec![
+                ("component", Json::text("axiom-cli")),
+                ("sha256", Json::text(&file_digest(&cli).unwrap())),
+            ]),
+            Json::from_pairs(vec![
+                ("component", Json::text("axiom-graphd")),
+                (
+                    "sha256",
+                    Json::text(&sha256::digest_hex(b"verified daemon")),
+                ),
+            ]),
+        ];
         assert_eq!(
             public_command_conflict(&root, &verified)
                 .unwrap_err()
@@ -481,6 +645,96 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn legacy_migration_preserves_recorded_bytes_and_refuses_modified_files() {
+        let root = temp("legacy-retirement");
+        let source = root.join("source");
+        std::fs::write(&source, b"old verified engine").unwrap();
+        let digest = file_digest(&source).unwrap();
+        let sources = [BinSource {
+            name: "axiom",
+            source,
+            sha256: digest.clone(),
+        }];
+        let bin = place_bin(&root, &sources).unwrap();
+        let legacy = bin_dir(&root).join(program_file("axiom"));
+        assert_eq!(
+            retire_legacy_commands(&root).err().unwrap().reason,
+            "legacy_command_foreign"
+        );
+        record(
+            &root,
+            &Record {
+                channel: "stable",
+                host: "fixture",
+                manifest_bytes: b"{}",
+                manifest_sha256: &sha256::digest_hex(b"{}"),
+                plan_digest: &"a".repeat(64),
+                components: vec![(
+                    "bin/axiom".into(),
+                    "0.1.6".into(),
+                    String::new(),
+                    digest.clone(),
+                    legacy.clone(),
+                    false,
+                )],
+                bin,
+            },
+        )
+        .unwrap();
+        std::fs::write(&legacy, b"human edit").unwrap();
+        assert_eq!(
+            retire_legacy_commands(&root).err().unwrap().reason,
+            "legacy_command_foreign"
+        );
+        assert_eq!(std::fs::read(&legacy).unwrap(), b"human edit");
+        std::fs::write(&legacy, b"old verified engine").unwrap();
+        let retired = retire_legacy_commands(&root).unwrap();
+        assert!(!legacy.exists());
+        assert_eq!(retired.len(), 1);
+        assert_eq!(file_digest(&retired[0].source).unwrap(), digest);
+        let installed = State::new(&root).read_installed().unwrap();
+        let previous = Generation::read(&State::new(&root), &installed.current_generation).unwrap();
+        previous
+            .verify(&State::new(&root).generation_dir(&installed.current_generation))
+            .unwrap();
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn private_engine_placement_refuses_traversal_and_linked_directories() {
+        let root = temp("private-engine-path");
+        let source = root.join("source");
+        std::fs::write(&source, b"verified").unwrap();
+        let digest = file_digest(&source).unwrap();
+        let sources = [BinSource {
+            name: "../escape",
+            source: source.clone(),
+            sha256: digest.clone(),
+        }];
+        assert_eq!(
+            place_bin(&root, &sources).unwrap_err().reason,
+            "bin_path_invalid"
+        );
+        #[cfg(unix)]
+        {
+            let outside = root.join("outside");
+            std::fs::create_dir(&outside).unwrap();
+            std::os::unix::fs::symlink(&outside, bin_dir(&root).join(".internal")).unwrap();
+            let sources = [BinSource {
+                name: ".internal/axiom",
+                source,
+                sha256: digest,
+            }];
+            assert_eq!(
+                place_bin(&root, &sources).unwrap_err().reason,
+                "bin_path_link"
+            );
+            assert!(!outside.join("axiom").exists());
+        }
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

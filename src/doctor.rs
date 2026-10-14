@@ -1,4 +1,4 @@
-//! `axiom-cli doctor` - report prerequisites, installed versions, digests and target state.
+//! `axm doctor` - report prerequisites, installed versions, digests and target state.
 //!
 //! The distribution contract (section 2) fixes this verb's purpose and section 7 fixes the
 //! dependency table this verb reports against. `doctor` is the distribution layer's own health

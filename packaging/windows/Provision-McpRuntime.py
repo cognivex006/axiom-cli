@@ -111,7 +111,8 @@ def pointer(root: Path, name: str = "current.json") -> dict | None:
         return None
     version = owned_version(root, value.get("generation", ""), complete=False)
     bin_dir = version / "venv" / "Scripts"
-    for file, field in (("python.exe", "python_sha256"), ("axiom-mcp.exe", "executable_sha256")):
+    launcher_name = "axmp.exe" if (bin_dir / "axmp.exe").exists() else "axiom-mcp.exe"
+    for file, field in (("python.exe", "python_sha256"), (launcher_name, "executable_sha256")):
         target = bin_dir / file
         if not target.is_file() or target.is_symlink() or sha(target) != value.get(field):
             raise ValueError("active runtime executable changed")
@@ -228,18 +229,19 @@ def provision(args: argparse.Namespace) -> dict:
         command([str(python), "-m", "pip", "install", "--no-index", "--no-compile",
                  "--target", str(site), "--find-links", str(package_dir / "wheelhouse"),
                  "--find-links", str(package_dir), "--require-hashes", "-r", str(combined)], env)
-        for name in ("axiom-mcp.exe", "axiom-mcp-entrypoints.exe"):
+        launcher_name = "axmp.exe" if (site / "bin" / "axmp.exe").exists() else "axiom-mcp.exe"
+        for name in (launcher_name,):
             launcher = site / "bin" / name
             if not launcher.is_file():
                 raise ValueError("installed MCP entrypoint is missing")
             shutil.copyfile(launcher, bin_dir / name)
-        health = command([str(bin_dir / "axiom-mcp.exe"), "--help"], env)
+        health = command([str(bin_dir / launcher_name), "--help"], env)
         if "doctor" not in health or "version" not in health:
             raise ValueError("installed MCP entrypoint failed health check")
         if args.interrupt_before_activate:
             raise InterruptedError("injected interruption before runtime activation")
         new = {"generation": key, "version": args.version, "source_revision": args.source_revision,
-               "python_sha256": sha(python), "executable_sha256": sha(bin_dir / "axiom-mcp.exe"),
+               "python_sha256": sha(python), "executable_sha256": sha(bin_dir / launcher_name),
                "runtime_sha256": identity["runtime_sha256"], "pip_wheel_sha256": identity["pip_wheel_sha256"],
                "inputs_sha256": identity["inputs_sha256"], "owner_wheel_sha256": manifest["owner_wheel"]["sha256"]}
         atomic_json(version / "owner.json", {"owner": "axiom-cli", "generation": key, "files": contents(version)})

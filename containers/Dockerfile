@@ -57,8 +57,8 @@ RUN groupadd --gid 10001 axiom \
  && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /home/axiom --shell /usr/sbin/nologin axiom \
  && install -d -o 10001 -g 10001 -m 0755 /home/axiom
 
-COPY --from=builder --chown=0:0 --chmod=0755 /src/target/release/axiom-cli /usr/local/bin/axiom-cli
-COPY --chown=0:0 --chmod=0755 containers/entrypoint.sh /usr/local/bin/axiom-cli-entrypoint
+COPY --from=builder --chown=0:0 --chmod=0755 /src/target/release/axiom-cli /usr/local/bin/axm
+COPY --chown=0:0 --chmod=0755 containers/entrypoint.sh /usr/local/libexec/axm-entrypoint
 
 USER 10001:10001
 WORKDIR /home/axiom
@@ -66,5 +66,5 @@ WORKDIR /home/axiom
 # The entrypoint forwards argv verbatim to the binary, so the container exposes the
 # same five verbs with the same exit codes as the native binary. No verb is added,
 # removed or shimmed here.
-ENTRYPOINT ["/usr/local/bin/axiom-cli-entrypoint"]
+ENTRYPOINT ["/usr/local/libexec/axm-entrypoint"]
 CMD ["--help"]

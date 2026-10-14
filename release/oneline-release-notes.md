@@ -32,7 +32,7 @@ The script uses an existing installation's update command; recognized older layo
 
 ## Commands and setup
 
-`axm` and `axiom-cli` run the same program. `axiom` is the graph engine's separate operations CLI. Use `axm version`, `axm doctor` and `axm --help` to inspect the installation. `axm uninstall` retains user data.
+The public commands are `axm`, `axsk`, `axge` and `axmp`. Use `axm version`, `axm doctor` and `axm --help` to inspect the installation. `axm uninstall` retains user data.
 
 `install` manages the complete pinned component set; it does not accept a component name. Project registration, MCP permissions and host plugin discovery need their own setup. See the [installation guide](https://github.com/orchex006/axiom-cli/blob/main/docs/INSTALL.md) and [skills/plugin guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 

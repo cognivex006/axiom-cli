@@ -117,25 +117,25 @@ fn mcp(args: &[OsString]) -> i32 {
         .first()
         .is_some_and(|arg| arg == "--help" || arg == "-h")
     {
-        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [stdio|http|version|doctor|update] [options]\nDefault: stdio. HTTP requires explicit Host/Origin allowlists.\nRun axmp <command> --help for command options.");
+        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [stdio|http|version|doctor|update|entrypoints] [options]\nDefault: stdio. HTTP requires explicit Host/Origin allowlists.\nRun axmp <command> --help for command options.");
         return 0;
     }
-    let (module, forwarded) = match args.first().and_then(|arg| arg.to_str()) {
-        Some("stdio") => ("axiom_mcp.stdio", &args[1..]),
-        Some("http") => ("axiom_mcp.http", &args[1..]),
-        Some("version" | "doctor" | "update") => ("axiom_mcp.cli", args),
-        None => ("axiom_mcp.stdio", args),
-        Some(_) => {
-            return failure(
+    let (module, forwarded) =
+        match args.first().and_then(|arg| arg.to_str()) {
+            Some("stdio") => ("axiom_mcp.stdio", &args[1..]),
+            Some("http") => ("axiom_mcp.http", &args[1..]),
+            Some("entrypoints") => ("axiom_mcp.entrypoints", &args[1..]),
+            Some("version" | "doctor" | "update") => ("axiom_mcp.cli", args),
+            None => ("axiom_mcp.stdio", args),
+            Some(_) => return failure(
                 "axmp",
                 Refusal::validation(
                     "command_unknown",
-                    "expected stdio, http, version, doctor or update; use axmp --help",
+                    "expected stdio, http, version, doctor, update or entrypoints; use axmp --help",
                 ),
                 args,
-            )
-        }
-    };
+            ),
+        };
     let Some(root) = state::default_root() else {
         return failure(
             "axmp",

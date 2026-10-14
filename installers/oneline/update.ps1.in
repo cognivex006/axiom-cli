@@ -4,11 +4,11 @@
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
 #
 # This script contains no update logic:
-#   * Axiom installed (an installed.json root): run that installation's own `axiom-cli update`,
+#   * Axiom installed (an installed.json root): run that installation's own `axm update`,
 #     which reads the recorded channel, prints the plan and asks once.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.ps1 -
 #     download the @@TAG@@ archive, check its SHA-256, extract it to a temporary directory and run
-#     `axiom-cli install`, which shows the adoption plan and asks once.
+#     `axm install`, which shows the adoption plan and asks once.
 #   * Nothing installed: change nothing and print the install command.
 # It never resolves `latest` itself, never runs elevated and stops while leftover AXIOM_* variables
 # from the 0.1.2 procedure are set. Environment equivalents for `irm | iex`: AXIOM_INSTALL_YES=1,
@@ -45,7 +45,7 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     Stop-AxiomUpdate 'this updater is for Windows; on macOS, Linux or WSL2 use update.sh'
 }
 
-# Leftover variables from the 0.1.2 procedure send axiom-cli to another root or an old engine.
+# Leftover variables from the 0.1.2 procedure send axm to another root or an old engine.
 $leftover = @()
 foreach ($name in 'AXIOM_CLI_INSTALL_ROOT', 'AXIOM_ENGINE_BIN', 'AXIOM_HOME') {
     $value = [Environment]::GetEnvironmentVariable($name, 'Process')
@@ -54,14 +54,14 @@ foreach ($name in 'AXIOM_CLI_INSTALL_ROOT', 'AXIOM_ENGINE_BIN', 'AXIOM_HOME') {
 }
 if ($leftover.Count -gt 0) {
     Stop-AxiomUpdate ("leftover variables from the 0.1.2 procedure are set (" + ($leftover -join '; ') + "). " +
-        "They redirect axiom-cli to another folder or an old engine, so nothing was changed. Remove them, open a new PowerShell and run this command again: " +
+        "They redirect axm to another folder or an old engine, so nothing was changed. Remove them, open a new PowerShell and run this command again: " +
         "foreach (`$n in 'AXIOM_CLI_INSTALL_ROOT','AXIOM_ENGINE_BIN','AXIOM_HOME') { [Environment]::SetEnvironmentVariable(`$n, `$null, 'User') }")
 }
 
 function Get-AxiomInstalledRoot {
     $candidates = @()
-    # `axm` is the short name of axiom-cli from 0.1.5; either one on PATH names its root.
-    foreach ($command in 'axiom-cli', 'axm') {
+    # Prefer axm; older names are read-only migration inputs.
+    foreach ($command in 'axm', 'axiom-cli') {
         $onPath = Get-Command $command -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($onPath) { $candidates += (Split-Path -Parent (Split-Path -Parent $onPath.Source)) }
     }
@@ -69,7 +69,7 @@ function Get-AxiomInstalledRoot {
     if ($env:USERPROFILE) { $candidates += (Join-Path $env:USERPROFILE 'axiom') }
     foreach ($root in $candidates) {
         if ((Test-Path -LiteralPath (Join-Path $root 'installed.json') -PathType Leaf) -and
-            (Test-Path -LiteralPath (Join-Path (Join-Path $root 'bin') $AxiomCli) -PathType Leaf)) {
+            ((Test-Path -LiteralPath (Join-Path $root 'bin\axm.exe') -PathType Leaf) -or (Test-Path -LiteralPath (Join-Path (Join-Path $root 'bin') $AxiomCli) -PathType Leaf))) {
             return $root
         }
     }
@@ -96,14 +96,15 @@ function Get-AxiomLegacyLayouts {
 
 $root = Get-AxiomInstalledRoot
 if ($root) {
-    $cli = Join-Path (Join-Path $root 'bin') $AxiomCli
-    Write-Host "axiom update: found the installation at $root; running its axiom-cli update"
+    $cli = Join-Path $root 'bin\axm.exe'
+    if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { $cli = Join-Path (Join-Path $root 'bin') $AxiomCli }
+    Write-Host "axiom update: found the installation at $root; running its axm update"
     $cliArgs = @('update')
     if ($Yes) { $cliArgs += '--yes' }
     & $cli @cliArgs
     $code = $LASTEXITCODE
     $global:LASTEXITCODE = $code
-    if ($code -ne 0) { Stop-AxiomUpdate "axiom-cli update exited $code" }
+    if ($code -ne 0) { Stop-AxiomUpdate "axm update exited $code" }
     return
 }
 
@@ -153,4 +154,4 @@ finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
 }
 $global:LASTEXITCODE = $code
-if ($code -ne 0) { Stop-AxiomUpdate "axiom-cli install exited $code" }
+if ($code -ne 0) { Stop-AxiomUpdate "axm install exited $code" }

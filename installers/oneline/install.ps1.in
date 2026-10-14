@@ -4,7 +4,7 @@
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/install.ps1))) -Yes -NoModifyPath
 #
 # This script only downloads the @@TAG@@ archive named below, checks its SHA-256, extracts it to
-# a temporary directory and hands off to `axiom-cli install`, which prints the plan and asks once.
+# a temporary directory and hands off to `axm install`, which prints the plan and asks once.
 # It never resolves `latest` itself, never runs elevated and contains no installation logic.
 # Environment equivalents for `irm | iex`: AXIOM_INSTALL_YES=1, AXIOM_NO_MODIFY_PATH=1, AXIOM_VERSION=X.Y.Z.
 param(
@@ -99,4 +99,4 @@ finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
 }
 $global:LASTEXITCODE = $code
-if ($code -ne 0) { Stop-AxiomInstall "axiom-cli install exited $code" }
+if ($code -ne 0) { Stop-AxiomInstall "axm install exited $code" }

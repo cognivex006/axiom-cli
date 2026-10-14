@@ -19,4 +19,4 @@
 
 set -eu
 
-exec /usr/local/bin/axiom-cli "$@"
+exec /usr/local/bin/axm "$@"

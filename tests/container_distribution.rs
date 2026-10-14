@@ -260,7 +260,7 @@ fn entrypoint_forwards_the_argv_vector_unchanged() {
         "the entrypoint must use LF endings to run on Linux"
     );
     assert!(
-        text.contains("exec /usr/local/bin/axiom-cli \"$@\""),
+        text.contains("exec /usr/local/bin/axm \"$@\""),
         "the entrypoint must exec the binary with the argv vector verbatim"
     );
     assert!(

@@ -2,15 +2,16 @@
 
 One command installs Axiom for your user account:
 
-- `axm`: the installer and manager. It is the short name of `axiom-cli`; both names are installed and behave the same.
-- `axiom` and `axiom-graphd`: the graph engine.
-- The MCP server and the skills bundle.
+- `axm`: Main CLI / Orchestrator.
+- `axsk`: Skills Manager.
+- `axge`: Graph Engine.
+- `axmp`: MCP Server / Gateway.
 
 You do not need Administrator or root rights, and you do not copy any checksums by hand.
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
-`axm` and `axiom-cli` are the same manager. `axiom` is a separate graph operations CLI, and `axiom-graphd` is the daemon. The installed skills payload still needs [plugin registration in your AI host](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+Only the four commands above are installed on PATH. The installation engine is private. The installed skills payload still needs [plugin registration in your AI host](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
 - [Before you start](#before-you-start)
 - [Install](#install)
@@ -88,7 +89,7 @@ curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/updat
 
 ## Check that it worked
 
-In a new terminal (`axm` is the short name of `axiom-cli`; installations before 0.1.5 only have `axiom-cli`):
+In a new terminal:
 
 ```sh
 axm version
@@ -138,7 +139,7 @@ Inside the install folder:
 
 | Path | Contents |
 |---|---|
-| `bin/` | `axm` and `axiom-cli` (the same program under two names), `axiom`, `axiom-graphd` |
+| `bin/` | `axm`, `axsk`, `axge`, `axmp`; private helpers are under `bin/.internal/` |
 | `mcp-runtime/` | The Python runtime for the MCP server |
 | `generations/` | The installed release, kept so an update can roll back |
 | `installed.json` | What is installed (read by `version`, `doctor`, `update`, `uninstall`) |
@@ -194,7 +195,7 @@ axm uninstall
 
 `uninstall` shows the plan and asks once. It removes the Axiom programs, the background service registration and the PATH entry it added. **Your data, workspaces and graph output are kept.**
 
-On Windows, the running program (`axm.exe` or `axiom-cli.exe`) cannot delete itself, so it is renamed to `<name>.exe.uninstalled`. You can delete that file afterwards.
+On Windows, the running program (`axm.exe`) cannot delete itself, so it is renamed to `<name>.exe.uninstalled`. You can delete that file afterwards.
 
 ## Upgrading from 0.1.0 or 0.1.2
 
@@ -210,13 +211,13 @@ foreach ($name in 'AXIOM_CLI_INSTALL_ROOT', 'AXIOM_ENGINE_BIN', 'AXIOM_HOME') {
 
 On Linux or macOS, delete any `export AXIOM_CLI_INSTALL_ROOT=...`, `AXIOM_ENGINE_BIN` or `AXIOM_HOME` lines from your shell profile. Then **open a new terminal**.
 
-Why: `AXIOM_CLI_INSTALL_ROOT` changes where Axiom installs, and `AXIOM_ENGINE_BIN` makes `axiom-cli` keep running the old 0.1.2 engine.
+Why: `AXIOM_CLI_INSTALL_ROOT` changes where Axiom installs, and `AXIOM_ENGINE_BIN` makes `axm` keep running the old 0.1.2 engine.
 
 **2. Run the [update](#update) command** (from 0.1.4) **or the [install](#install) command.** Both reach the same installer, which says what it found and what it will do:
 
 | Found | What the installer does |
 |---|---|
-| An old `axiom-cli` (0.1.0 or 0.1.2) in the default install folder, `%LOCALAPPDATA%\Axiom` | Upgrades it in place. The old program is backed up to `legacy\cli-store-<version>\`, and the PATH entry the old installer added is taken over. |
+| An old `axiom-cli` (0.1.0 or 0.1.2) in the default install folder, `%LOCALAPPDATA%\Axiom` | Checks recorded ownership before migration. An executable without a verified ownership record is preserved and installation stops with its path; move that file aside before retrying. |
 | A 0.1.2 bootstrap folder elsewhere (for example `%USERPROFILE%\axiom`) | Leaves it untouched and installs to the default folder next to it. |
 
 Most people should keep this default. If you would rather turn the 0.1.2 bootstrap folder into your install, do this instead of the one-line command:
@@ -235,8 +236,8 @@ Most people should keep this default. If you would rather turn the 0.1.2 bootstr
 
 | What you see | Cause | Fix |
 |---|---|---|
-| `axm` (or `axiom-cli`) is not recognized after installing | The terminal was opened before the PATH changed, or the installation is older than 0.1.5 (no `axm` yet) | Open a new terminal. If you used `--no-modify-path`, run `<install folder>/bin/axm` directly. On 0.1.4 or older, use `axiom-cli` or run the [update command](#update) once. |
-| `axiom-cli` shows old help text, or answers `NotReady` to every command | An older `axiom-cli` comes first on your PATH | Find it with `Get-Command axiom-cli -All` (Windows) or `which -a axiom-cli`. `axm doctor` also names it. Remove the old folder from your PATH. |
+| `axm` is not recognized after installing | The terminal was opened before the PATH changed, or the installation is older than 0.1.5 (no `axm` yet) | Open a new terminal. If you used `--no-modify-path`, run `<install folder>/bin/axm` directly. On an older installation, run the [update command](#update) once. |
+| `axm` shows old help text, or answers `NotReady` to every command | An older `axm` comes first on your PATH | Find it with `Get-Command axm -All` (Windows) or `which -a axm`. `axm doctor` also names it. Remove the old folder from your PATH. |
 | `axm version` says `installed: no` | A leftover `AXIOM_CLI_INSTALL_ROOT` points to another folder | Remove the variable ([Upgrading](#upgrading-from-010-or-012), step 1) and open a new terminal. |
 | `refusing to run elevated` or `refusing to run as root` | The terminal runs as Administrator, or you used `sudo` | Run it again from a normal-user terminal. |
 | `axm engine update: leftover variables from the 0.1.2 procedure are set` | `AXIOM_CLI_INSTALL_ROOT`, `AXIOM_ENGINE_BIN` or `AXIOM_HOME` is still set | Remove them ([Upgrading](#upgrading-from-010-or-012), step 1), open a new terminal and run the update command again. |
@@ -258,6 +259,8 @@ For the meaning of every exit code, run `axm --help`. For details on how install
 
 An existing installation can supply its verified active skills bundle for repair even after the downloaded archive has been removed. If that bundle is missing or corrupt, reinstall from the release installer to obtain verified payloads.
 
-`axm version` summarizes the running CLI and installed graph engine, MCP and skills. `axiom` is the engine's operator command, and `axiom-graphd` is its daemon. `axm` and `axiom-cli` are aliases of the installation manager. To inspect the live update offer without applying it, run `axm update --dry-run`. The advanced `axm update check` examines recorded channel metadata; it does not fetch the latest public offer.
+`axm version` summarizes the running CLI and installed graph engine, MCP and skills. Use `axge` for graph work, `axsk` for skills and `axmp` for MCP. To inspect the live update offer without applying it, run `axm update --dry-run`. The advanced `axm update check` examines recorded channel metadata; it does not fetch the latest public offer.
 
 `axm doctor` prints a short summary and actionable findings. Use `axm doctor --verbose` for paths, transaction details and prerequisite evidence, or `--json` for automation. Project graph registration and host plugin discovery remain separate checks.
+
+The current command layout migrates recorded, unchanged legacy entrypoints into private storage. If an old executable was edited or is unowned, installation stops and names the file; move it aside and retry. Verified previous generation payloads remain available for rollback. Existing published releases retain their original layout until you install a release containing this change.

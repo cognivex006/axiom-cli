@@ -126,7 +126,7 @@ class UpdateBootstrapperTests(unittest.TestCase):
                 self.assertIn(name, text)
         self.assertIn("IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)", ps1)
         # ADR-0036: the short command `axm` on PATH also identifies an installed root.
-        self.assertIn("'axiom-cli', 'axm'", ps1)
+        self.assertIn("'axm', 'axiom-cli'", ps1)
         self.assertIn("command -v axm", sh)
         self.assertIn("[Environment]::GetEnvironmentVariable($name, 'User')", ps1)
         self.assertIn('id -u', sh)
@@ -195,7 +195,7 @@ class UpdateShBehaviourTests(unittest.TestCase):
         stub.write_bytes(b'#!/bin/sh\necho "stub axiom-cli $*"\nexit 7\n')
         stub.chmod(0o755)
         result = self.run_update("--yes")
-        self.assertIn("running its axiom-cli update", result.stdout)
+        self.assertIn("running its axm update", result.stdout)
         self.assertIn("stub axiom-cli update --yes", result.stdout)
         self.assertEqual(result.returncode, 7, "the installed CLI's exit code is passed through")
 

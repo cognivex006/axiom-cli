@@ -142,7 +142,7 @@ const USAGE_EXIT_CODES: &str = concat!(
     "    20  partial multi-repository operation\n",
 );
 
-/// Global usage text, printed by `axiom-cli --help`.
+/// Global usage text, printed by `axm --help`.
 pub fn usage() -> String {
     format!(
         "\

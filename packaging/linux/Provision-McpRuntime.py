@@ -120,7 +120,8 @@ def pointer(root: Path) -> dict | None:
 
 def report(root: Path, current: dict, state: str) -> dict:
     version = owned_version(root, current["generation"])
-    executable = version / "venv" / "bin" / "axiom-mcp"
+    runtime_bin = version / "venv" / "bin"
+    executable = runtime_bin / ("axmp" if (runtime_bin / "axmp").exists() else "axiom-mcp")
     python = version / "venv" / "bin" / "python"
     if not executable.is_file() or not python.is_file():
         raise ValueError("owned runtime executable is missing")
@@ -244,7 +245,8 @@ def provision(args: argparse.Namespace) -> dict:
             ],
             env,
         )
-        launcher = version / "venv" / "bin" / "axiom-mcp"
+        runtime_bin = version / "venv" / "bin"
+        launcher = runtime_bin / ("axmp" if (runtime_bin / "axmp").exists() else "axiom-mcp")
         output = command(
             [str(launcher), "version"],
             {**env, "AXIOM_MCP_BUILD_REVISION": args.source_revision},

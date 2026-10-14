@@ -7,10 +7,10 @@
 | Axiom Graph Engine | `axge` | แอ็กซ์-จี | Graph Engine |
 | Axiom MCP | `axmp` | แอ็กซ์-เอ็ม-พี | MCP Server / Gateway |
 
-`axm` (short for `axiom-cli`) installs, checks, updates and removes the Axiom ecosystem on your machine:
+`axm` installs, checks, updates and removes the Axiom ecosystem on your machine:
 
 - `axm` itself (two names for the same program).
-- The graph engine, `axiom` and `axiom-graphd`.
+- The graph engine, `axge`.
 - The MCP server and the skills bundle.
 
 **Start here:** [Install and update](#install-and-update) · [Commands](#commands) · [Use Axiom after installation](#use-axiom-after-installation) · [Troubleshooting](docs/INSTALL.md#troubleshooting)
@@ -22,7 +22,7 @@ Axiom builds a graph of your code and makes it available to your existing AI too
 | Component | What it provides | Where to go |
 |---|---|---|
 | **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
-| **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | Rust graph engine: source analysis, file watching, indexing and graph publication; `axiom-graphd` and the `axiom` operations CLI | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
+| **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | `axge`: source analysis, file watching, indexing and graph publication | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
 | **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
 | **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
 
@@ -78,9 +78,9 @@ The update script finds your installation and runs its `axm update`, which shows
 
 `install` and `update` operate on the complete pinned release set. They do not accept a component name (`cli`, `axiom-graphd`, `mcp` or `skills`). For AI-host skill discovery, use the [skills/plugin installation guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
-`axiom` in the release is the graph engine's operations CLI. It is separate from the manager; `axm` and `axiom-cli` are the two names for the manager.
+Public commands are `axm` (orchestrator), `axsk` (skills manager), `axge` (graph engine) and `axmp` (MCP server/gateway). Internal installation helpers stay outside PATH.
 
-Run `axm --help` for every option and exit code. `axm` is installed from 0.1.5; on 0.1.4 or older use `axiom-cli` (same verbs), or run the update script once to get `axm`.
+Run `axm --help` for every option and exit code. For an older installation, run the update script to migrate to the current command layout.
 
 ## Use Axiom after installation
 
@@ -94,7 +94,7 @@ Installing the programs and passing `axm doctor` checks the installation. Projec
 | Understand the graph-assisted agent workflow | [Agent workflow guide](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/agent-workflow.md) |
 | Diagnose installation or update problems | [CLI troubleshooting](docs/INSTALL.md#troubleshooting); include the command, output and `axm version` when reporting a problem |
 
-`axm` manages the installed ecosystem. Graph commands belong to `axiom-graphd`; project bootstrap and host operations belong to `axiom`. Installing the skills plugin does not start an MCP server or install the graph runtime. Follow the linked host guide for the capabilities verified for your host and version.
+`axm` manages the installed ecosystem. Use `axge` for graph commands, `axsk` for skills, `axmp` for MCP, and `axm bootstrap` or `axm host` for project setup. Installing the skills plugin does not start an MCP server or install the graph runtime. Follow the linked host guide for the capabilities verified for your host and version.
 
 ## For maintainers
 

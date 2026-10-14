@@ -21,6 +21,10 @@ def render(tag: str, root: Path = ROOT) -> str:
     changes = re.sub(r"^### ", "## ", selected[0], flags=re.M)
     guide = (root / "release/oneline-release-notes.md").read_text().split("\n## Changes\n", 1)[0]
     guide = guide.split("\n", 1)[1].strip()
+    # Preserve the actual command layout of immutable historical releases.
+    if tuple(map(int, version.split("."))) <= (0, 1, 6):
+        guide = guide.replace("The public commands are `axm`, `axsk`, `axge` and `axmp`.",
+                              "`axm` and `axiom-cli` run the same program. `axiom` is the graph engine's separate operations CLI.")
     if tuple(map(int, version.split("."))) < (0, 1, 3):
         historical = root / f"release/{tag}-notes.md"
         if historical.is_file():

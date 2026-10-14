@@ -1,4 +1,4 @@
-//! One-command update (ADR-0033 decision 6, task L-005): bare `axiom-cli update`.
+//! One-command update (ADR-0033 decision 6, task L-005): bare `axm update`.
 //!
 //! ```text
 //! read installed.json (installed version, recorded channel source)
@@ -8,7 +8,7 @@
 //! -> print the plan, ask once (`--yes` pre-approves; no terminal and no --yes: exit 4)
 //! -> re-fetch the manifest and refuse if its digest changed after planning
 //! -> download the archive, verify length and SHA-256 before use, extract to staging
-//! -> hand the extracted release to its own `axiom-cli install` in engine-update mode, so the
+//! -> hand the extracted release to its own `axm install` in engine-update mode, so the
 //!    graphd engine runs its update transaction and the new bin + installed.json are recorded
 //!    with the old generation kept as `previous_generation`
 //! -> health-check the new bin; on failure roll back the engine transaction, the bin files and
@@ -443,7 +443,7 @@ pub fn apply(
             "manifest_changed_after_plan",
             format!(
                 "the channel manifest at {source} now digests to {observed}, not the {manifest_sha} \
-                 that was approved; nothing was changed. Run `axiom-cli update` again to review the new plan"
+                 that was approved; nothing was changed. Run `axm update` again to review the new plan"
             ),
         ));
     }
@@ -646,7 +646,7 @@ pub fn apply(
     let mut report = Report::ok(
         "ok",
         format!(
-            "updated {} -> {}; the previous version is kept for `axiom-cli update rollback --transaction previous`",
+            "updated {} -> {}; the previous version is kept for `axm update rollback --transaction previous`",
             plan.get("from_version").and_then(Json::as_text).unwrap_or("?"),
             offer.version
         ),
@@ -671,8 +671,8 @@ fn health(root: &Path) -> Result<(), String> {
     }
     let bin = crate::layout::bin_dir(root);
     for (program, args) in [
-        ("axiom-cli", vec!["version", "--json"]),
-        ("axiom", vec!["version"]),
+        ("axm", vec!["version", "--json"]),
+        (".internal/axiom", vec!["version"]),
     ] {
         let path = bin.join(crate::layout::program_file(program));
         let status = Command::new(&path)
@@ -703,7 +703,13 @@ fn restore(
 ) -> Result<(), Refusal> {
     let st = State::new(root);
     if let Some(id) = transaction {
-        let engine = crate::layout::bin_dir(root).join(crate::layout::program_file("axiom"));
+        let bin = crate::layout::bin_dir(root);
+        let private = bin.join(crate::layout::program_file(".internal/axiom"));
+        let engine = if private.is_file() {
+            private
+        } else {
+            bin.join(crate::layout::program_file("axiom"))
+        };
         let output = Command::new(&engine)
             .args(["update", "rollback", "--transaction", id])
             .env("AXIOM_HOME", root)
@@ -737,6 +743,15 @@ fn restore(
         let name: &'static str = match program {
             "axiom-cli" => "axiom-cli",
             "axm" => crate::layout::SHORT_COMMAND,
+            "axsk" => "axsk",
+            "axmp" => "axmp",
+            "axge" => "axge",
+            ".internal/axiom" => ".internal/axiom",
+            ".internal/retired-axiom-cli" => ".internal/retired-axiom-cli",
+            ".internal/retired-axiom" => ".internal/retired-axiom",
+            ".internal/retired-axiom-graphd" => ".internal/retired-axiom-graphd",
+            ".internal/retired-axiom-mcp" => ".internal/retired-axiom-mcp",
+            ".internal/retired-axiom-mcp-entrypoints" => ".internal/retired-axiom-mcp-entrypoints",
             "axiom" => "axiom",
             "axiom-graphd" => "axiom-graphd",
             _ => continue,
@@ -838,6 +853,74 @@ impl Drop for LockGuard {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rollback_restores_all_canonical_commands_and_the_private_engine() {
+        let root =
+            std::env::temp_dir().join(format!("axiom-command-rollback-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let artifact = root.join("verified-source");
+        std::fs::write(&artifact, b"previous verified bytes").unwrap();
+        let digest = digest_of(b"previous verified bytes");
+        let names = ["axm", "axsk", "axge", "axmp", ".internal/axiom"];
+        let sources: Vec<_> = names
+            .iter()
+            .map(|name| crate::layout::BinSource {
+                name,
+                source: artifact.clone(),
+                sha256: digest.clone(),
+            })
+            .collect();
+        let bin = crate::layout::place_bin(&root, &sources).unwrap();
+        let record = crate::layout::record(
+            &root,
+            &crate::layout::Record {
+                channel: "stable",
+                host: "fixture",
+                manifest_bytes: b"{}",
+                manifest_sha256: &digest_of(b"{}"),
+                plan_digest: &"b".repeat(64),
+                bin,
+                components: names
+                    .iter()
+                    .map(|name| {
+                        (
+                            format!("bin/{name}"),
+                            "0.1.6".into(),
+                            String::new(),
+                            digest.clone(),
+                            crate::layout::bin_dir(&root).join(crate::layout::program_file(name)),
+                            false,
+                        )
+                    })
+                    .collect(),
+            },
+        )
+        .unwrap();
+        let before = std::fs::read(State::new(&root).installed_path()).unwrap();
+        for name in names {
+            std::fs::write(
+                crate::layout::bin_dir(&root).join(crate::layout::program_file(name)),
+                b"new candidate bytes",
+            )
+            .unwrap();
+        }
+        restore(&root, &before, &record, None).unwrap();
+        for name in names {
+            assert_eq!(
+                std::fs::read(
+                    crate::layout::bin_dir(&root).join(crate::layout::program_file(name))
+                )
+                .unwrap(),
+                b"previous verified bytes"
+            );
+        }
+        assert_eq!(
+            std::fs::read(State::new(&root).installed_path()).unwrap(),
+            before
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn manifest(version: &str, tag: &str, url: &str) -> Vec<u8> {
         format!(

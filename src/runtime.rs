@@ -1,7 +1,7 @@
 //! MCP runtime provisioning from an extracted release set (task L-002).
 //!
 //! Before ADR-0033 a separate bootstrap script ran the owner provisioner and only then called
-//! `axiom-cli install`. A first install through `axiom-cli` alone must place the MCP runtime too,
+//! `axm install`. A first install through `axiom-cli` alone must place the MCP runtime too,
 //! so this module runs the same provisioner the release already ships, with the same pinned
 //! inputs. The provisioner script and its input record are bound into the install plan digest, so
 //! the approval covers them. Invocation is program plus argv; no shell string is built.

@@ -78,7 +78,7 @@ def main() -> int:
         oneliner = ["sh", "-c", f"curl -fsSL {base}/{tag}/install.sh | sh -s -- --yes"]
         update_oneliner = ["sh", "-c", f"curl -fsSL {base}/{tag}/update.sh | sh -s -- --yes"]
         legacy_root = Path.home() / "axiom"
-    cli = root / "bin" / ("axiom-cli.exe" if WINDOWS else "axiom-cli")
+    cli = root / "bin" / ("axm.exe" if WINDOWS else "axm")
     if root.exists() or legacy_root.exists():
         ap.error("requires a fresh runner without an Axiom install or legacy root; existing files preserved")
     axm = root / "bin" / ("axm.exe" if WINDOWS else "axm")  # ADR-0036 short command
@@ -107,22 +107,22 @@ def main() -> int:
     steps.append({"step": "PATH announced and added", "passed": on_path()})
     step("version", [cli, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)))
     step("doctor", [cli, "doctor"])
-    steps.append({"step": "bin/axm is a verified copy of bin/axiom-cli",
-                  "passed": axm.is_file() and sha(axm) == sha(cli)})
+    steps.append({"step": "only four canonical public commands are installed",
+                  "passed": {p.stem for p in (root / "bin").iterdir() if p.is_file()} == {"axm", "axsk", "axge", "axmp"}})
     step("axm version", [axm, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)) and ("Axiom CLI" in t and version in t) and (f"Skills: {version}" in t or ("Axiom Skills" in t and version in t)))
     step("axm doctor", [axm, "doctor"])
     step("update (channel offers the installed release)", [cli, "update", "--yes", "--channel", f"{base}/{tag}/channel.json"],
          check=lambda t: "up to date" in t)
     installed_json = root / "installed.json"
     step("update one-liner with an installed release (runs its axiom-cli update)", update_oneliner,
-         check=lambda t: "running its axiom-cli update" in t and "up to date" in t)
+         check=lambda t: "running its axm update" in t and "up to date" in t)
     before = sha(installed_json)
     step("update one-liner refuses a leftover AXIOM_ENGINE_BIN", update_oneliner, expect=1,
          check=lambda t: "leftover variables" in t and "AXIOM_ENGINE_BIN" in t,
          extra_env={"AXIOM_ENGINE_BIN": str(root / "elsewhere" / "axiom")})
     steps.append({"step": "leftover refusal changed nothing", "passed": sha(installed_json) == before})
     step("uninstall through axm", [axm, "uninstall", "--yes"])
-    steps.append({"step": "uninstall removed bin/axiom-cli and bin/axm", "passed": not cli.exists() and not axm.exists()})
+    steps.append({"step": "uninstall removed canonical bin commands", "passed": not cli.exists() and not axm.exists()})
     steps.append({"step": "PATH entry removed by uninstall", "passed": not on_path()})
     step("update one-liner with nothing installed refuses", update_oneliner, expect=1,
          check=lambda t: "not installed" in t)
