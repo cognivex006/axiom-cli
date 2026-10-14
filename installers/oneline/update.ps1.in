@@ -130,7 +130,8 @@ if ($arch -ne 'AMD64') {
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-$cliArgs = if ($root) { @('update') } else { @('install') }
+$cliArgs = @('install')
+if ($root) { $cliArgs = @('update') }
 if ($Yes) { $cliArgs += '--yes' }
 if ($NoModifyPath -and -not $root) { $cliArgs += '--no-modify-path' }
 
