@@ -428,6 +428,12 @@ fn inspect_installed(
                 }
                 ancestor = ancestor.parent().unwrap_or(state.root());
             }
+            if !path.is_file() {
+                return Err(classify_refusal(Refusal::not_ready(
+                    "installed_bin_missing",
+                    format!("{} is missing; run axm install to repair", path.display()),
+                )));
+            }
             crate::update::sha256::file_hex(&path)
                 .map_err(|e| {
                     classify_refusal(Refusal::io(
@@ -553,7 +559,7 @@ fn prerequisites(all: bool, installed: Option<&std::path::Path>) -> (Json, Vec<S
             let bin = bin.ok_or_else(|| Refusal::not_ready("mcp_runtime_missing", "provisioned MCP runtime is missing"))?;
             let python = bin.join(if cfg!(windows) { "python.exe" } else { "python" });
             let output = std::process::Command::new(&python)
-                .args(["-I", "-c", "import axiom_mcp.command; import axiom_mcp.stdio; print('ready')"])
+                .args(["-I", "-c", "import axiom_mcp.version; import axiom_mcp.stdio; print('ready')"])
                 .output().map_err(|e| Refusal::io("mcp_runtime_unlaunchable", "MCP Python", &e))?;
             if !output.status.success() || String::from_utf8_lossy(&output.stdout).trim() != "ready" {
                 return Err(Refusal::not_ready("mcp_runtime_import_failed", "MCP runtime could not import its command and server modules; run axm install to repair"));

@@ -199,6 +199,22 @@ class UpdateShBehaviourTests(unittest.TestCase):
         self.assertIn("stub axiom-cli update --yes", result.stdout)
         self.assertEqual(result.returncode, 7, "the installed CLI's exit code is passed through")
 
+    def test_canonical_command_root_wins_over_a_separate_legacy_installation(self):
+        import os
+        roots = []
+        for directory, command, marker in [("legacy", "axiom-cli", "legacy-root"), ("current", "axm", "current-root")]:
+            root = self.home / directory
+            (root / "bin").mkdir(parents=True)
+            (root / "installed.json").write_text("{}")
+            stub = root / "bin" / command
+            stub.write_text('#!/bin/sh\necho "' + marker + ' $*"\n')
+            stub.chmod(0o755)
+            roots.append(str(root / "bin"))
+        result = self.run_update("--yes", extra={"PATH": os.pathsep.join([*roots, os.environ.get("PATH", "")])})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("current-root update --yes", result.stdout)
+        self.assertNotIn("legacy-root", result.stdout)
+
     def test_legacy_bootstrap_root_takes_the_verified_install_path(self):
         current = self.home / "axiom" / "installs" / "ecosystem" / "current"
         current.parent.mkdir(parents=True)

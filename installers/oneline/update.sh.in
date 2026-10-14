@@ -56,7 +56,7 @@ data="${XDG_DATA_HOME:-$HOME/.local/share}"
 root=''
 installed_cli=''
 # Prefer axm; older names are read-only migration inputs.
-for candidate in "$(command -v axiom-cli 2>/dev/null | sed 's#/bin/[^/]*$##')" "$(command -v axm 2>/dev/null | sed 's#/bin/[^/]*$##')" "$data/axiom" "$HOME/axiom"; do
+for candidate in "$(command -v axm 2>/dev/null | sed 's#/bin/[^/]*$##')" "$(command -v axiom-cli 2>/dev/null | sed 's#/bin/[^/]*$##')" "$data/axiom" "$HOME/axiom"; do
     [ -n "$candidate" ] || continue
     if [ -f "$candidate/installed.json" ]; then
         for executable in axm "$AXIOM_CLI"; do

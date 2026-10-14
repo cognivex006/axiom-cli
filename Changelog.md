@@ -10,6 +10,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Make the shell updater prefer the installation selected by `axm` when a separate legacy CLI also exists on PATH, matching PowerShell.
+
 - Make doctor report actual SQLite and MCP runtime readiness with concise results and actionable repair steps. SQLite version numbers are informational; verbose mode keeps paths and scope without parser trace noise.
 - Place the private installation engine in `bin/graphd-engine/`. Install and update migrate verified older layouts while retaining owned rollback files and protecting modified or foreign files.
 

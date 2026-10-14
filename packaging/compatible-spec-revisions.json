@@ -1,9 +1,13 @@
 {
-  "purpose": "Earlier verified axiom-specs revisions an owner input (e.g. the skills bundle) may still be pinned to while spec.lock.json moves forward. Only additive spec changes may be listed.",
+  "purpose": "Reviewed earlier owner-input pins accepted for verified legacy installation, repair and migration. Current runtime readiness checks still apply; immutable published payload identities are preserved.",
   "revisions": [
     {
       "revision": "2564d53d6a39f7a9b4b1c99528387807eee7b73d",
       "reason": "K-615 published 0.1.2 pin; L-001 (ADR-0033) is additive to it"
+    },
+    {
+      "revision": "4b90fb0a2586cbcf5b9d2f09f29955f3a58d2db2",
+      "reason": "Published 0.1.6 owner inputs remain accepted for migration and repair. Functional SQLite readiness and named engine placement are enforced by current runtime code, independently of old input metadata."
     }
   ]
 }
