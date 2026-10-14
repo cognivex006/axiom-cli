@@ -1,8 +1,15 @@
 # Axiom CLI
 
+| Component | CLI Command | คำอ่าน | Responsibility |
+|---|---|---|---|
+| Axiom CLI | `axm` | แอ็กซ์-เอ็ม | Main CLI / Orchestrator |
+| Axiom Skills | `axsk` | แอ็กซ์-สกิล | Skills Manager |
+| Axiom Graph Engine | `axge` | แอ็กซ์-จี | Graph Engine |
+| Axiom MCP | `axmp` | แอ็กซ์-เอ็ม-พี | MCP Server / Gateway |
+
 `axm` (short for `axiom-cli`) installs, checks, updates and removes the Axiom ecosystem on your machine:
 
-- `axm` / `axiom-cli` itself (two names for the same program).
+- `axm` itself (two names for the same program).
 - The graph engine, `axiom` and `axiom-graphd`.
 - The MCP server and the skills bundle.
 
@@ -14,7 +21,7 @@ Axiom builds a graph of your code and makes it available to your existing AI too
 
 | Component | What it provides | Where to go |
 |---|---|---|
-| **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm` / `axiom-cli`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
+| **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
 | **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | Rust graph engine: source analysis, file watching, indexing and graph publication; `axiom-graphd` and the `axiom` operations CLI | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
 | **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
 | **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |

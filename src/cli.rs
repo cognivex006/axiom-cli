@@ -54,7 +54,7 @@ pub mod exit {
 }
 
 /// The distributed program name (`axiom-cli.exe` on Windows).
-pub const PROGRAM: &str = "axiom-cli";
+pub const PROGRAM: &str = "axm";
 /// The repository that owns the installation engine this layer wraps.
 pub const ENGINE_OWNER: &str = "axiom-graphd";
 /// Distribution version, taken from `Cargo.toml` and kept in step with `VERSION`.
@@ -180,9 +180,8 @@ NOTES:
     without a prompt. Without a terminal and without --yes nothing changes and the exit
     code is 4. --dry-run reports the plan; --apply needs --approve-digest <sha256> bound
     to the canonical plan digest; supplying --plan or --from is not approval.
-    axm is the short name of axiom-cli: the same program, installed next to it in the
-    same bin. Every verb, option and exit code is identical.
-    The installation engine stays owned by {ENGINE_OWNER}; this layer wraps it.
+    Public commands: axm (CLI), axsk (Skills), axge (Graph Engine), axmp (MCP).
+    Service, host and bootstrap operations are delegated to the engine.
 "
     )
 }
@@ -195,7 +194,7 @@ NOTES:
 pub fn verb_help(verb: Verb) -> String {
     let options = match verb {
         Verb::Install => concat!(
-            "    Installs the complete set: CLI (axm / axiom-cli), graph engine, MCP and skills.\n    Component names such as cli or axiom-graphd are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
+            "    Installs the complete set: axm, axsk, axge, axmp and the skills bundle.\n    Components are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
             "    --yes, -y                  Approve the printed plan without a prompt (AXIOM_INSTALL_YES=1)\n",
             "    --no-modify-path           Do not add the install's bin to the user PATH\n",
             "    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",

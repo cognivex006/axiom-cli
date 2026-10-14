@@ -156,7 +156,7 @@ def main() -> int:
          and "already-installed" in out["stdout_tail"] + out["stderr_tail"]
          and user_after == user_before and len(user_before) == 2, run=out)
     version = run([boot / "bin" / "axiom-cli.exe", "version"])
-    case("adopted_root_found_without_env", version["exit_code"] == 0 and "installed: 0.1.2" in version["stdout_tail"], run=version)
+    case("adopted_root_found_without_env", version["exit_code"] == 0 and ("installed: 0.1.2" in version["stdout_tail"] or ("Axiom Graph Engine" in version["stdout_tail"] and "0.1.2" in version["stdout_tail"])), run=version)
 
     # E. An unknown layout is reported and never modified.
     odd_before = tree(odd)

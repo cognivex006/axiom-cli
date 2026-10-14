@@ -1027,13 +1027,15 @@ fn version_plain_distinguishes_aliases_and_recorded_versions_from_updates() {
     assert_eq!(out.code, SUCCESS, "{}", out.stdout);
     assert!(out
         .stdout
-        .contains(&format!("Axiom CLI {VERSION} (axm / axiom-cli)")));
+        .contains(&format!("{:<19} {:<8} {}", "Axiom CLI", "axm", VERSION)));
     assert!(out
         .stdout
-        .contains("Graph engine (axiom / axiom-graphd): not recorded"));
-    assert!(out
-        .stdout
-        .contains("use axm update --dry-run for newer releases"));
+        .contains("Axiom Graph Engine  axge     not recorded"));
+    assert!(out.stdout.contains("Axiom MCP"));
+    assert!(!out.stdout.contains("installed:"));
+    assert!(!out.stdout.contains("axiom-cli"));
+    assert!(!out.stdout.contains("Recorded channel"));
+    assert!(!out.stdout.contains("reported installed"));
     assert!(!out.stdout.contains(SEED_GENERATION));
     assert!(!out.stdout.contains("up to date"));
     assert!(!out.stdout.contains("action="));
@@ -1059,7 +1061,7 @@ fn version_all_reports_the_cli_host_and_engine_blocks() {
     }
     assert_eq!(
         json_string_field(&out.stdout, "program").as_deref(),
-        Some("axiom-cli")
+        Some("axm")
     );
     assert_eq!(
         json_string_field(&out.stdout, "version").as_deref(),

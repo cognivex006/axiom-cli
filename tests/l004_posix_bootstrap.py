@@ -104,7 +104,7 @@ def main() -> int:
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
         env.update(HOME=str(work / "oneliner"), XDG_DATA_HOME=str(work / "oneliner" / "data"))
         version = subprocess.run([str(cli), "version"], env=env, capture_output=True, text=True)
-        case("installed_version_answers", version.returncode == 0 and "installed:" in version.stdout,
+        case("installed_version_answers", version.returncode == 0 and ("installed:" in version.stdout or "Axiom Graph Engine" in version.stdout),
              stdout_tail=version.stdout[-400:])
     r = run("switches", f"curl -fsSL {url(T[1])} | sh -s -- --yes --no-modify-path")
     case("yes_and_no_modify_path_pass_through", r["exit_code"] == 0 and r["installed"] and not r["path_record"]

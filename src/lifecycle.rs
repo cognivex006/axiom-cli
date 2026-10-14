@@ -334,6 +334,7 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
         .filter(|layout| matches!(layout.kind, "cli-store" | "bootstrap-root"))
         .into_iter()
         .collect();
+    crate::layout::public_command_conflict(&root, verified)?;
     if !root.join(state::INSTALLED_FILE).is_file() && adopting.is_empty() {
         if let Some(refusal) = crate::layout::foreign_root_refusal(&root) {
             return Err(refusal);
@@ -552,6 +553,7 @@ fn record_layout(
     }
     // ADR-0036: `axm` is the short name of `axiom-cli`, a verified copy of the same bytes.
     layout::with_short_command(&mut sources);
+    layout::with_public_commands(&mut sources);
     let bin = layout::place_bin(root, &sources)?;
     let bin_payloads: Vec<(String, PathBuf, String)> = sources
         .iter()
@@ -643,7 +645,7 @@ fn record_layout(
 
 /// Read a provisioned candidate runtime as a verified engine input. An absent
 /// runtime retains the pre-K-104 behavior; a present but changed record refuses.
-fn provisioned_mcp_runtime_bin(root: &Path) -> Result<Option<PathBuf>, Refusal> {
+pub(crate) fn provisioned_mcp_runtime_bin(root: &Path) -> Result<Option<PathBuf>, Refusal> {
     let mut runtime_root = root.join("mcp-runtime");
     if !runtime_root.join("current.json").exists() {
         // An adopted 0.1.2 Windows bootstrap root keeps its runtime at the nested location the

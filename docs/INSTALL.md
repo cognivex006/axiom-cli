@@ -78,7 +78,7 @@ curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/updat
      mcp runtime - provisioned from the release
    install root: C:\Users\you\AppData\Local\Axiom (bin: C:\Users\you\AppData\Local\Axiom\bin)
    size: 4.4 MB of verified artifacts
-   PATH: add C:\Users\you\AppData\Local\Axiom\bin to the user PATH (undo: axiom-cli uninstall; skip: --no-modify-path)
+   PATH: add C:\Users\you\AppData\Local\Axiom\bin to the user PATH (undo: axm uninstall; skip: --no-modify-path)
    Proceed? [Y/n]
    ```
 
@@ -226,7 +226,7 @@ Most people should keep this default. If you would rather turn the 0.1.2 bootstr
 3. Extract the zip to a new folder. In that folder, run:
 
    ```powershell
-   .\axiom-cli.exe install --adopt "<path to the 0.1.2 bootstrap folder>"
+   .\axm.exe install --adopt "<path to the 0.1.2 bootstrap folder>"
    ```
 
 **3. Run `axm doctor`.** It lists any old layouts, any older `axiom-cli` that is still earlier on your PATH, and any leftover variables. `doctor` only reports and never changes anything.
@@ -239,8 +239,8 @@ Most people should keep this default. If you would rather turn the 0.1.2 bootstr
 | `axiom-cli` shows old help text, or answers `NotReady` to every command | An older `axiom-cli` comes first on your PATH | Find it with `Get-Command axiom-cli -All` (Windows) or `which -a axiom-cli`. `axm doctor` also names it. Remove the old folder from your PATH. |
 | `axm version` says `installed: no` | A leftover `AXIOM_CLI_INSTALL_ROOT` points to another folder | Remove the variable ([Upgrading](#upgrading-from-010-or-012), step 1) and open a new terminal. |
 | `refusing to run elevated` or `refusing to run as root` | The terminal runs as Administrator, or you used `sudo` | Run it again from a normal-user terminal. |
-| `axiom update: leftover variables from the 0.1.2 procedure are set` | `AXIOM_CLI_INSTALL_ROOT`, `AXIOM_ENGINE_BIN` or `AXIOM_HOME` is still set | Remove them ([Upgrading](#upgrading-from-010-or-012), step 1), open a new terminal and run the update command again. |
-| `axiom update: Axiom is not installed for this user, so there is nothing to update` | Nothing is installed (or it was uninstalled) | Use the [install](#install) command. |
+| `axm engine update: leftover variables from the 0.1.2 procedure are set` | `AXIOM_CLI_INSTALL_ROOT`, `AXIOM_ENGINE_BIN` or `AXIOM_HOME` is still set | Remove them ([Upgrading](#upgrading-from-010-or-012), step 1), open a new terminal and run the update command again. |
+| `axm engine update: Axiom is not installed for this user, so there is nothing to update` | Nothing is installed (or it was uninstalled) | Use the [install](#install) command. |
 | `download failed ...` or `SHA-256 mismatch ...; nothing was changed` | Network or proxy problem, or a damaged download | Try again. Nothing was installed. |
 | `a host python3 is required` (Linux / macOS) | `python3` is not installed | Install it with your package manager, for example `sudo apt install python3`, then run the install command again as your normal user. |
 | `unsupported platform` or `unsupported architecture` | arm64 is not published yet | See [Before you start](#before-you-start). |

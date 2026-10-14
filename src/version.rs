@@ -55,10 +55,17 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
     let mut report =
         Report::ok("ok", "reported installed and available versions").subject("version");
     report.detail("cli", cli_block());
-    report.line(format!(
-        "Axiom CLI {} (axm / axiom-cli)",
-        crate::cli::VERSION
-    ));
+    if concise {
+        report.line("Component           Command  Version");
+        report.line(format!(
+            "{:<19} {:<8} {}",
+            "Axiom CLI",
+            "axm",
+            crate::cli::VERSION
+        ));
+    } else {
+        report.line(format!("Axiom CLI (axm): {}", crate::cli::VERSION));
+    }
     report.detail("host", host_block());
     report.detail("all", Json::bool(all));
 
@@ -82,7 +89,17 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
 
     match &root {
         None => {
-            report.line("install root: unavailable on this host");
+            if concise {
+                for (label, command) in [
+                    ("Axiom Skills", "axsk"),
+                    ("Axiom Graph Engine", "axge"),
+                    ("Axiom MCP", "axmp"),
+                ] {
+                    report.line(format!("{label:<19} {command:<8} unavailable"));
+                }
+            } else {
+                report.line("install root: unavailable on this host");
+            }
             report.detail("installed", Json::bool(false));
             report.detail("installed_skills", Json::null());
             report.detail(
@@ -95,10 +112,20 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
         Some(path) => {
             let state = State::new(path.clone());
             if !state.has_installed() {
-                report.line(format!(
-                    "installed: no (nothing recorded at {})",
-                    state.installed_path().display()
-                ));
+                if !concise {
+                    report.line(format!(
+                        "installation: no record at {}",
+                        state.installed_path().display()
+                    ));
+                } else {
+                    for (label, command) in [
+                        ("Axiom Skills", "axsk"),
+                        ("Axiom Graph Engine", "axge"),
+                        ("Axiom MCP", "axmp"),
+                    ] {
+                        report.line(format!("{label:<19} {command:<8} not installed"));
+                    }
+                }
                 report.detail("installed", Json::bool(false));
                 report.detail("installed_skills", Json::null());
             } else {
@@ -113,17 +140,29 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                     "installed",
                     installed_block(&installed, &generation, &loaded.manifest, all),
                 );
+                let skills = installed_skills_block(path, &loaded.manifest)?;
+                if concise {
+                    let skill_version = skills
+                        .get("version")
+                        .and_then(Json::as_text)
+                        .unwrap_or("not installed");
+                    report.line(format!(
+                        "{:<19} {:<8} {}",
+                        "Axiom Skills", "axsk", skill_version
+                    ));
+                }
                 for line in installed_lines(&installed, &generation, concise) {
                     report.line(line);
                 }
-                let skills = installed_skills_block(path, &loaded.manifest)?;
-                report.line(format!(
-                    "Skills: {}",
-                    skills
-                        .get("version")
-                        .and_then(Json::as_text)
-                        .unwrap_or("not installed")
-                ));
+                if !concise {
+                    report.line(format!(
+                        "Axiom Skills (axsk): {}",
+                        skills
+                            .get("version")
+                            .and_then(Json::as_text)
+                            .unwrap_or("not installed")
+                    ));
+                }
                 report.detail("installed_skills", skills);
             }
         }
@@ -150,12 +189,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
             report.detail("available_source", Json::text(&available_source));
             report.detail("available_note", Json::text(&available_note));
             report.detail("available", manifest_block(manifest, all));
-            if concise {
-                report.line(format!(
-                    "Recorded channel: {} (use axm update --dry-run for newer releases)",
-                    manifest.channel
-                ));
-            } else {
+            if !concise {
                 for line in manifest_lines(manifest, all) {
                     report.line(line);
                 }
@@ -456,13 +490,10 @@ fn installed_lines(
     concise: bool,
 ) -> Vec<String> {
     if concise {
-        let mut lines = vec![format!(
-            "installed: {}",
-            release_version(generation).unwrap_or("mixed")
-        )];
-        for (component, label) in [
-            ("axiom-graphd", "Graph engine (axiom / axiom-graphd)"),
-            ("axiom-mcp", "MCP"),
+        let mut lines = Vec::new();
+        for (component, label, command) in [
+            ("axiom-graphd", "Axiom Graph Engine", "axge"),
+            ("axiom-mcp", "Axiom MCP", "axmp"),
         ] {
             let version = generation
                 .entries
@@ -470,7 +501,7 @@ fn installed_lines(
                 .find(|entry| entry.component == component)
                 .map(|entry| entry.version.as_str())
                 .unwrap_or("not recorded");
-            lines.push(format!("{label}: {version}"));
+            lines.push(format!("{label:<19} {command:<8} {version}"));
         }
         return lines;
     }

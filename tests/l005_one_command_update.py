@@ -166,7 +166,7 @@ def main() -> int:
     case("update_applies_newer_release", out["exit_code"] == 0 and versions.get("axiom-graphd") == "0.1.3"
          and versions.get("bin/axiom-cli") == "0.1.3"
          and record_b.get("previous_generation") and (root / "installed.previous.json").is_file()
-         and engine_current() != engine_a and "installed: 0.1.3" in version_out["stdout_tail"],
+         and engine_current() != engine_a and ("installed: 0.1.3" in version_out["stdout_tail"] or ("Axiom Graph Engine" in version_out["stdout_tail"] and "0.1.3" in version_out["stdout_tail"])),
          run=out, version=version_out, engine_current=engine_current(), last_update=record_b.get("last_update"))
     case("user_data_unchanged_after_update", tree_digest(workspace) == user_before)
 

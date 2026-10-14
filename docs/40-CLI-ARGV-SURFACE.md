@@ -21,7 +21,7 @@ invoked through their published argv surface; this repository re-implements none
 ## Invocation
 
 ```
-axiom-cli [GLOBAL OPTIONS] <verb> [verb options]
+axm [GLOBAL OPTIONS] <verb> [verb options]
 ```
 
 | Verb | Options |

@@ -4,6 +4,14 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### New Features
+
+- Provide canonical native commands `axm`, `axsk`, `axge` and `axmp` with owned, verified placement. Route skills to the engine and MCP to its provisioned runtime without a shell.
+
+### Bug Fixes
+
+- Show four component/command/version rows in `axm version`; remove the redundant installed summary, legacy command labels, channel hint and success footer.
+
 ## 0.1.6
 
 ### New Features

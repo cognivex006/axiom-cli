@@ -20,7 +20,7 @@ Generation is deterministic: the same tag and checksum input produce the same sc
 
 ## Installation transaction
 
-From an extracted release, `axiom-cli install --dry-run` discovers the adjacent `channel.json`, verifies the artifact lengths and hashes and reports the plan. The interactive command asks `Proceed? [Y/n]`; `--yes` approves that printed plan. Automation can use `--apply --approve-digest <sha256>`.
+From an extracted release, `axm install --dry-run` discovers the adjacent `channel.json`, verifies the artifact lengths and hashes and reports the plan. The interactive command asks `Proceed? [Y/n]`; `--yes` approves that printed plan. Automation can use `--apply --approve-digest <sha256>`.
 
 Installation refuses a foreign nonempty root or missing required engine input, provisions the release's hash-bound MCP runtime, assembles the skills bundle and asks the engine to plan and apply placement. It places the CLI and core binaries in `<root>/bin`, retains generation payloads and writes `installed.json` atomically after activation. A crash before the final record may require retry or recovery; it is not proof of a successful install.
 

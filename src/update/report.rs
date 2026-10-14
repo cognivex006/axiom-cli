@@ -122,7 +122,9 @@ impl Report {
                 for text in &self.lines {
                     println!("{text}");
                 }
-                println!("{PROGRAM}: {}", self.message);
+                if self.subject != "version" || verbose {
+                    println!("{PROGRAM}: {}", self.message);
+                }
             }
             exit::NOT_READY => {
                 eprintln!("{PROGRAM}: {}: NotReady: {}", self.subject, self.message);

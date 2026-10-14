@@ -119,6 +119,74 @@ pub fn with_short_command(sources: &mut Vec<BinSource>) {
     }
 }
 
+/// Canonical entrypoints are owned, digest-bound copies of verified native programs.
+pub fn with_public_commands(sources: &mut Vec<BinSource>) {
+    for (name, component) in [
+        ("axsk", "axiom-cli"),
+        ("axmp", "axiom-cli"),
+        ("axge", "axiom-graphd"),
+    ] {
+        if sources.iter().any(|source| source.name == name) {
+            continue;
+        }
+        if let Some(source) = sources.iter().find(|source| source.name == component) {
+            sources.push(BinSource {
+                name,
+                source: source.source.clone(),
+                sha256: source.sha256.clone(),
+            });
+        }
+    }
+}
+
+/// Refuse a new command slot occupied by user data or a modified owned executable.
+pub fn public_command_conflict(root: &Path, verified: &[Json]) -> Result<(), Refusal> {
+    let state = State::new(root);
+    let owned = if state.has_installed() {
+        let installed = state.read_installed()?;
+        Generation::read(&state, &installed.current_generation)?.entries
+    } else {
+        Vec::new()
+    };
+    for (name, component) in [
+        ("axsk", "axiom-cli"),
+        ("axmp", "axiom-cli"),
+        ("axge", "axiom-graphd"),
+    ] {
+        let path = bin_dir(root).join(program_file(name));
+        if !path.exists() && !path.is_symlink() {
+            continue;
+        }
+        let actual = if path.is_file() && !path.is_symlink() {
+            Some(file_digest(&path)?)
+        } else {
+            None
+        };
+        let expected = verified
+            .iter()
+            .find(|entry| entry.get("component").and_then(Json::as_text) == Some(component))
+            .and_then(|entry| entry.get("sha256"))
+            .and_then(Json::as_text);
+        let tracked = owned
+            .iter()
+            .find(|entry| entry.component == format!("bin/{name}"))
+            .map(|entry| entry.artifact_sha256.as_str());
+        if actual
+            .as_deref()
+            .is_some_and(|digest| Some(digest) == expected || Some(digest) == tracked)
+        {
+            continue;
+        }
+        return Err(Refusal::conflict(
+            "public_command_foreign",
+            format!(
+                "{name} is occupied by an unowned, linked or modified file; nothing was installed"
+            ),
+        ));
+    }
+    Ok(())
+}
+
 /// Place each executable in `bin` atomically and idempotently.
 ///
 /// A destination already holding the verified bytes is left alone, which is also what lets a
@@ -356,6 +424,57 @@ pub fn file_digest(path: &Path) -> Result<String, Refusal> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn canonical_aliases_are_idempotent_and_foreign_slots_are_preserved() {
+        let root = temp("public-command-slots");
+        std::fs::create_dir_all(bin_dir(&root)).unwrap();
+        let cli = root.join("cli-source");
+        let daemon = root.join("daemon-source");
+        std::fs::write(&cli, b"verified cli").unwrap();
+        std::fs::write(&daemon, b"verified daemon").unwrap();
+        let mut sources = vec![
+            BinSource {
+                name: "axiom-cli",
+                source: cli.clone(),
+                sha256: file_digest(&cli).unwrap(),
+            },
+            BinSource {
+                name: "axiom-graphd",
+                source: daemon,
+                sha256: sha256::digest_hex(b"verified daemon"),
+            },
+        ];
+        with_short_command(&mut sources);
+        with_public_commands(&mut sources);
+        with_public_commands(&mut sources);
+        assert_eq!(
+            sources
+                .iter()
+                .filter(|source| matches!(source.name, "axm" | "axsk" | "axge" | "axmp"))
+                .count(),
+            4
+        );
+        let user_file = bin_dir(&root).join(program_file("axsk"));
+        std::fs::write(&user_file, b"human data").unwrap();
+        let verified = vec![Json::from_pairs(vec![
+            ("component", Json::text("axiom-cli")),
+            ("sha256", Json::text(&file_digest(&cli).unwrap())),
+        ])];
+        assert_eq!(
+            public_command_conflict(&root, &verified)
+                .unwrap_err()
+                .reason,
+            "public_command_foreign"
+        );
+        assert_eq!(std::fs::read(&user_file).unwrap(), b"human data");
+        std::fs::copy(cli, user_file).unwrap();
+        assert!(
+            public_command_conflict(&root, &verified).is_ok(),
+            "an interrupted exact-byte placement can be repaired"
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
 
     fn temp(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("axiom-layout-{name}-{}", std::process::id()));

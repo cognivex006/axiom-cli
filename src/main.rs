@@ -9,6 +9,7 @@
 
 mod bundle;
 mod cli;
+mod commands;
 mod confirm;
 mod doctor;
 mod elevation;
@@ -23,6 +24,7 @@ mod update;
 mod version;
 
 fn main() {
-    let code = cli::run(std::env::args_os());
+    let arguments: Vec<_> = std::env::args_os().collect();
+    let code = commands::run(&arguments).unwrap_or_else(|| cli::run(arguments));
     std::process::exit(code);
 }

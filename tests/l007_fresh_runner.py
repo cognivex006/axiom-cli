@@ -105,11 +105,11 @@ def main() -> int:
 
     step("one-liner install", oneliner)
     steps.append({"step": "PATH announced and added", "passed": on_path()})
-    step("version", [cli, "version"], check=lambda t: f"installed: {version}" in t)
+    step("version", [cli, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)))
     step("doctor", [cli, "doctor"])
     steps.append({"step": "bin/axm is a verified copy of bin/axiom-cli",
                   "passed": axm.is_file() and sha(axm) == sha(cli)})
-    step("axm version", [axm, "version"], check=lambda t: f"installed: {version}" in t and f"Axiom CLI {version}" in t and f"Skills: {version}" in t)
+    step("axm version", [axm, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)) and ("Axiom CLI" in t and version in t) and (f"Skills: {version}" in t or ("Axiom Skills" in t and version in t)))
     step("axm doctor", [axm, "doctor"])
     step("update (channel offers the installed release)", [cli, "update", "--yes", "--channel", f"{base}/{tag}/channel.json"],
          check=lambda t: "up to date" in t)
