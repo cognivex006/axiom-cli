@@ -100,7 +100,9 @@ def main() -> int:
     case("oneliner_installs_embedded_version", r["exit_code"] == 0 and r["installed"] and r["path_record"]
          and r["profile"] and "axiom" in r["profile"] and not r["temp_leftovers"], run=r)
     if r["installed"]:
-        cli = work / "oneliner" / "data" / "axiom" / "bin" / "axiom-cli"
+        cli = work / "oneliner" / "data" / "axiom" / "bin" / "axm"
+        if not cli.is_file():  # immutable older release inputs
+            cli = cli.with_name("axiom-cli")
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
         env.update(HOME=str(work / "oneliner"), XDG_DATA_HOME=str(work / "oneliner" / "data"))
         version = subprocess.run([str(cli), "version"], env=env, capture_output=True, text=True)
