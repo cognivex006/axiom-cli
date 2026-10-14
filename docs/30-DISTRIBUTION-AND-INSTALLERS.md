@@ -54,3 +54,5 @@ The update script finds the installed root and runs its update command. It can m
 The Rust suite checks parsing, plans, integrity, activation, refusal and recovery boundaries. Bootstrap tests verify deterministic output and download/elevation/hash refusals. Fresh native CI exercises release installation on Windows, Linux and Intel Mac. Real WSL verification is recorded separately from native Windows execution; containers do not establish native macOS or Windows behavior.
 
 Contributor commands and retained evidence belong in [Development](../Development.md). A passing installation check does not establish project registration, graph generation or AI-host configuration.
+
+Updates retain the previous recorded channel manifest alongside the previous installed record. Failed updates and explicit rollbacks restore both together; a changed retained manifest is refused before restoring the installation.

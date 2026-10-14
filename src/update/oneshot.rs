@@ -506,6 +506,9 @@ pub fn apply(
     let st = State::new(root);
     let before = state::read_bytes(&st.installed_path(), "installed_unreadable")?;
     let before_record = st.read_installed()?;
+    st.load_recorded_manifest(&before_record)?;
+    let manifest_before =
+        state::read_bytes(&st.recorded_manifest_path(), "recorded_manifest_unreadable")?;
     let mcp_before = std::fs::read(mcp_pointer(root)).ok();
     let child = |args: &[&str]| -> Result<(i32, String), Refusal> {
         let output = Command::new(&new_cli)
@@ -550,7 +553,7 @@ pub fn apply(
     if code != 0 {
         // The engine refused before activation or rolled its own transaction back; restore the
         // record in case the layout step started.
-        restore(root, &before, &before_record, None)?;
+        restore(root, &before, &before_record, None, Some(&manifest_before))?;
         restore_mcp_pointer(root, mcp_before.as_deref())?;
         return Err(Refusal::not_ready(
             "engine_update_failed",
@@ -564,7 +567,7 @@ pub fn apply(
     if transaction.is_none() {
         // Without the engine transaction id the engine half could not be rolled back, so an
         // update that cannot name it is refused rather than half-recorded.
-        let rolled = restore(root, &before, &before_record, None)
+        let rolled = restore(root, &before, &before_record, None, Some(&manifest_before))
             .and_then(|()| restore_mcp_pointer(root, mcp_before.as_deref()));
         return Err(Refusal::new(
             Class::IoInternal,
@@ -578,8 +581,14 @@ pub fn apply(
     }
     let healthy = health(root);
     if let Err(reason) = healthy {
-        let rolled = restore(root, &before, &before_record, transaction.as_deref())
-            .and_then(|()| restore_mcp_pointer(root, mcp_before.as_deref()));
+        let rolled = restore(
+            root,
+            &before,
+            &before_record,
+            transaction.as_deref(),
+            Some(&manifest_before),
+        )
+        .and_then(|()| restore_mcp_pointer(root, mcp_before.as_deref()));
         let mut report = Report::new(
             Class::IoInternal.exit_code(),
             Class::IoInternal.status(),
@@ -624,6 +633,12 @@ pub fn apply(
     record
         .extra
         .insert("channel_source".to_string(), Json::text(source));
+    let previous_manifest = root.join("recorded-manifest.previous.json");
+    state::write_atomic(
+        &previous_manifest.with_extension("json.tmp"),
+        &previous_manifest,
+        &manifest_before,
+    )?;
     st.write_installed(&record)?;
     let previous_record = root.join("installed.previous.json");
     state::write_atomic(
@@ -700,7 +715,13 @@ fn restore(
     before: &[u8],
     before_record: &state::Installed,
     transaction: Option<&str>,
+    manifest_snapshot: Option<&[u8]>,
 ) -> Result<(), Refusal> {
+    if manifest_snapshot
+        .is_some_and(|bytes| digest_of(bytes) != before_record.channel_manifest_sha256)
+    {
+        return Err(Refusal::conflict("previous_manifest_changed", "retained channel manifest does not match the previous installation; nothing was restored"));
+    }
     let st = State::new(root);
     if let Some(id) = transaction {
         let bin = crate::layout::bin_dir(root);
@@ -810,6 +831,9 @@ fn restore(
             )
         })?;
     }
+    if let Some(bytes) = manifest_snapshot {
+        st.record_manifest_bytes(bytes)?;
+    }
     let path = st.installed_path();
     state::write_atomic(&path.with_extension("json.tmp"), &path, before)
 }
@@ -838,17 +862,34 @@ pub fn rollback_last(root: &Path) -> Result<Report, Refusal> {
         ));
     }
     let before_record = state::Installed::parse(&String::from_utf8_lossy(&before))?;
+    let previous_manifest = root.join("recorded-manifest.previous.json");
+    let manifest_snapshot = if previous_manifest.exists() {
+        if previous_manifest.is_symlink() {
+            return Err(Refusal::conflict(
+                "previous_manifest_linked",
+                "retained channel manifest is linked; nothing was restored",
+            ));
+        }
+        state::read_bytes(&previous_manifest, "previous_manifest_unreadable")?
+    } else {
+        // Older updates may have kept the same manifest. Accept it only if it verifies
+        // against the previous record; never restore a record with an incompatible manifest.
+        st.load_recorded_manifest(&before_record)?;
+        state::read_bytes(&st.recorded_manifest_path(), "previous_manifest_missing")?
+    };
     let _guard = LockGuard::take(&root.join(state::LOCK_FILE))?;
     restore(
         root,
         &before,
         &before_record,
         last.get("engine_transaction").and_then(Json::as_text),
+        Some(&manifest_snapshot),
     )?;
     let previous_mcp = root.join("mcp-runtime.previous.json");
     restore_mcp_pointer(root, std::fs::read(&previous_mcp).ok().as_deref())?;
     let _ = std::fs::remove_file(&previous_mcp);
     let _ = std::fs::remove_file(&previous_path);
+    let _ = std::fs::remove_file(&previous_manifest);
     Ok(Report::ok(
         "ok",
         format!(
@@ -950,7 +991,7 @@ mod tests {
             )
             .unwrap();
         }
-        restore(&root, &before, &record, None).unwrap();
+        restore(&root, &before, &record, None, None).unwrap();
         for name in names {
             assert_eq!(
                 std::fs::read(
@@ -1024,16 +1065,32 @@ mod tests {
         let old_path =
             crate::layout::bin_dir(&root).join(crate::layout::program_file(".internal/axiom"));
         std::fs::remove_file(&old_path).unwrap();
+        let state = State::new(&root);
+        state.record_manifest_bytes(b"{\"new\":true}").unwrap();
+        assert_eq!(
+            restore(&root, &before, &old, None, Some(b"changed manifest"))
+                .unwrap_err()
+                .reason,
+            "previous_manifest_changed"
+        );
+        assert!(!old_path.exists());
+
         std::fs::write(&new_path, b"modified engine").unwrap();
         assert_eq!(
-            restore(&root, &before, &old, None).unwrap_err().reason,
+            restore(&root, &before, &old, None, Some(b"{}"))
+                .unwrap_err()
+                .reason,
             "rollback_engine_changed"
         );
         assert!(!old_path.exists());
         assert_eq!(std::fs::read(&new_path).unwrap(), b"modified engine");
         std::fs::write(&new_path, b"new verified engine bytes").unwrap();
-        restore(&root, &before, &old, None).unwrap();
+        restore(&root, &before, &old, None, Some(b"{}")).unwrap();
         assert!(!new_path.exists());
+        assert_eq!(
+            std::fs::read(state.recorded_manifest_path()).unwrap(),
+            b"{}"
+        );
         assert_eq!(std::fs::read(old_path).unwrap(), b"old verified engine");
         assert_eq!(
             std::fs::read(State::new(&root).installed_path()).unwrap(),

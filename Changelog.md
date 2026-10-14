@@ -10,6 +10,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Restore the exact recorded channel manifest with the previous generation after a failed update or explicit rollback, keeping doctor integrity checks valid. Refuse changed rollback snapshots before mutation.
+
 - Make the shell updater prefer the installation selected by `axm` when a separate legacy CLI also exists on PATH, matching PowerShell.
 
 - Make doctor report actual SQLite and MCP runtime readiness with concise results and actionable repair steps. SQLite version numbers are informational; verbose mode keeps paths and scope without parser trace noise.

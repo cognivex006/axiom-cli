@@ -30,7 +30,7 @@ pub const BIN_DIR: &str = "bin";
 
 /// Entries a root may already contain without being foreign: everything this layout, the engine,
 /// the update channel, the MCP runtime provisioner or an earlier Axiom release writes.
-const OWNED_ENTRIES: [&str; 17] = [
+const OWNED_ENTRIES: [&str; 20] = [
     "bin",
     "installs",
     "generations",
@@ -39,6 +39,9 @@ const OWNED_ENTRIES: [&str; 17] = [
     "state",
     "mcp-runtime",
     "installed.json",
+    "installed.previous.json",
+    "mcp-runtime.previous.json",
+    "recorded-manifest.previous.json",
     "installed.json.tmp",
     "recorded-manifest.json",
     "recorded-manifest.json.tmp",
