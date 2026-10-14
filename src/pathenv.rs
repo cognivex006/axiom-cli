@@ -26,7 +26,7 @@ pub const RECORD_FILE: &str = "path-change.json";
 #[cfg_attr(not(windows), allow(dead_code))]
 pub const TEST_KEY_ENV: &str = "AXIOM_CLI_TEST_USER_ENV_KEY";
 /// The marker comment written above the POSIX profile line.
-pub const PROFILE_MARKER: &str = "# Added by axiom-cli install; removed by axiom-cli uninstall";
+pub const PROFILE_MARKER: &str = "# Added by axm install; removed by axm uninstall";
 
 /// What the plan announces for the PATH.
 pub fn plan_block(bin: &Path, modify: bool) -> Json {
@@ -55,11 +55,11 @@ pub fn plan_line(block: &Json) -> String {
     let target = block.get("target").and_then(Json::as_text).unwrap_or("?");
     match block.get("action").and_then(Json::as_text) {
         Some("add") => format!(
-            "PATH: add {entry} to {target} (undo: axiom-cli uninstall; skip: --no-modify-path)"
+            "PATH: add {entry} to {target} (undo: axm uninstall; skip: --no-modify-path)"
         ),
         Some("already-present") => format!("PATH: {entry} is already on {target}; unchanged"),
         _ => format!(
-            "PATH: unchanged (--no-modify-path); run {entry}{}axiom-cli directly",
+            "PATH: unchanged (--no-modify-path); run {entry}{}axm directly",
             std::path::MAIN_SEPARATOR
         ),
     }

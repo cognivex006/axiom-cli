@@ -194,7 +194,7 @@ pub fn detect(target: &Path) -> Vec<Layout> {
         .collect()
 }
 
-/// An `axiom-cli` on PATH that is not this root's `bin`, and whether it comes first.
+/// An `axm` on PATH that is not this root's `bin`, and whether it comes first.
 #[derive(Clone, Debug)]
 pub struct Shadow {
     pub path: PathBuf,
@@ -202,7 +202,7 @@ pub struct Shadow {
     pub before_root_bin: bool,
 }
 
-/// Every other `axiom-cli` on PATH, in PATH order.
+/// Every other `axm` on PATH, in PATH order.
 pub fn shadows(root_bin: &Path) -> Vec<Shadow> {
     let Some(path) = std::env::var_os("PATH") else {
         return Vec::new();
@@ -214,7 +214,7 @@ pub fn shadows(root_bin: &Path) -> Vec<Shadow> {
         if same_path(dir, root_bin) {
             continue;
         }
-        let exe = dir.join(crate::layout::program_file("axiom-cli"));
+        let exe = dir.join(crate::layout::program_file("axm"));
         if exe.is_file() && !found.iter().any(|s: &Shadow| same_path(&s.path, &exe)) {
             found.push(Shadow {
                 version: probe_version(&exe),

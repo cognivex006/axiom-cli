@@ -252,7 +252,7 @@ fn legacy_finding(lines: &mut Vec<String>) -> Json {
     }
     for shadow in &shadows {
         lines.push(format!(
-            "axiom-cli on PATH: {} ({}){}",
+            "axm on PATH: {} ({}){}",
             shadow.path.display(),
             shadow.version,
             if shadow.before_root_bin {
