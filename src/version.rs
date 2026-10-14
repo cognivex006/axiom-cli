@@ -211,7 +211,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
 
 /// Skills are installed by the engine outside the binary generation inventory.
 /// Read their active owner metadata instead of inferring installation from channel availability.
-fn installed_skills_block(root: &Path, manifest: &Manifest) -> Result<Json, Refusal> {
+pub(crate) fn installed_skills_block(root: &Path, manifest: &Manifest) -> Result<Json, Refusal> {
     let store = root.join("installs/ecosystem/skills");
     let current = store.join("current");
     if !current.exists() && !current.is_symlink() {

@@ -6,7 +6,7 @@
 
 - `install` verifies and places the release's pinned component set.
 - `version` reports the installation record and available release information.
-- `doctor` checks installation integrity, prerequisites, locks, interrupted transactions and engine discovery.
+- `doctor` checks recorded installation and executable integrity, verifies the provisioned MCP runtime can import its server modules, and probes the graph engine-linked SQLite connection/query. SQLite versions are informational; prebuilt installs need no compiler. Locks, interrupted transactions and engine discovery remain visible in detailed output.
 - `update` verifies a release offer and applies an approved transaction, retaining rollback state.
 - `uninstall` removes owned programs and service entrypoints while retaining user data.
 

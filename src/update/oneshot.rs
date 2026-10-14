@@ -672,7 +672,7 @@ fn health(root: &Path) -> Result<(), String> {
     let bin = crate::layout::bin_dir(root);
     for (program, args) in [
         ("axm", vec!["version", "--json"]),
-        (".internal/axiom", vec!["version"]),
+        ("graphd-engine/axiom", vec!["version"]),
     ] {
         let path = bin.join(crate::layout::program_file(program));
         let status = Command::new(&path)
@@ -704,7 +704,11 @@ fn restore(
     let st = State::new(root);
     if let Some(id) = transaction {
         let bin = crate::layout::bin_dir(root);
-        let private = bin.join(crate::layout::program_file(".internal/axiom"));
+        let private = ["graphd-engine/axiom", ".internal/axiom", "axiom"]
+            .iter()
+            .map(|name| bin.join(crate::layout::program_file(name)))
+            .find(|path| path.is_file())
+            .unwrap_or_else(|| bin.join(crate::layout::program_file("graphd-engine/axiom")));
         let engine = if private.is_file() {
             private
         } else {
@@ -746,6 +750,8 @@ fn restore(
             "axsk" => "axsk",
             "axmp" => "axmp",
             "axge" => "axge",
+            "graphd-engine/axiom" => "graphd-engine/axiom",
+            ".internal/retired-private-engine" => ".internal/retired-private-engine",
             ".internal/axiom" => ".internal/axiom",
             ".internal/retired-axiom-cli" => ".internal/retired-axiom-cli",
             ".internal/retired-axiom" => ".internal/retired-axiom",
@@ -764,7 +770,46 @@ fn restore(
             });
         }
     }
+    // A rollback to an older folder must not leave a newer engine ahead of it in discovery.
+    let new_name = "graphd-engine/axiom";
+    let retired_engine = if !sources.iter().any(|source| source.name == new_name) {
+        st.read_installed()
+            .ok()
+            .and_then(|current| {
+                super::generation::Generation::read(&st, &current.current_generation).ok()
+            })
+            .and_then(|active| {
+                active
+                    .entries
+                    .into_iter()
+                    .find(|entry| entry.component == format!("bin/{new_name}"))
+            })
+    } else {
+        None
+    };
+    let new_path = crate::layout::bin_dir(root).join(crate::layout::program_file(new_name));
+    if let Some(entry) = &retired_engine {
+        if new_path.is_symlink()
+            || new_path.parent().is_some_and(Path::is_symlink)
+            || crate::update::sha256::file_hex(&new_path).ok().as_deref()
+                != Some(entry.artifact_sha256.as_str())
+        {
+            return Err(Refusal::conflict(
+                "rollback_engine_changed",
+                "new engine runtime changed; nothing was restored",
+            ));
+        }
+    }
     crate::layout::place_bin(root, &sources)?;
+    if retired_engine.is_some() {
+        std::fs::remove_file(&new_path).map_err(|error| {
+            Refusal::io(
+                "rollback_engine_remove_failed",
+                &new_path.display().to_string(),
+                &error,
+            )
+        })?;
+    }
     let path = st.installed_path();
     state::write_atomic(&path.with_extension("json.tmp"), &path, before)
 }
@@ -862,7 +907,7 @@ mod tests {
         let artifact = root.join("verified-source");
         std::fs::write(&artifact, b"previous verified bytes").unwrap();
         let digest = digest_of(b"previous verified bytes");
-        let names = ["axm", "axsk", "axge", "axmp", ".internal/axiom"];
+        let names = ["axm", "axsk", "axge", "axmp", "graphd-engine/axiom"];
         let sources: Vec<_> = names
             .iter()
             .map(|name| crate::layout::BinSource {
@@ -915,6 +960,81 @@ mod tests {
                 b"previous verified bytes"
             );
         }
+        assert_eq!(
+            std::fs::read(State::new(&root).installed_path()).unwrap(),
+            before
+        );
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn rollback_to_older_private_folder_removes_only_the_verified_new_engine() {
+        fn seed(root: &Path, name: &'static str, bytes: &[u8], plan: &str) -> state::Installed {
+            let source = root.join(format!("source-{}", bytes.len()));
+            std::fs::write(&source, bytes).unwrap();
+            let sha = digest_of(bytes);
+            let bin = crate::layout::place_bin(
+                root,
+                &[crate::layout::BinSource {
+                    name,
+                    source,
+                    sha256: sha.clone(),
+                }],
+            )
+            .unwrap();
+            crate::layout::record(
+                root,
+                &crate::layout::Record {
+                    channel: "stable",
+                    host: "fixture",
+                    manifest_bytes: b"{}",
+                    manifest_sha256: &digest_of(b"{}"),
+                    plan_digest: plan,
+                    bin,
+                    components: vec![(
+                        format!("bin/{name}"),
+                        "0.1.6".into(),
+                        String::new(),
+                        sha,
+                        crate::layout::bin_dir(root).join(crate::layout::program_file(name)),
+                        false,
+                    )],
+                },
+            )
+            .unwrap()
+        }
+        let root =
+            std::env::temp_dir().join(format!("axiom-folder-rollback-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        let old = seed(
+            &root,
+            ".internal/axiom",
+            b"old verified engine",
+            &"d".repeat(64),
+        );
+        let before = std::fs::read(State::new(&root).installed_path()).unwrap();
+        seed(
+            &root,
+            "graphd-engine/axiom",
+            b"new verified engine bytes",
+            &"e".repeat(64),
+        );
+        let new_path =
+            crate::layout::bin_dir(&root).join(crate::layout::program_file("graphd-engine/axiom"));
+        let old_path =
+            crate::layout::bin_dir(&root).join(crate::layout::program_file(".internal/axiom"));
+        std::fs::remove_file(&old_path).unwrap();
+        std::fs::write(&new_path, b"modified engine").unwrap();
+        assert_eq!(
+            restore(&root, &before, &old, None).unwrap_err().reason,
+            "rollback_engine_changed"
+        );
+        assert!(!old_path.exists());
+        assert_eq!(std::fs::read(&new_path).unwrap(), b"modified engine");
+        std::fs::write(&new_path, b"new verified engine bytes").unwrap();
+        restore(&root, &before, &old, None).unwrap();
+        assert!(!new_path.exists());
+        assert_eq!(std::fs::read(old_path).unwrap(), b"old verified engine");
         assert_eq!(
             std::fs::read(State::new(&root).installed_path()).unwrap(),
             before

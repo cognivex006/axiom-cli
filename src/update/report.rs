@@ -122,7 +122,7 @@ impl Report {
                 for text in &self.lines {
                     println!("{text}");
                 }
-                if self.subject != "version" || verbose {
+                if self.subject != "doctor" && (self.subject != "version" || verbose) {
                     println!("{PROGRAM}: {}", self.message);
                 }
             }

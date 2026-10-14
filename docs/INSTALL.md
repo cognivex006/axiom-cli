@@ -101,7 +101,7 @@ The first line shows the installed version, for example `installed: 0.1.3 channe
 axm doctor
 ```
 
-The exit code is `0` when the reported installation checks pass. Project registration, graph freshness, MCP permissions and host plugin discovery require separate setup. The line `sqlite driver: unverified (non-blocking ...)` is expected and is not an error.
+The exit code is `0` when the reported installation checks pass. Project registration, graph freshness, MCP permissions and host plugin discovery require separate setup. SQLite is checked through the graph engine's actual connection/query probe; its version is informational. A missing or unusable driver reports a failure and a repair command. Prebuilt installations need no Rust compiler or separate system SQLite installation.
 
 ## Install options
 
@@ -139,7 +139,7 @@ Inside the install folder:
 
 | Path | Contents |
 |---|---|
-| `bin/` | `axm`, `axsk`, `axge`, `axmp`; private helpers are under `bin/.internal/` |
+| `bin/` | `axm`, `axsk`, `axge`, `axmp`; private helpers are under `bin/graphd-engine/` |
 | `mcp-runtime/` | The Python runtime for the MCP server |
 | `generations/` | The installed release, kept so an update can roll back |
 | `installed.json` | What is installed (read by `version`, `doctor`, `update`, `uninstall`) |

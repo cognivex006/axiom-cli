@@ -1318,11 +1318,7 @@ fn doctor_reports_a_healthy_installed_generation_as_ok() {
 }
 
 #[test]
-fn doctor_reports_the_sqlite_driver_as_unverified_never_ok() {
-    // Contract section 7 requires a prerequisite to name the manifest or document that proves its
-    // version. Locating an engine binary proves nothing about the SQLite driver it bundles, so the
-    // honest state is `unverified` with an undeclared source - and an unverified mandatory
-    // prerequisite must never coexist with an overall exit of 0.
+fn doctor_reports_a_missing_engine_sqlite_probe_as_a_failure() {
     let fx = Fixture::new("doctor-sqlite-driver", Mode::Present);
     let out = Run::new(&fx.root)
         .without_engine()
@@ -1330,16 +1326,9 @@ fn doctor_reports_the_sqlite_driver_as_unverified_never_ok() {
     assert_single_json_object(&out.stdout);
     assert_eq!(
         finding_status(&out.stdout, "sqlite-driver").as_deref(),
-        Some("unverified"),
+        Some("fail"),
         "the sqlite driver must be reported unverified, never ok: {}",
         out.stdout
-    );
-    let driver = finding_object(&out.stdout, "sqlite-driver")
-        .expect("the sqlite driver finding must be present");
-    assert_eq!(
-        json_string_field(driver, "version_source").as_deref(),
-        Some("undeclared"),
-        "an unverified driver must name the missing declaration source: {driver}"
     );
     assert_ne!(
         out.code, SUCCESS,

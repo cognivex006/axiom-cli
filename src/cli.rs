@@ -471,7 +471,7 @@ where
         Err(message) => return fail(json, verbose, Some(verb.name()), &message),
     };
 
-    if verbose && !json {
+    if verbose && !json && invocation.verb != Verb::Doctor {
         eprintln!(
             "{PROGRAM}: diagnostic: parsed {} invocation: {}",
             invocation.verb.name(),

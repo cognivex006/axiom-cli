@@ -4,9 +4,8 @@
 //!
 //! ```text
 //! <root>/
-//!   bin/axiom-cli[.exe]   the distribution entrypoint
-//!   bin/axiom[.exe]       the graphd-owned engine CLI (found as a sibling, no environment variable)
-//!   bin/axiom-graphd[.exe]
+//!   bin/axm, axsk, axge, axmp[.exe]   public commands
+//!   bin/graphd-engine/axiom[.exe]    private installation engine
 //!   installs/ecosystem/   placed by the engine (`install plan` / `install apply`)
 //!   generations/<id>/     the verified artifact bytes of the active generation
 //!   recorded-manifest.json
@@ -139,7 +138,7 @@ pub fn with_public_commands(sources: &mut Vec<BinSource>) {
     }
     for source in sources.iter_mut() {
         if source.name == "axiom" {
-            source.name = ".internal/axiom";
+            source.name = "graphd-engine/axiom";
         }
     }
     sources.retain(|source| !matches!(source.name, "axiom-cli" | "axiom-graphd"));
@@ -156,6 +155,7 @@ fn legacy_public_sources(root: &Path) -> Result<Vec<BinSource>, Refusal> {
     };
     let mut sources = Vec::new();
     for (old, private) in [
+        (".internal/axiom", ".internal/retired-private-engine"),
         ("axiom-cli", ".internal/retired-axiom-cli"),
         ("axiom", ".internal/retired-axiom"),
         ("axiom-graphd", ".internal/retired-axiom-graphd"),
@@ -255,7 +255,10 @@ pub fn retire_legacy_commands(root: &Path) -> Result<Vec<BinSource>, Refusal> {
 
 /// Refuse a new command slot occupied by user data or a modified owned executable.
 pub fn public_command_conflict(root: &Path, verified: &[Json]) -> Result<(), Refusal> {
-    if bin_dir(root).is_symlink() || bin_dir(root).join(".internal").is_symlink() {
+    if bin_dir(root).is_symlink()
+        || bin_dir(root).join(".internal").is_symlink()
+        || bin_dir(root).join("graphd-engine").is_symlink()
+    {
         return Err(Refusal::conflict(
             "bin_path_link",
             "executable directory is linked; nothing was installed",
@@ -270,7 +273,7 @@ pub fn public_command_conflict(root: &Path, verified: &[Json]) -> Result<(), Ref
         Vec::new()
     };
     for (name, component) in [
-        (".internal/axiom", "axiom"),
+        ("graphd-engine/axiom", "axiom"),
         ("axm", "axiom-cli"),
         ("axsk", "axiom-cli"),
         ("axmp", "axiom-cli"),
@@ -428,7 +431,7 @@ pub struct Record<'a> {
 /// The generation id a plan digest maps to; stable, so a re-run reuses the same generation.
 pub fn generation_id(plan_digest: &str) -> String {
     format!(
-        "install-{}-commands",
+        "install-{}-graphd",
         &plan_digest[..plan_digest.len().min(16)]
     )
 }
@@ -649,58 +652,64 @@ mod tests {
 
     #[test]
     fn legacy_migration_preserves_recorded_bytes_and_refuses_modified_files() {
-        let root = temp("legacy-retirement");
-        let source = root.join("source");
-        std::fs::write(&source, b"old verified engine").unwrap();
-        let digest = file_digest(&source).unwrap();
-        let sources = [BinSource {
-            name: "axiom",
-            source,
-            sha256: digest.clone(),
-        }];
-        let bin = place_bin(&root, &sources).unwrap();
-        let legacy = bin_dir(&root).join(program_file("axiom"));
-        assert_eq!(
-            retire_legacy_commands(&root).err().unwrap().reason,
-            "legacy_command_foreign"
-        );
-        record(
-            &root,
-            &Record {
-                channel: "stable",
-                host: "fixture",
-                manifest_bytes: b"{}",
-                manifest_sha256: &sha256::digest_hex(b"{}"),
-                plan_digest: &"a".repeat(64),
-                components: vec![(
-                    "bin/axiom".into(),
-                    "0.1.6".into(),
-                    String::new(),
-                    digest.clone(),
-                    legacy.clone(),
-                    false,
-                )],
-                bin,
-            },
-        )
-        .unwrap();
-        std::fs::write(&legacy, b"human edit").unwrap();
-        assert_eq!(
-            retire_legacy_commands(&root).err().unwrap().reason,
-            "legacy_command_foreign"
-        );
-        assert_eq!(std::fs::read(&legacy).unwrap(), b"human edit");
-        std::fs::write(&legacy, b"old verified engine").unwrap();
-        let retired = retire_legacy_commands(&root).unwrap();
-        assert!(!legacy.exists());
-        assert_eq!(retired.len(), 1);
-        assert_eq!(file_digest(&retired[0].source).unwrap(), digest);
-        let installed = State::new(&root).read_installed().unwrap();
-        let previous = Generation::read(&State::new(&root), &installed.current_generation).unwrap();
-        previous
-            .verify(&State::new(&root).generation_dir(&installed.current_generation))
+        for (old_name, label) in [
+            ("axiom", "legacy-retirement"),
+            (".internal/axiom", "old-private-retirement"),
+        ] {
+            let root = temp(label);
+            let source = root.join("source");
+            std::fs::write(&source, b"old verified engine").unwrap();
+            let digest = file_digest(&source).unwrap();
+            let sources = [BinSource {
+                name: old_name,
+                source,
+                sha256: digest.clone(),
+            }];
+            let bin = place_bin(&root, &sources).unwrap();
+            let legacy = bin_dir(&root).join(program_file(old_name));
+            assert_eq!(
+                retire_legacy_commands(&root).err().unwrap().reason,
+                "legacy_command_foreign"
+            );
+            record(
+                &root,
+                &Record {
+                    channel: "stable",
+                    host: "fixture",
+                    manifest_bytes: b"{}",
+                    manifest_sha256: &sha256::digest_hex(b"{}"),
+                    plan_digest: &"a".repeat(64),
+                    components: vec![(
+                        format!("bin/{old_name}"),
+                        "0.1.6".into(),
+                        String::new(),
+                        digest.clone(),
+                        legacy.clone(),
+                        false,
+                    )],
+                    bin,
+                },
+            )
             .unwrap();
-        std::fs::remove_dir_all(root).unwrap();
+            std::fs::write(&legacy, b"human edit").unwrap();
+            assert_eq!(
+                retire_legacy_commands(&root).err().unwrap().reason,
+                "legacy_command_foreign"
+            );
+            assert_eq!(std::fs::read(&legacy).unwrap(), b"human edit");
+            std::fs::write(&legacy, b"old verified engine").unwrap();
+            let retired = retire_legacy_commands(&root).unwrap();
+            assert!(!legacy.exists());
+            assert_eq!(retired.len(), 1);
+            assert_eq!(file_digest(&retired[0].source).unwrap(), digest);
+            let installed = State::new(&root).read_installed().unwrap();
+            let previous =
+                Generation::read(&State::new(&root), &installed.current_generation).unwrap();
+            previous
+                .verify(&State::new(&root).generation_dir(&installed.current_generation))
+                .unwrap();
+            std::fs::remove_dir_all(root).unwrap();
+        }
     }
 
     #[test]
@@ -722,9 +731,9 @@ mod tests {
         {
             let outside = root.join("outside");
             std::fs::create_dir(&outside).unwrap();
-            std::os::unix::fs::symlink(&outside, bin_dir(&root).join(".internal")).unwrap();
+            std::os::unix::fs::symlink(&outside, bin_dir(&root).join("graphd-engine")).unwrap();
             let sources = [BinSource {
-                name: ".internal/axiom",
+                name: "graphd-engine/axiom",
                 source,
                 sha256: digest,
             }];

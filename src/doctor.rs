@@ -84,6 +84,14 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
         }
     }
 
+    if let Some((code, reason, message)) = integrity_failure {
+        let mut failure = Report::new(code, class_status(code), message).subject("doctor");
+        failure.detail("reason_code", Json::text(&reason));
+        failure.detail("findings", Json::array(findings.clone()));
+        failure.lines(lines);
+        return emit_doctor(failure, &findings, json, verbose);
+    }
+
     // The distribution-owned prerequisite table from the contract's section 7.
     let installed_root =
         state::default_root().filter(|root| State::new(root.clone()).has_installed());
@@ -95,14 +103,6 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
 
     findings.push(engine_finding(&mut lines, &mut worst));
     findings.push(legacy_finding(&mut lines));
-
-    if let Some((code, reason, message)) = integrity_failure {
-        let mut failure = Report::new(code, class_status(code), message).subject("doctor");
-        failure.detail("reason_code", Json::text(&reason));
-        failure.detail("findings", Json::array(findings.clone()));
-        failure.lines(lines);
-        return emit_doctor(failure, &findings, json, verbose);
-    }
 
     if worst != crate::cli::exit::SUCCESS {
         let mut failure = Report::not_ready(
@@ -117,12 +117,15 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
         return emit_doctor(failure, &findings, json, verbose);
     }
 
-    let mut report = Report::ok(
-        "ok",
-        "installation checks passed; project and host setup are not checked",
-    )
-    .subject("doctor");
+    let mut report = Report::ok("ok", "installation checks passed").subject("doctor");
     report.detail("all", Json::bool(all));
+    report.detail(
+        "scope",
+        Json::text("installation only; project graph and AI-host setup are separate"),
+    );
+    lines.push(
+        "Scope: installation; project graph and AI-host setup are separate checks".to_string(),
+    );
     report.detail("findings", Json::array(findings.clone()));
     report.lines(lines);
     emit_doctor(report, &findings, json, verbose)
@@ -187,6 +190,9 @@ fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
                 "engine" => lines.push(
                     "Engine: unavailable. Reinstall Axiom using the install URL.".to_string(),
                 ),
+                "sqlite-driver" => lines.push(format!(
+                    "SQLite: unavailable. {message}. Run axm install to repair the graph engine."
+                )),
                 "python-interpreter" => lines.push(
                     "MCP Python: missing or incompatible. Reinstall Axiom using the install URL."
                         .to_string(),
@@ -197,16 +203,21 @@ fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
                 _ => lines.push(format!("{check}: {message}")),
             }
         } else if status == "unverified" {
-            lines.push(if check == "sqlite-driver" {
-                "Note: bundled SQLite version is unverified (non-blocking).".to_string()
-            } else {
-                format!("Unverified: {check}. {message}")
-            });
+            lines.push(format!("Not checked: {check}. {message}"));
         } else if status == "warn" {
             lines.push(
                 "Warning: an older install, PATH conflict or leftover AXIOM_* setting was found."
                     .to_string(),
             );
+        } else if status == "ok" && matches!(check, "sqlite-driver" | "python-interpreter") {
+            lines.push(format!(
+                "{}: OK",
+                if check == "sqlite-driver" {
+                    "SQLite"
+                } else {
+                    "MCP runtime"
+                }
+            ));
         } else if check == "installed_release" {
             if row
                 .get("journal_entries")
@@ -227,7 +238,6 @@ fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
             }
         }
     }
-    lines.push("Project and AI-host setup: not checked.".to_string());
     lines.push("Details: axm doctor --verbose".to_string());
     lines
 }
@@ -363,12 +373,7 @@ fn host_finding(lines: &mut Vec<String>) -> Json {
             match target::tier(value) {
                 Some(tier) => {
                     pairs.push(("tier", Json::text(tier.name())));
-                    lines.push(format!(
-                        "target: {} tier={} evidence_target={}",
-                        value,
-                        tier.name(),
-                        target::evidence_target_for(value)
-                    ));
+                    lines.push(format!("Platform: {value}"));
                 }
                 None => lines.push(format!("target: {value} (no tier recorded)")),
             }
@@ -396,6 +401,67 @@ fn inspect_installed(
         Generation::read(state, &installed.current_generation).map_err(classify_refusal)?;
     let directory = state.generation_dir(&generation.generation_id);
     generation.verify(&directory).map_err(classify_refusal)?;
+
+    for entry in &generation.entries {
+        if let Some(name) = entry.component.strip_prefix("bin/") {
+            let relative = std::path::Path::new(name);
+            if relative
+                .components()
+                .any(|c| !matches!(c, std::path::Component::Normal(_)))
+            {
+                return Err(classify_refusal(Refusal::validation(
+                    "installed_bin_path_invalid",
+                    "installed executable path is invalid",
+                )));
+            }
+            let path = state
+                .root()
+                .join("bin")
+                .join(crate::layout::program_file(name));
+            let mut ancestor = path.as_path();
+            while ancestor != state.root() {
+                if ancestor.is_symlink() {
+                    return Err(classify_refusal(Refusal::validation(
+                        "installed_bin_linked",
+                        "installed executable path is linked",
+                    )));
+                }
+                ancestor = ancestor.parent().unwrap_or(state.root());
+            }
+            crate::update::sha256::file_hex(&path)
+                .map_err(|e| {
+                    classify_refusal(Refusal::io(
+                        "installed_bin_missing",
+                        &path.display().to_string(),
+                        &e,
+                    ))
+                })
+                .and_then(|digest| {
+                    if digest == entry.artifact_sha256 {
+                        Ok(())
+                    } else {
+                        Err(classify_refusal(Refusal::validation(
+                            "installed_bin_changed",
+                            "installed executable digest changed; run axm install to repair",
+                        )))
+                    }
+                })?;
+        }
+    }
+
+    if loaded.manifest.component("skills").is_some() {
+        let skills = crate::version::installed_skills_block(state.root(), &loaded.manifest)
+            .map_err(classify_refusal)?;
+        if skills.get("manifest_verified").and_then(Json::as_bool) != Some(true) {
+            return Err(classify_refusal(Refusal::not_ready(
+                "skills_missing",
+                "skills bundle is missing; run axm install",
+            )));
+        }
+        lines.push(
+            "Skills: installed manifest verified (host plugin discovery is separate)".to_string(),
+        );
+    }
 
     lines.push(format!(
         "installed release: channel={} generation={} components={}",
@@ -468,96 +534,64 @@ fn journal_entries(state: &State) -> Vec<String> {
 
 /// Evaluate the distribution contract's section 7 dependency table.
 fn prerequisites(all: bool, installed: Option<&std::path::Path>) -> (Json, Vec<String>, i32) {
-    let mut lines = vec!["prerequisites (distribution contract section 7):".to_string()];
+    let mut lines = vec!["Runtime checks:".to_string()];
     let mut items: Vec<Json> = Vec::new();
     let mut worst = crate::cli::exit::SUCCESS;
 
-    // Rust toolchain - needed to *build* the core release and axiom-cli. Section 7 forbids
-    // requiring a compiler at install time, so for an installed release it is informational.
-    let rust = probe_rust();
-    if installed.is_some() {
-        lines.push(format!(
-            "  rust toolchain: not required by an installed release (build-time only; observed: {})",
-            rust.summary
-        ));
-        items.push(finding(
-            "rust-toolchain",
-            "ok",
-            "build-time prerequisite; installed binaries need no compiler",
-            vec![
-                ("mandatory", Json::bool(false)),
-                ("observed", Json::text(&rust.summary)),
-            ],
-        ));
-    } else {
-        lines.push(format!("  rust toolchain: {}", rust.summary));
-        if !rust.satisfied {
-            worst = worst.max(crate::cli::exit::NOT_READY);
-        }
-        items.push(rust.to_json("rust-toolchain", true));
-    }
+    lines.push("  Rust: not required (prebuilt installation)".to_string());
+    items.push(finding(
+        "rust-toolchain",
+        "ok",
+        "build-time only; no compiler required",
+        vec![("mandatory", Json::bool(false))],
+    ));
 
     // Python interpreter - needed by axiom-mcp. An installed release carries its own provisioned,
     // digest-checked runtime, which satisfies section 7 ("provision an approved runtime").
-    let provisioned = installed.and_then(|root| {
-        [
-            "mcp-runtime/current.json",
-            "mcp-runtime/mcp-runtime/current.json",
-        ]
-        .iter()
-        .map(|rel| root.join(rel))
-        .find(|path| path.is_file())
-    });
-    if let Some(pointer) = provisioned {
-        lines.push(format!(
-            "  python interpreter: provisioned MCP runtime ({})",
-            pointer.display()
-        ));
+    if let Some(root) = installed {
+        let result = crate::lifecycle::provisioned_mcp_runtime_bin(root).and_then(|bin| {
+            let bin = bin.ok_or_else(|| Refusal::not_ready("mcp_runtime_missing", "provisioned MCP runtime is missing"))?;
+            let python = bin.join(if cfg!(windows) { "python.exe" } else { "python" });
+            let output = std::process::Command::new(&python)
+                .args(["-I", "-c", "import axiom_mcp.command; import axiom_mcp.stdio; print('ready')"])
+                .output().map_err(|e| Refusal::io("mcp_runtime_unlaunchable", "MCP Python", &e))?;
+            if !output.status.success() || String::from_utf8_lossy(&output.stdout).trim() != "ready" {
+                return Err(Refusal::not_ready("mcp_runtime_import_failed", "MCP runtime could not import its command and server modules; run axm install to repair"));
+            }
+            Ok(python)
+        });
+        let (status, message) = match result {
+            Ok(path) => (
+                "ok",
+                format!("verified runtime imports passed ({})", path.display()),
+            ),
+            Err(error) => {
+                worst = crate::cli::exit::NOT_READY;
+                ("fail", error.message)
+            }
+        };
+        lines.push(format!("  MCP runtime: {message}"));
         items.push(finding(
             "python-interpreter",
-            "ok",
-            "satisfied by the installed, provisioned MCP runtime",
-            vec![
-                ("mandatory", Json::bool(true)),
-                ("satisfied", Json::bool(true)),
-                ("source", Json::text(&pointer.display().to_string())),
-            ],
+            status,
+            &message,
+            vec![("mandatory", Json::bool(true))],
         ));
     } else {
         let python = probe_python();
-        lines.push(format!("  python interpreter: {}", python.summary));
+        lines.push(format!("  Python: {}", python.summary));
         if !python.satisfied {
-            worst = worst.max(crate::cli::exit::NOT_READY);
+            worst = crate::cli::exit::NOT_READY;
         }
         items.push(python.to_json("python-interpreter", true));
     }
 
-    // SQLite driver - bundled or explicitly declared by the engine's owner manifest.
-    //
-    // The contract's section 7 requires every prerequisite to name the manifest or document that
-    // proves its version, and forbids guessing one. Neither the engine's published surface nor the
-    // channel manifest declares a SQLite driver today, so the honest state is `unverified` (recorded
-    // as undeclared), never `ok`: merely locating a binary named `axiom-graphd` proves nothing about
-    // the driver it bundles. ADR-0033 / spec L goal: a remaining `unverified` item is non-blocking
-    // and attributed to the component that owns its declaration.
-    lines.push(
-        "  sqlite driver: unverified (non-blocking): no owner manifest declares the bundled SQLite driver version"
-            .to_string(),
-    );
-    items.push(finding(
-        "sqlite-driver",
-        "unverified",
-        "no owner manifest or document declares the SQLite driver version, so it cannot be verified",
-        vec![
-            ("needed_by", Json::text("axiom-graphd, axiom-cli")),
-            ("mandatory", Json::bool(true)),
-            ("satisfied", Json::bool(false)),
-            ("version_source", Json::text("undeclared")),
-            ("blocking", Json::bool(false)),
-            ("owner_component", Json::text("axiom-graphd")),
-            ("observed", Json::text("owner release manifest / update channel declares no SQLite driver")),
-        ],
-    ));
+    let sqlite = sqlite_probe(installed);
+    if !sqlite.satisfied {
+        worst = crate::cli::exit::NOT_READY;
+    }
+    lines.push(format!("  SQLite: {}", sqlite.summary));
+    items.push(sqlite.to_json("sqlite-driver", true));
 
     // The contract declares these explicitly *not* required. Reporting them keeps an operator
     // from installing a runtime the distribution forbids depending on.
@@ -639,50 +673,51 @@ impl Probe {
     }
 }
 
-fn probe_rust() -> Probe {
-    const EXPECTED: &str = "a Rust toolchain matching Cargo.lock (rust-version 1.85)";
-    match run_probe("rustc", &["--version"]) {
-        Some(text) => {
-            let version = text
-                .trim()
-                .strip_prefix("rustc ")
-                .and_then(|rest| rest.split_whitespace().next())
-                .map(str::to_string);
-            match version.as_deref().and_then(parse_major_minor) {
-                Some((major, minor)) if (major, minor) >= (1, 85) => Probe {
-                    satisfied: true,
-                    summary: format!("{} meets rust-version 1.85", text.trim()),
-                    observed: version,
-                    expected: EXPECTED,
-                    detail: None,
-                },
-                Some(_) => Probe {
-                    satisfied: false,
-                    summary: format!("{} is older than the pinned rust-version 1.85", text.trim()),
-                    observed: version,
-                    expected: EXPECTED,
-                    detail: Some(
-                        "install a toolchain that satisfies rust-version 1.85".to_string(),
-                    ),
-                },
-                None => Probe {
-                    satisfied: false,
-                    summary: format!("could not parse a version from `{}`", text.trim()),
-                    observed: version,
-                    expected: EXPECTED,
-                    detail: None,
-                },
-            }
-        }
-        None => Probe {
-            satisfied: false,
-            summary: "no `rustc` was found on PATH".to_string(),
-            observed: None,
-            expected: EXPECTED,
-            detail: Some(
-                "install the pinned Rust toolchain or use a prebuilt release set".to_string(),
-            ),
+fn sqlite_probe(installed: Option<&std::path::Path>) -> Probe {
+    let result = installed
+        .and_then(|root| {
+            ["axge", "axiom-graphd"]
+                .iter()
+                .map(|name| root.join("bin").join(crate::layout::program_file(name)))
+                .find(|path| path.is_file() && !path.is_symlink())
+        })
+        .and_then(|program| {
+            let output = std::process::Command::new(program)
+                .args(["version", "--json"])
+                .output()
+                .ok()?;
+            output.status.success().then_some(output.stdout)
+        })
+        .and_then(|bytes| crate::update::json::parse(&String::from_utf8_lossy(&bytes)).ok());
+    sqlite_report_probe(result.as_ref())
+}
+
+fn sqlite_report_probe(report: Option<&Json>) -> Probe {
+    let observed = report
+        .and_then(|r| r.get("sqlite_version"))
+        .and_then(Json::as_text)
+        .filter(|v| !v.trim().is_empty() && *v != "unavailable")
+        .map(str::to_string);
+    // Earlier released engines actually opened SQLite to obtain sqlite_version(). Their
+    // numeric WAL verdict is not a readiness gate; new engines additionally exercise SQL.
+    let available = report
+        .and_then(|r| r.get("sqlite_available"))
+        .and_then(Json::as_bool)
+        .unwrap_or(observed.is_some());
+    Probe {
+        satisfied: available,
+        summary: if available {
+            format!(
+                "connection/query passed (observed version {})",
+                observed.as_deref().unwrap_or("unavailable")
+            )
+        } else {
+            "graph engine SQLite connection/query unavailable; run axm install to repair"
+                .to_string()
         },
+        observed,
+        expected: "usable engine-linked SQLite driver; version informational",
+        detail: None,
     }
 }
 
@@ -855,7 +890,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn compact_success_keeps_unverified_checks_visible_without_internal_paths() {
+    fn compact_success_names_actual_sqlite_check_without_internal_paths() {
         let findings = vec![
             finding(
                 "installed_release",
@@ -869,20 +904,35 @@ mod tests {
                 "checked",
                 vec![(
                     "items",
-                    Json::array(vec![finding(
-                        "sqlite-driver",
-                        "unverified",
-                        "unknown",
-                        vec![],
-                    )]),
+                    Json::array(vec![finding("sqlite-driver", "ok", "query passed", vec![])]),
                 )],
             ),
         ];
         let lines = summary_lines(&findings, 0);
         assert_eq!(lines[0], "Axiom installation: OK");
-        assert!(lines.iter().any(|line| line.contains("non-blocking")));
-        assert!(lines.iter().any(|line| line.contains("not checked")));
+        assert!(lines.iter().any(|line| line == "SQLite: OK"));
+        assert!(!lines
+            .iter()
+            .any(|line| line.contains("unverified") || line.contains("not checked")));
         assert!(lines.len() <= 5);
+    }
+
+    #[test]
+    fn sqlite_availability_is_independent_of_version_and_old_wal_verdict() {
+        for version in ["3.1.0", "3.51.3", "99.0.0"] {
+            let report = Json::from_pairs(vec![
+                ("sqlite_version", Json::text(version)),
+                ("sqlite_wal_supported", Json::bool(false)),
+            ]);
+            assert!(sqlite_report_probe(Some(&report)).satisfied);
+        }
+        let unavailable = Json::from_pairs(vec![
+            ("sqlite_version", Json::text("3.99.0")),
+            ("sqlite_available", Json::bool(false)),
+        ]);
+        assert!(!sqlite_report_probe(Some(&unavailable)).satisfied);
+        assert!(!sqlite_report_probe(None).satisfied);
+        assert!(!sqlite_report_probe(Some(&Json::from_pairs(vec![]))).satisfied);
     }
 
     #[test]

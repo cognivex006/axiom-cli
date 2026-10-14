@@ -90,7 +90,7 @@ envelope. What remains is the engine handoff:
 
 - `install --apply`: assembles the engine bundle, provisions the release's MCP runtime,
   delegates placement to the engine (`install plan --bundle` / `install apply`), then places
-  `axm`, `axsk`, `axge` and `axmp` in `<root>/bin`, with the private installation engine in `<root>/bin/.internal` and writes `installed.json` last. Refusals:
+  `axm`, `axsk`, `axge` and `axmp` in `<root>/bin`, with the private installation engine in `<root>/bin/graphd-engine` and writes `installed.json` last. Refusals:
   `3` `engine_not_found` when no engine binary is present (nothing placed), `6`
   `install_root_foreign` for a nonempty root holding non-Axiom entries, `2` `artifact_unverified:*`
   for a tampered artifact (before any placement), and the engine's own code when it refuses.

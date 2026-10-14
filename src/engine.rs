@@ -169,13 +169,19 @@ pub fn locate() -> Located {
     }
 
     if let Some(directory) = executable_directory() {
-        let private = directory
-            .join(".internal")
-            .join(crate::layout::program_file(ENGINE_PROGRAM));
-        if is_executable_file(&private) {
-            return Located::Found(Engine {
-                program: private,
-                source: "private_runtime",
+        for folder in ["graphd-engine", ".internal"] {
+            let private = directory
+                .join(folder)
+                .join(crate::layout::program_file(ENGINE_PROGRAM));
+            if is_executable_file(&private) {
+                return Located::Found(Engine {
+                    program: private,
+                    source: "private_runtime",
+                });
+            }
+            searched.push(Searched {
+                description: "private graph engine runtime".to_string(),
+                path: private.display().to_string(),
             });
         }
         for name in program_names() {

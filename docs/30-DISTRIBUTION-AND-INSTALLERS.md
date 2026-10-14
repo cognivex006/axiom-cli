@@ -4,7 +4,7 @@ For installation commands, start with [Installing Axiom](INSTALL.md). This guide
 
 ## Components and ownership
 
-`axm` and `axiom-cli` are two entrypoints for the same installation manager. The release also contains `axiom` (the graph engine's operations CLI), `axiom-graphd` (the daemon), MCP and a portable skills bundle. `axiom` is a separate program, not an extra alias of `axm`.
+The public commands are `axm` (installation manager), `axsk` (skills manager), `axge` (graph engine) and `axmp` (MCP gateway). The release also contains a portable skills bundle. The private installation engine lives in `<root>/bin/graphd-engine/`; raw component names in release archives are package identities, not additional installed commands.
 
 The distribution verifies inputs, presents the plan, provisions the MCP runtime and records the installed release. The graph engine owns ecosystem placement, activation, service lifecycle and removal. Calls use program and argv rather than an interpolated shell command.
 
@@ -22,7 +22,7 @@ Generation is deterministic: the same tag and checksum input produce the same sc
 
 From an extracted release, `axm install --dry-run` discovers the adjacent `channel.json`, verifies the artifact lengths and hashes and reports the plan. The interactive command asks `Proceed? [Y/n]`; `--yes` approves that printed plan. Automation can use `--apply --approve-digest <sha256>`.
 
-Installation refuses a foreign nonempty root or missing required engine input, provisions the release's hash-bound MCP runtime, assembles the skills bundle and asks the engine to plan and apply placement. It places the CLI and core binaries in `<root>/bin`, retains generation payloads and writes `installed.json` atomically after activation. A crash before the final record may require retry or recovery; it is not proof of a successful install.
+Installation refuses a foreign nonempty root or missing required engine input, provisions the release's hash-bound MCP runtime, assembles the skills bundle and asks the engine to plan and apply placement. It places the four public commands in `<root>/bin` and the private engine under `<root>/bin/graphd-engine/`, retains generation payloads and writes `installed.json` atomically after activation. A crash before the final record may require retry or recovery; it is not proof of a successful install.
 
 | Platform | Default root |
 |---|---|

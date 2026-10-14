@@ -10,6 +10,9 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Make doctor report actual SQLite and MCP runtime readiness with concise results and actionable repair steps. SQLite version numbers are informational; verbose mode keeps paths and scope without parser trace noise.
+- Place the private installation engine in `bin/graphd-engine/`. Install and update migrate verified older layouts while retaining owned rollback files and protecting modified or foreign files.
+
 - Install only `axm`, `axsk`, `axge` and `axmp` on PATH. Keep installation helpers private and migrate only unchanged, recorded legacy executables; preserve verified rollback payloads.
 
 - Show four component/command/version rows in `axm version`; remove the redundant installed summary, legacy command labels, channel hint and success footer.
