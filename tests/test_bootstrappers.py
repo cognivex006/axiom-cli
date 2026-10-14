@@ -220,7 +220,7 @@ class UpdateShBehaviourTests(unittest.TestCase):
         self.assertIn("current-root update --yes", result.stdout)
         self.assertNotIn("legacy-root", result.stdout)
 
-    def test_older_command_layout_uses_verified_new_cli_and_preserves_it_on_download_failure(self):
+    def test_older_command_layout_preserves_it_on_bootstrap_refusal(self):
         root = self.home / "data/axiom"
         (root / "bin").mkdir(parents=True)
         record = root / "installed.json"
@@ -232,9 +232,13 @@ class UpdateShBehaviourTests(unittest.TestCase):
         result = self.run_update("--yes")
         self.assertEqual(result.returncode, 1)
         self.assertIn("older command layout", result.stdout)
-        self.assertIn("downloading v1.2.3", result.stdout)
         self.assertNotIn("unexpected legacy updater", result.stdout)
-        self.assertIn("download failed", result.stderr)
+        if sys.platform == "win32":
+            self.assertIn("unsupported platform", result.stderr)
+            self.assertNotIn("downloading v1.2.3", result.stdout)
+        else:
+            self.assertIn("downloading v1.2.3", result.stdout)
+            self.assertIn("download failed", result.stderr)
         self.assertEqual(record.read_text(), "{}")
         self.assertEqual(self.tree(), before)
 

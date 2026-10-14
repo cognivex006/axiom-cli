@@ -60,6 +60,12 @@ def verify(artifacts, lane, output):
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
         env.update(HOME=str(home), USERPROFILE=str(home), XDG_DATA_HOME=str(data), LOCALAPPDATA=str(data),
                    AXIOM_CLI_TEST_USER_ENV_KEY=registry_key)
+        # Bootstrap discovery prefers commands on PATH. Keep it inside this fixture even
+        # when the developer already has a real installation or an earlier CI case ran.
+        names = ("axm", "axiom-cli", "axm.exe", "axiom-cli.exe")
+        entries = [entry for entry in env.get("PATH", "").split(os.pathsep)
+                   if entry and not any((Path(entry) / name).is_file() for name in names)]
+        env["PATH"] = os.pathsep.join([str(root / "bin"), *entries])
         if suffix and os.environ.get("GITHUB_ACTIONS") == "true":
             env["AXIOM_CLI_TEST_ALLOW_ELEVATED"] = "1"
 
@@ -110,7 +116,7 @@ def verify(artifacts, lane, output):
             axm = root / "bin" / ("axm" + suffix)
             version = run("current component versions", [axm, "version"]).stdout
             if version.count(VERSION) != 4:
-                raise ValueError("the four installed components must report the new version")
+                raise ValueError("the four installed components must report the new version: " + version)
             run("doctor after upgrade", [axm, "doctor"])
             if not (root / "bin/graphd-engine" / ("axiom" + suffix)).is_file():
                 raise ValueError("named engine runtime missing")
