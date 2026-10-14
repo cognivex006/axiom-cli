@@ -54,9 +54,9 @@ pub fn plan_line(block: &Json) -> String {
     let entry = block.get("entry").and_then(Json::as_text).unwrap_or("?");
     let target = block.get("target").and_then(Json::as_text).unwrap_or("?");
     match block.get("action").and_then(Json::as_text) {
-        Some("add") => format!(
-            "PATH: add {entry} to {target} (undo: axm uninstall; skip: --no-modify-path)"
-        ),
+        Some("add") => {
+            format!("PATH: add {entry} to {target} (undo: axm uninstall; skip: --no-modify-path)")
+        }
         Some("already-present") => format!("PATH: {entry} is already on {target}; unchanged"),
         _ => format!(
             "PATH: unchanged (--no-modify-path); run {entry}{}axm directly",
