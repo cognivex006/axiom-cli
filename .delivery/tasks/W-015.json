@@ -1,0 +1,24 @@
+{
+  "task_id": "W-015",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-015-release-019",
+  "source_revision": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+  "local_commit_sha": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+  "verified_remote_branch_sha": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "release_source_revision": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+  "component_version": "0.1.9",
+  "delivery_state": "integrated",
+  "main_integration": "Verified source integrated before immutable release tag",
+  "primary_checkout": ".",
+  "release": "published",
+  "release_url": "https://github.com/orchex006/axiom-cli/releases/tag/v0.1.9",
+  "all_downloaded_checksums_verified": true,
+  "tag_ci": {
+    "conclusion": "success",
+    "headSha": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+    "status": "completed",
+    "url": "https://github.com/orchex006/axiom-cli/actions/runs/38692186699"
+  },
+  "note": "This record identifies the verified immutable release source. Receipt-only follow-up commits do not change product bytes; final metadata branch/main revisions are recorded separately in canonical publication evidence."
+}

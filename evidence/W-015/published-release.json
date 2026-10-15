@@ -1,0 +1,72 @@
+{
+  "repository": "axiom-cli",
+  "version": "0.1.9",
+  "release_id": 413486345,
+  "release_url": "https://github.com/orchex006/axiom-cli/releases/tag/v0.1.9",
+  "source_revision": "e35b6eaf5150ca903528f700f0813add4b441bdb",
+  "tag_verified": true,
+  "latest_verified": true,
+  "all_listed_sha256_verified": true,
+  "assets": {
+    "SOURCE-REVISION.txt": {
+      "sha256": "5e9b564fd89eb28dfd55ef97fcc69c14975e5d2c9a1fb9037b3b7450ce1ebafb",
+      "bytes": 41
+    },
+    "axiom-0.1.9-linux-x64.tar.gz": {
+      "sha256": "b04b747af6d8e211b3ab5d0fde26c73febf18abfa7e475b6d88bf89f57a8fc65",
+      "bytes": 86523797
+    },
+    "axiom-0.1.9-macos-x64.tar.gz": {
+      "sha256": "b74be2931c80dd8baac2e89b1c722cd8d4b72dd2346f50be6a9a1fce3c4051cf",
+      "bytes": 62101525
+    },
+    "axiom-0.1.9-windows-x64.zip": {
+      "sha256": "f844be40f42a6801ab5daa446ce4a75e3c66806c24cc08ac2bb70fadba406730",
+      "bytes": 38028608
+    },
+    "channel.json": {
+      "sha256": "cfbaff5355edb7a6f405d2b03bf91b5f7f4eef162ce532d0e35183c751117a50",
+      "bytes": 1078
+    },
+    "install.ps1": {
+      "sha256": "8129467ea20339a4a8a2c23b065a6cc555d35e5252a963b5d670452b49e50269",
+      "bytes": 5239
+    },
+    "install.sh": {
+      "sha256": "e2f9e0043fb4836753f67aae88e66c1b166bf0a9f07865c2d0991a338c3801f0",
+      "bytes": 4351
+    },
+    "linux-x64-distribution.json": {
+      "sha256": "ebc92b8b5c801b6219df744584ae8f787c26e8982992da9d11c7ae057f216c3d",
+      "bytes": 17418
+    },
+    "linux-x64-native-proof.json": {
+      "sha256": "7a7ce343ba8a25d08be83382feab006b0c53009acf49fc85ce5d259e4151ca11",
+      "bytes": 1508
+    },
+    "macos-x64-distribution.json": {
+      "sha256": "e5025d1afe481908048d6f7e4d4eee4b531227c7d2aa089835496733b2a26dfe",
+      "bytes": 17105
+    },
+    "macos-x64-native-proof.json": {
+      "sha256": "435c19f483c5bec9ecf26a77e7812a6f4868b4089bbe35719e872e909330bc22",
+      "bytes": 1347
+    },
+    "update.ps1": {
+      "sha256": "68af42dd9c5d51d78d507e17ffcd67226b7482d0db4afa6f15a47b2c2acc0e7b",
+      "bytes": 8603
+    },
+    "update.sh": {
+      "sha256": "ea4ea85ee7d37d8e0cbb5c84129b582a746b16c280b720e5ef7753fdcc0cc7b6",
+      "bytes": 6490
+    },
+    "windows-x64-distribution.json": {
+      "sha256": "1cb2a291f7f6466b732f0aff91618947ac2c1cb35a727ab2aebc2ba72eb731c0",
+      "bytes": 18119
+    },
+    "windows-x64-native-proof.json": {
+      "sha256": "b290b76a5237c1303aede097d535db89002776cf3e5fa80a12e0fbb43820fcd2",
+      "bytes": 1508
+    }
+  }
+}
