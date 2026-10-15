@@ -105,7 +105,8 @@ def main():
     hashes_match = all(sums.get(name) == digest for name, digest in hashes.items()) and script_digest == downloaded_sha
     if not hashes_match:
         parser.error("published script/archive/embedded digest disagree with SHA256SUMS; nothing installed")
-    cli = root / "bin/axiom-cli"
+    modern_commands = tuple(map(int, tag[1:].split("."))) >= (0, 1, 7)
+    cli = root / "bin" / ("axm" if modern_commands else "axiom-cli")
     oneliner = ["sh", "-c", f"curl -fsSL {script_url} | sh"]
     steps = []
 
@@ -127,7 +128,10 @@ def main():
     installed = step("published one-liner", oneliner,
                      check=lambda text: f"downloading {tag} ({asset})" in text, prompts=1)
     if installed:
-        step("version", [cli, "version"], check=lambda text: f"installed: {tag[1:]}" in text)
+        step("version", [cli, "version"], check=lambda text: (
+            all(re.search(r"^Axiom\s+" + label + r"\s+" + command + r"\s+" + re.escape(tag[1:]) + r"\s*$", text, re.M)
+                for label, command in (("CLI", "axm"), ("Skills", "axsk"), ("Graph Engine", "axge"), ("MCP", "axmp")))
+            if modern_commands else f"installed: {tag[1:]}" in text))
         step("doctor exit 0", [cli, "doctor"])
         step("update", [cli, "update"], check=lambda text: "up to date" in text)
         removed = step("uninstall", [cli, "uninstall"], prompts=1)

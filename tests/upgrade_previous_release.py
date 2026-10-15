@@ -17,7 +17,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / "VERSION").read_text().strip()
-PREVIOUS = "0.1.6"
+PREVIOUS = "0.1.7"
 
 
 def load(name, path):
@@ -31,7 +31,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify(artifacts, lane, output):
+def verify(artifacts, lane, output, previous_version=PREVIOUS):
     extension = "zip" if lane == "windows-x64" else "tar.gz"
     suffix = ".exe" if lane == "windows-x64" else ""
     current = artifacts / f"axiom-{VERSION}-{lane}.{extension}"
@@ -47,8 +47,8 @@ def verify(artifacts, lane, output):
         home.mkdir()
         data = home / "data"
         root = data / ("Axiom" if suffix else "axiom")
-        old_name = f"axiom-{PREVIOUS}-{lane}.{extension}"
-        base = f"https://github.com/orchex006/axiom-cli/releases/download/v{PREVIOUS}"
+        old_name = f"axiom-{previous_version}-{lane}.{extension}"
+        base = f"https://github.com/orchex006/axiom-cli/releases/download/v{previous_version}"
         sums = urllib.request.urlopen(base + "/SHA256SUMS", timeout=90).read().decode()
         expected = next(line.split("  ", 1)[0] for line in sums.splitlines() if line.split("  ", 1)[-1] == old_name)
         old_archive = work / old_name
@@ -84,6 +84,12 @@ def verify(artifacts, lane, output):
         original = json.loads(record_path.read_text())
         generation = original["current_generation"]
         original_manifest = (root / "recorded-manifest.json").read_bytes()
+        command_paths = {name: root / "bin" / (name + suffix)
+                         for name in ("axm", "axiom-cli", "axsk", "axge", "axmp")}
+        original_commands = {name: sha(path) if path.is_file() else None
+                             for name, path in command_paths.items()}
+        old_command = next(command_paths[name] for name in ("axm", "axiom-cli")
+                           if original_commands[name] is not None)
         served = work / "server"
         tag_root = served / ("v" + VERSION)
         tag_root.mkdir(parents=True)
@@ -125,11 +131,11 @@ def verify(artifacts, lane, output):
             run("rollback to previous release", [axm, "update", "rollback", "--transaction", "previous"])
             if record_path.read_bytes() != before or (root / "recorded-manifest.json").read_bytes() != original_manifest:
                 raise ValueError("rollback did not restore the exact previous records")
-            old_command = root / "bin" / ("axiom-cli" + suffix)
             run("previous release executable restored", [old_command, "version", "--json"])
-            for name in ("axsk", "axge", "axmp"):
-                if (root / "bin" / (name + suffix)).exists():
-                    raise ValueError("new public command remained after rollback: " + name)
+            for name, path in command_paths.items():
+                restored = sha(path) if path.is_file() else None
+                if restored != original_commands[name]:
+                    raise ValueError("previous command bytes or absence not restored: " + name)
             if sentinel.read_text() != "user project data":
                 raise ValueError("user data changed")
         finally:
@@ -141,7 +147,7 @@ def verify(artifacts, lane, output):
                 except FileNotFoundError:
                     pass
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps({"platform": lane, "previous_version": PREVIOUS, "version": VERSION,
+    output.write_text(json.dumps({"platform": lane, "previous_version": previous_version, "version": VERSION,
                                  "execution": "native", "candidate_sha256": sha(current), "cases": cases,
                                  "passed": True, "scope": "Actual immutable previous release to exact checked candidate, then rollback; isolated user directories and Windows test registry key"}, indent=2) + "\n")
 
@@ -151,5 +157,6 @@ if __name__ == "__main__":
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--platform", required=True, choices=["windows-x64", "linux-x64", "macos-x64"])
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7"])
     args = parser.parse_args()
-    verify(args.artifacts.resolve(), args.platform, args.out.resolve())
+    verify(args.artifacts.resolve(), args.platform, args.out.resolve(), args.previous)

@@ -1,0 +1,64 @@
+[
+  {
+    "id": "docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0
+  },
+  {
+    "id": "delivery-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "tests.test_release_012",
+      "-v"
+    ],
+    "exit_code": 0
+  },
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--check"
+    ],
+    "exit_code": 0
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0
+  },
+  {
+    "id": "rust-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0
+  }
+]

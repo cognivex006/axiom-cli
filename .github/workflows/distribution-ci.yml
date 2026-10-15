@@ -118,7 +118,9 @@ jobs:
         run: python tests/l007_fresh_runner.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/oneliner-${{ matrix.platform }}.json"
       - name: Upgrade actual previous release and verify rollback
         shell: bash
-        run: python tests/upgrade_previous_release.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/previous-upgrade-${{ matrix.platform }}.json"
+        run: |
+          python tests/upgrade_previous_release.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/previous-upgrade-${{ matrix.platform }}.json"
+          python tests/upgrade_previous_release.py --previous 0.1.6 --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/legacy-upgrade-${{ matrix.platform }}.json"
       - name: Native Mac Intel bootstrap options and digest/network refusals
         if: matrix.platform == 'macos-x64'
         shell: bash

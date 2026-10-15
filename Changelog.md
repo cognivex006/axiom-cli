@@ -4,6 +4,24 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.8
+
+### New Features
+
+- Ship two default workflow skills: axge for graph work and axm for ecosystem lifecycle, with focused references and optional legacy packages.
+- Include incremental graph build, instance-wide polling watch and verified selected JSON/HTML export with measured engine-cycle diagnostics.
+
+### Bug Fixes
+
+- Keep graph publications correct after the last source file is removed or recreated, retain the valid graph after malformed saves, and return repository-relative source locations.
+- Verify upgrades and exact rollback from both the previous canonical command layout and the older legacy layout. Check current public command names in the published Mac Intel smoke test.
+
+### Known Limitations
+
+- Analysis covers declarations and containment; complete method call graphs are not claimed. Phase, queue and source observation timings remain unavailable. Project-only builds may leave the full solution catalog pending.
+- Mac ARM and unrun AI host runtime behavior remain unverified.
+
+
 ## 0.1.7
 
 ### New Features
