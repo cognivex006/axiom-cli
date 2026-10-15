@@ -1,0 +1,702 @@
+{
+  "conclusion": "success",
+  "headSha": "8119cf5a59f0f8e92f859563a6f3bc75ea709c97",
+  "jobs": [
+    {
+      "completedAt": "2026-10-15T04:27:07Z",
+      "conclusion": "success",
+      "databaseId": 116246176158,
+      "name": "native (macos-x64)",
+      "startedAt": "2026-10-15T04:24:24Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:24:27Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:24:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:49Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:24:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:51Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:24:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:54Z",
+          "conclusion": "success",
+          "name": "Public documentation and release-note checks",
+          "number": 4,
+          "startedAt": "2026-10-15T04:24:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:35Z",
+          "conclusion": "success",
+          "name": "Required owner Rust checks",
+          "number": 5,
+          "startedAt": "2026-10-15T04:24:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:35Z",
+          "conclusion": "success",
+          "name": "Native runtime regression checks",
+          "number": 6,
+          "startedAt": "2026-10-15T04:26:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:55Z",
+          "conclusion": "success",
+          "name": "Compose current published owner bytes and verify native payload",
+          "number": 7,
+          "startedAt": "2026-10-15T04:26:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:01Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "startedAt": "2026-10-15T04:26:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:01Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 15,
+          "startedAt": "2026-10-15T04:27:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:02Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "startedAt": "2026-10-15T04:27:01Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:03Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-10-15T04:27:02Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246176158"
+    },
+    {
+      "completedAt": "2026-10-15T04:27:02Z",
+      "conclusion": "success",
+      "databaseId": 116246176376,
+      "name": "native (windows-x64)",
+      "startedAt": "2026-10-15T04:24:23Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:24:25Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:24:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:40Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:24:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:40Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:24:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:45Z",
+          "conclusion": "success",
+          "name": "Public documentation and release-note checks",
+          "number": 4,
+          "startedAt": "2026-10-15T04:24:40Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "success",
+          "name": "Required owner Rust checks",
+          "number": 5,
+          "startedAt": "2026-10-15T04:24:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "skipped",
+          "name": "Native runtime regression checks",
+          "number": 6,
+          "startedAt": "2026-10-15T04:25:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:55Z",
+          "conclusion": "success",
+          "name": "Compose current published owner bytes and verify native payload",
+          "number": 7,
+          "startedAt": "2026-10-15T04:25:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:58Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "startedAt": "2026-10-15T04:26:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:26:58Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 15,
+          "startedAt": "2026-10-15T04:26:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:00Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "startedAt": "2026-10-15T04:26:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:00Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-10-15T04:27:00Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246176376"
+    },
+    {
+      "completedAt": "2026-10-15T04:25:39Z",
+      "conclusion": "success",
+      "databaseId": 116246176396,
+      "name": "published one-line install (macos-x64)",
+      "startedAt": "2026-10-15T04:24:24Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:24:28Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:24:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:55Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:24:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:56Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:24:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:33Z",
+          "conclusion": "success",
+          "name": "Published bootstrapper, one confirmation and native lifecycle",
+          "number": 4,
+          "startedAt": "2026-10-15T04:24:56Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:35Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 5,
+          "startedAt": "2026-10-15T04:25:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:35Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 9,
+          "startedAt": "2026-10-15T04:25:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:36Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "startedAt": "2026-10-15T04:25:35Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:36Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "startedAt": "2026-10-15T04:25:36Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246176396"
+    },
+    {
+      "completedAt": "2026-10-15T04:25:45Z",
+      "conclusion": "success",
+      "databaseId": 116246176520,
+      "name": "native (linux-x64)",
+      "startedAt": "2026-10-15T04:24:23Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:24:25Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:24:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:29Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:24:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:30Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:24:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:24:31Z",
+          "conclusion": "success",
+          "name": "Public documentation and release-note checks",
+          "number": 4,
+          "startedAt": "2026-10-15T04:24:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:20Z",
+          "conclusion": "success",
+          "name": "Required owner Rust checks",
+          "number": 5,
+          "startedAt": "2026-10-15T04:24:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:20Z",
+          "conclusion": "success",
+          "name": "Native runtime regression checks",
+          "number": 6,
+          "startedAt": "2026-10-15T04:25:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:41Z",
+          "conclusion": "success",
+          "name": "Compose current published owner bytes and verify native payload",
+          "number": 7,
+          "startedAt": "2026-10-15T04:25:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 8,
+          "startedAt": "2026-10-15T04:25:41Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 15,
+          "startedAt": "2026-10-15T04:25:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 16,
+          "startedAt": "2026-10-15T04:25:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:25:44Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "startedAt": "2026-10-15T04:25:44Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246176520"
+    },
+    {
+      "completedAt": "2026-10-15T04:33:05Z",
+      "conclusion": "success",
+      "databaseId": 116246924261,
+      "name": "one-line install (macos-x64)",
+      "startedAt": "2026-10-15T04:27:11Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:27:13Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:27:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:26Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:27:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:27Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:27:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:32Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@v4",
+          "number": 4,
+          "startedAt": "2026-10-15T04:27:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:33Z",
+          "conclusion": "success",
+          "name": "Bootstrapper generator and update.sh behaviour tests",
+          "number": 5,
+          "startedAt": "2026-10-15T04:27:32Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:38Z",
+          "conclusion": "success",
+          "name": "Documented install and update one-liners, version, doctor, update, uninstall, reinstall",
+          "number": 6,
+          "startedAt": "2026-10-15T04:27:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:00Z",
+          "conclusion": "success",
+          "name": "Upgrade actual previous release and verify rollback",
+          "number": 7,
+          "startedAt": "2026-10-15T04:28:38Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:32:52Z",
+          "conclusion": "success",
+          "name": "Native Mac Intel bootstrap options and digest/network refusals",
+          "number": 8,
+          "startedAt": "2026-10-15T04:31:00Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:32:54Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 9,
+          "startedAt": "2026-10-15T04:32:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:32:55Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 17,
+          "startedAt": "2026-10-15T04:32:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:32:56Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 18,
+          "startedAt": "2026-10-15T04:32:55Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:32:59Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 19,
+          "startedAt": "2026-10-15T04:32:56Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246924261"
+    },
+    {
+      "completedAt": "2026-10-15T04:28:11Z",
+      "conclusion": "success",
+      "databaseId": 116246924277,
+      "name": "one-line install (linux-x64)",
+      "startedAt": "2026-10-15T04:27:09Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:27:13Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:27:10Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:19Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:27:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:19Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:27:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:22Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@v4",
+          "number": 4,
+          "startedAt": "2026-10-15T04:27:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:22Z",
+          "conclusion": "success",
+          "name": "Bootstrapper generator and update.sh behaviour tests",
+          "number": 5,
+          "startedAt": "2026-10-15T04:27:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:36Z",
+          "conclusion": "success",
+          "name": "Documented install and update one-liners, version, doctor, update, uninstall, reinstall",
+          "number": 6,
+          "startedAt": "2026-10-15T04:27:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:08Z",
+          "conclusion": "success",
+          "name": "Upgrade actual previous release and verify rollback",
+          "number": 7,
+          "startedAt": "2026-10-15T04:27:36Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:08Z",
+          "conclusion": "skipped",
+          "name": "Native Mac Intel bootstrap options and digest/network refusals",
+          "number": 8,
+          "startedAt": "2026-10-15T04:28:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:09Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 9,
+          "startedAt": "2026-10-15T04:28:08Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:09Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 17,
+          "startedAt": "2026-10-15T04:28:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:09Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 18,
+          "startedAt": "2026-10-15T04:28:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:28:09Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 19,
+          "startedAt": "2026-10-15T04:28:09Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246924277"
+    },
+    {
+      "completedAt": "2026-10-15T04:31:32Z",
+      "conclusion": "success",
+      "databaseId": 116246924366,
+      "name": "one-line install (windows-x64)",
+      "startedAt": "2026-10-15T04:27:10Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-15T04:27:12Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-15T04:27:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:22Z",
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "startedAt": "2026-10-15T04:27:12Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:22Z",
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "startedAt": "2026-10-15T04:27:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:24Z",
+          "conclusion": "success",
+          "name": "Run actions/download-artifact@v4",
+          "number": 4,
+          "startedAt": "2026-10-15T04:27:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:27:27Z",
+          "conclusion": "success",
+          "name": "Bootstrapper generator and update.sh behaviour tests",
+          "number": 5,
+          "startedAt": "2026-10-15T04:27:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:30:13Z",
+          "conclusion": "success",
+          "name": "Documented install and update one-liners, version, doctor, update, uninstall, reinstall",
+          "number": 6,
+          "startedAt": "2026-10-15T04:27:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:26Z",
+          "conclusion": "success",
+          "name": "Upgrade actual previous release and verify rollback",
+          "number": 7,
+          "startedAt": "2026-10-15T04:30:13Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:26Z",
+          "conclusion": "skipped",
+          "name": "Native Mac Intel bootstrap options and digest/network refusals",
+          "number": 8,
+          "startedAt": "2026-10-15T04:31:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:27Z",
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 9,
+          "startedAt": "2026-10-15T04:31:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:27Z",
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 17,
+          "startedAt": "2026-10-15T04:31:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:31Z",
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 18,
+          "startedAt": "2026-10-15T04:31:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-15T04:31:31Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 19,
+          "startedAt": "2026-10-15T04:31:31Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727/job/116246924366"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727",
+  "redaction": "Temporary script path display labels replaced; job URLs, source, step outcomes retained"
+}

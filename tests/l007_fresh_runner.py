@@ -136,6 +136,10 @@ def main() -> int:
     shutil.rmtree(legacy_root, ignore_errors=True)
     step("reinstall with the same one-liner", oneliner)
     step("doctor after reinstall", [cli, "doctor"])
+    from legacy_cli_store_upgrade import verify as verify_legacy_store
+    legacy_store = verify_legacy_store(args.platform, oneliner, env)
+    steps.extend({"step": "legacy CLI store: " + row["case"], "passed": row["passed"]}
+                 for row in legacy_store["cases"])
     server.shutdown()
     run_url = "{}/{}/actions/runs/{}".format(os.environ.get("GITHUB_SERVER_URL", ""), os.environ.get("GITHUB_REPOSITORY", ""),
                                               os.environ.get("GITHUB_RUN_ID", "local"))
@@ -146,6 +150,7 @@ def main() -> int:
            "host": {"system": host.system(), "release": host.release(), "machine": host.machine()},
            "assets": {p.name: sha(p) for p in sorted((srv / tag).iterdir())},
            "axiom_env_set": sorted(k for k in env if k.upper().startswith("AXIOM")),
+           "legacy_cli_store": legacy_store,
            "steps": steps, "passed": all(s["passed"] for s in steps)}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(doc, indent=2), encoding="utf-8")

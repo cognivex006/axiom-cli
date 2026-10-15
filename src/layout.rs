@@ -147,6 +147,98 @@ pub fn with_public_commands(sources: &mut Vec<BinSource>) {
     sources.retain(|source| !matches!(source.name, "axiom-cli" | "axiom-graphd"));
 }
 
+/// A pre-generation CLI store records ownership in its install manifest instead of installed.json.
+/// Only the old CLI slot can use this fallback; other public files still require a generation.
+fn legacy_cli_store_digest(root: &Path) -> Option<String> {
+    fn linked(path: &Path, root: &Path) -> bool {
+        // Check the selected root and its ownership paths. System aliases above the root
+        // (for example macOS /var -> /private/var) are outside this layout's ownership.
+        path.ancestors()
+            .take_while(|ancestor| ancestor.starts_with(root))
+            .any(|ancestor| {
+                std::fs::symlink_metadata(ancestor).is_ok_and(|metadata| {
+                    #[cfg(windows)]
+                    {
+                        use std::os::windows::fs::MetadataExt;
+                        metadata.file_attributes() & 0x400 != 0
+                    }
+                    #[cfg(not(windows))]
+                    {
+                        metadata.file_type().is_symlink()
+                    }
+                })
+            })
+    }
+    fn recorded_path(value: Option<&Json>, expected: &Path) -> bool {
+        value.and_then(Json::as_text).is_some_and(|value| {
+            if cfg!(windows) {
+                crate::legacy::same_path(Path::new(value), expected)
+            } else {
+                Path::new(value) == expected
+            }
+        })
+    }
+    if State::new(root).has_installed() || !root.join("cli").is_dir() {
+        return None;
+    }
+    let manifest_path = root.join("install-manifest.json");
+    let exe = bin_dir(root).join(program_file("axiom-cli"));
+    if [manifest_path.as_path(), exe.as_path(), &root.join("cli")]
+        .iter()
+        .any(|path| linked(path, root))
+    {
+        return None;
+    }
+    let manifest =
+        crate::update::json::parse(&std::fs::read_to_string(&manifest_path).ok()?).ok()?;
+    let version = manifest.get("release_version")?.as_text()?;
+    if manifest.get("schema_version").and_then(Json::as_int) != Some(1)
+        || manifest.get("document_kind").and_then(Json::as_text)
+            != Some("axiom-cli-install-manifest")
+        || !matches!(version, "0.1.0" | "0.1.2")
+    {
+        return None;
+    }
+    let mut components = manifest
+        .get("components")?
+        .as_array()?
+        .iter()
+        .filter(|item| item.get("component").and_then(Json::as_text) == Some("axiom-cli"));
+    let component = components.next()?;
+    if components.next().is_some()
+        || component.get("installed_version").and_then(Json::as_text) != Some(version)
+        || !recorded_path(component.get("install_root"), root)
+    {
+        return None;
+    }
+    let artifacts = component.get("artifacts")?.as_array()?;
+    if artifacts.len() != 1 {
+        return None;
+    }
+    let artifact = &artifacts[0];
+    let digest = artifact.get("sha256")?.as_text()?;
+    let metadata = std::fs::metadata(&exe).ok()?;
+    if artifact.get("name").and_then(Json::as_text) != Some(program_file("axiom-cli").as_str())
+        || !recorded_path(artifact.get("installed_path"), &exe)
+        || !metadata.is_file()
+        || artifact.get("size_bytes").and_then(Json::as_int) != i64::try_from(metadata.len()).ok()
+        || !rules::is_digest64(digest)
+        || file_digest(&exe).ok()?.as_str() != digest
+    {
+        return None;
+    }
+    let backup = root
+        .join("legacy")
+        .join(format!("cli-store-{version}"))
+        .join(program_file("axiom-cli"));
+    if linked(&backup, root)
+        || (backup.exists() && (!backup.is_file() || file_digest(&backup).ok()?.as_str() != digest))
+    {
+        return None;
+    }
+    Some(digest.to_string())
+}
+
 /// Read unchanged, recorded legacy public files before any installation mutation.
 fn legacy_public_sources(root: &Path) -> Result<Vec<BinSource>, Refusal> {
     let state = State::new(root);
@@ -195,7 +287,12 @@ fn legacy_public_sources(root: &Path) -> Result<Vec<BinSource>, Refusal> {
         let tracked = entries
             .iter()
             .find(|entry| entry.component == format!("bin/{old}"));
-        let expected = tracked.map(|entry| entry.artifact_sha256.as_str());
+        let legacy_digest = (old == "axiom-cli")
+            .then(|| legacy_cli_store_digest(root))
+            .flatten();
+        let expected = tracked
+            .map(|entry| entry.artifact_sha256.as_str())
+            .or(legacy_digest.as_deref());
         if path.is_symlink() || !path.is_file() || Some(file_digest(&path)?.as_str()) != expected {
             return Err(Refusal::conflict("legacy_command_foreign", format!("{} is unowned, linked or modified; move it aside before running axm install; nothing was changed", path.display())));
         }
@@ -651,6 +748,185 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    fn cli_store_fixture(root: &Path, version: &str) -> Json {
+        std::fs::create_dir_all(bin_dir(root)).unwrap();
+        std::fs::create_dir(root.join("cli")).unwrap();
+        let exe = bin_dir(root).join(program_file("axiom-cli"));
+        std::fs::write(&exe, b"recorded legacy CLI").unwrap();
+        let artifact = Json::from_pairs(vec![
+            ("name", Json::text(&program_file("axiom-cli"))),
+            ("installed_path", Json::text(&exe.display().to_string())),
+            ("size_bytes", Json::int(19)),
+            ("sha256", Json::text(&file_digest(&exe).unwrap())),
+        ]);
+        let component = Json::from_pairs(vec![
+            ("component", Json::text("axiom-cli")),
+            ("installed_version", Json::text(version)),
+            ("install_root", Json::text(&root.display().to_string())),
+            ("artifacts", Json::array(vec![artifact])),
+        ]);
+        let manifest = Json::from_pairs(vec![
+            ("schema_version", Json::int(1)),
+            ("document_kind", Json::text("axiom-cli-install-manifest")),
+            ("release_version", Json::text(version)),
+            ("components", Json::array(vec![component])),
+        ]);
+        std::fs::write(
+            root.join("install-manifest.json"),
+            crate::update::json::canonical_bytes(&manifest),
+        )
+        .unwrap();
+        manifest
+    }
+
+    #[test]
+    fn legacy_cli_store_manifest_owns_the_unchanged_executable() {
+        for version in ["0.1.0", "0.1.2"] {
+            let root = temp(&format!("cli-store-{version}"));
+            cli_store_fixture(&root, version);
+            let exe = bin_dir(&root).join(program_file("axiom-cli"));
+            let digest = file_digest(&exe).unwrap();
+            let before = std::fs::read(root.join("install-manifest.json")).unwrap();
+            public_command_conflict(&root, &[]).unwrap();
+            assert!(exe.is_file(), "preflight must be read only");
+            let layout = crate::legacy::classify(&root).unwrap();
+            let backup = crate::legacy::backup_cli_store(&layout).unwrap().unwrap();
+            let retired = retire_legacy_commands(&root).unwrap();
+            assert_eq!(retired.len(), 1);
+            assert_eq!(file_digest(&retired[0].source).unwrap(), digest);
+            assert_eq!(file_digest(&backup).unwrap(), digest);
+            assert!(!exe.exists());
+            assert!(root.join("cli").is_dir());
+            assert_eq!(
+                std::fs::read(root.join("install-manifest.json")).unwrap(),
+                before
+            );
+            std::fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn legacy_cli_store_refuses_invalid_ownership_without_changes() {
+        for case in [
+            "bytes",
+            "digest",
+            "size",
+            "path",
+            "root",
+            "version",
+            "schema",
+            "kind",
+            "missing",
+            "duplicate",
+            "backup",
+            "foreign-command",
+        ] {
+            let root = temp(&format!("cli-store-refusal-{case}"));
+            let mut manifest = cli_store_fixture(&root, "0.1.2");
+            let exe = bin_dir(&root).join(program_file("axiom-cli"));
+            let mut component = manifest.get("components").unwrap().as_array().unwrap()[0].clone();
+            let mut artifact = component.get("artifacts").unwrap().as_array().unwrap()[0].clone();
+            match case {
+                "bytes" => std::fs::write(&exe, b"edited___legacy CLI").unwrap(),
+                "digest" => artifact.set("sha256", Json::text(&"0".repeat(64))).unwrap(),
+                "size" => artifact.set("size_bytes", Json::int(20)).unwrap(),
+                "path" => artifact
+                    .set("installed_path", Json::text("elsewhere/axiom-cli"))
+                    .unwrap(),
+                "root" => component
+                    .set("install_root", Json::text("elsewhere"))
+                    .unwrap(),
+                "version" => manifest
+                    .set("release_version", Json::text("9.9.9"))
+                    .unwrap(),
+                "schema" => manifest.set("schema_version", Json::int(2)).unwrap(),
+                "kind" => manifest
+                    .set("document_kind", Json::text("unowned"))
+                    .unwrap(),
+                "backup" => {
+                    let backup = root
+                        .join("legacy/cli-store-0.1.2")
+                        .join(program_file("axiom-cli"));
+                    std::fs::create_dir_all(backup.parent().unwrap()).unwrap();
+                    std::fs::write(backup, b"user backup").unwrap();
+                }
+                "foreign-command" => std::fs::write(
+                    bin_dir(&root).join(program_file("axiom")),
+                    b"unowned engine",
+                )
+                .unwrap(),
+                "missing" | "duplicate" => (),
+                _ => unreachable!(),
+            }
+            component
+                .set("artifacts", Json::array(vec![artifact]))
+                .unwrap();
+            manifest
+                .set(
+                    "components",
+                    Json::array(match case {
+                        "missing" => vec![],
+                        "duplicate" => vec![component.clone(), component],
+                        _ => vec![component],
+                    }),
+                )
+                .unwrap();
+            let path = root.join("install-manifest.json");
+            std::fs::write(&path, crate::update::json::canonical_bytes(&manifest)).unwrap();
+            let before = std::fs::read(&exe).unwrap();
+            let manifest_before = std::fs::read(&path).unwrap();
+            assert_eq!(
+                public_command_conflict(&root, &[]).unwrap_err().reason,
+                "legacy_command_foreign",
+                "{case}"
+            );
+            assert_eq!(std::fs::read(&exe).unwrap(), before, "{case}");
+            assert_eq!(std::fs::read(path).unwrap(), manifest_before, "{case}");
+            assert!(!root.join("installed.json").exists());
+            assert!(!bin_dir(&root).join(".internal").exists());
+            std::fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn legacy_cli_store_refuses_linked_ownership_inputs() {
+        for name in ["install-manifest.json", "cli", "bin", "legacy", "root"] {
+            let root = temp(&format!("cli-store-link-{name}"));
+            cli_store_fixture(&root, "0.1.2");
+            let path = if name == "root" {
+                root.clone()
+            } else {
+                root.join(name)
+            };
+            let original = root.with_extension(format!("original-{name}"));
+            if name == "legacy" {
+                std::fs::create_dir(&path).unwrap();
+            }
+            std::fs::rename(&path, &original).unwrap();
+            std::os::unix::fs::symlink(&original, &path).unwrap();
+            assert_eq!(
+                public_command_conflict(&root, &[]).unwrap_err().reason,
+                if name == "bin" {
+                    "bin_path_link"
+                } else {
+                    "legacy_command_foreign"
+                }
+            );
+            std::fs::remove_file(path).unwrap();
+            if name == "root" {
+                std::fs::remove_dir_all(original).unwrap();
+            } else {
+                if original.is_dir() {
+                    std::fs::remove_dir_all(original).unwrap();
+                } else {
+                    std::fs::remove_file(original).unwrap();
+                }
+                std::fs::remove_dir_all(root).unwrap();
+            }
+        }
     }
 
     #[test]

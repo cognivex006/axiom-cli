@@ -4,6 +4,13 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.9
+
+### Bug Fixes
+
+- Restore adoption of unchanged 0.1.0 and 0.1.2 CLI stores by checking their original install manifest. Preserve the old executable and metadata, and refuse modified files or conflicting backups.
+- Verify adoption through the native one-line installer using published 0.1.2 CLI bytes and a legacy store fixture. Check updates and exact rollback from 0.1.8.
+
 ## 0.1.8
 
 ### New Features

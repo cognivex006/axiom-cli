@@ -1,0 +1,30 @@
+[
+  {
+    "id": "format",
+    "command": "cargo fmt --all -- --check",
+    "exit_code": 0,
+    "log": "format.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  },
+  {
+    "id": "clippy",
+    "command": "cargo clippy --locked --all-targets -- -D warnings",
+    "exit_code": 0,
+    "log": "clippy.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  },
+  {
+    "id": "rust-tests",
+    "command": "cargo test --locked",
+    "exit_code": 0,
+    "log": "rust-tests.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  },
+  {
+    "id": "build",
+    "command": "cargo build --locked --release",
+    "exit_code": 0,
+    "log": "build.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  }
+]

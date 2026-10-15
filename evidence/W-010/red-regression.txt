@@ -1,0 +1,24 @@
+Command: cargo test --locked legacy_cli_store_manifest_owns_the_unchanged_executable
+Expected pre-fix failure; exit code 1. Machine-local path prefixes redacted.
+Compiling axiom-cli v0.1.8 (<cli-checkout>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.99s
+     Running unittests src\main.rs (target\debug\deps\axiom_cli-d13203f20607d4c5.exe)
+
+running 1 test
+test layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable ... FAILED
+
+failures:
+
+---- layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable stdout ----
+
+thread 'layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable' (4252) panicked at src\layout.rs:691:49:
+called `Result::unwrap()` on an `Err` value: Refusal { class: Conflict, reason: "legacy_command_foreign", message: "<temp>\\axiom-layout-cli-store-0.1.0-21960\\bin\\axiom-cli.exe is unowned, linked or modified; move it aside before running axm install; nothing was changed" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 120 filtered out; finished in 0.03s
+
+error: test failed, to rerun pass `--bin axiom-cli`

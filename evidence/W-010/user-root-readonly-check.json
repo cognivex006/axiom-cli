@@ -1,0 +1,12 @@
+{
+  "read_only": true,
+  "legacy_version": "0.1.2",
+  "original_executable_matches_recorded_sha256": true,
+  "root_entries": [
+    "bin",
+    "cli",
+    "install-manifest.json"
+  ],
+  "new_installed_record_present": false,
+  "note": "No real installed root mutation was performed. Personal paths and raw manifest are excluded."
+}

@@ -1514,6 +1514,73 @@ fn install_yes_applies_the_printed_plan_and_announces_the_path_change() {
 }
 
 #[test]
+fn install_adopts_a_manifest_owned_legacy_cli_store() {
+    let fx = Fixture::new("install-legacy-manifest", Mode::Present);
+    fx.seed_engine_release();
+    let Some(engine) = shell_engine(&fx.dir, "engine", &engine_accepting_body()) else {
+        return;
+    };
+    let name = if cfg!(windows) {
+        "axiom-cli.exe"
+    } else {
+        "axiom-cli"
+    };
+    let bin = fx.root.join("bin");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::create_dir(fx.root.join("cli")).unwrap();
+    let old = b"owned old CLI";
+    let exe = bin.join(name);
+    std::fs::write(&exe, old).unwrap();
+    std::fs::write(fx.root.join("cli/state.json"), b"legacy state retained").unwrap();
+    let root_path = fx.root.display().to_string().replace('\\', "/");
+    let exe_path = exe.display().to_string().replace('\\', "/");
+    let manifest = format!(
+        "{{\"schema_version\":1,\"document_kind\":\"axiom-cli-install-manifest\",\"release_version\":\"0.1.2\",\
+         \"components\":[{{\"component\":\"axiom-cli\",\"installed_version\":\"0.1.2\",\
+         \"install_root\":\"{root_path}\",\"artifacts\":[{{\"name\":\"{name}\",\
+         \"installed_path\":\"{exe_path}\",\"size_bytes\":{},\"sha256\":\"{}\"}}]}}]}}",
+        old.len(), sha256::hex(old)
+    );
+    std::fs::write(fx.root.join("install-manifest.json"), &manifest).unwrap();
+    let out = Run::new(&fx.root).with_engine(&engine).out(&[
+        "install",
+        "--yes",
+        "--no-modify-path",
+        "--from",
+        fx.release.to_str().unwrap(),
+        "--json",
+    ]);
+    assert_eq!(
+        out.code, SUCCESS,
+        "stdout={} stderr={}",
+        out.stdout, out.stderr
+    );
+    assert!(fx.root.join("installed.json").is_file());
+    assert_eq!(
+        std::fs::read(fx.root.join("legacy/cli-store-0.1.2").join(name)).unwrap(),
+        old
+    );
+    assert_eq!(
+        std::fs::read(bin.join(".internal").join(if cfg!(windows) {
+            "retired-axiom-cli.exe"
+        } else {
+            "retired-axiom-cli"
+        }))
+        .unwrap(),
+        old
+    );
+    assert!(!exe.exists());
+    assert_eq!(
+        std::fs::read_to_string(fx.root.join("install-manifest.json")).unwrap(),
+        manifest
+    );
+    assert_eq!(
+        std::fs::read(fx.root.join("cli/state.json")).unwrap(),
+        b"legacy state retained"
+    );
+}
+
+#[test]
 fn install_yes_with_no_modify_path_leaves_the_path_alone() {
     let fx = Fixture::new("install-yes-no-path", Mode::Present);
     fx.seed_engine_release();

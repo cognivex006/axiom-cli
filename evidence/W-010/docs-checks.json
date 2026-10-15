@@ -1,0 +1,16 @@
+[
+  {
+    "id": "public-docs",
+    "command": "python release/check_public_docs.py",
+    "exit_code": 0,
+    "log": "public-docs.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  },
+  {
+    "id": "delivery-tests",
+    "command": "python -m unittest tests.test_public_docs tests.test_bootstrappers tests.test_release_012 -v",
+    "exit_code": 0,
+    "log": "delivery-tests.txt",
+    "redaction": "Machine-local paths replaced with descriptive placeholders"
+  }
+]

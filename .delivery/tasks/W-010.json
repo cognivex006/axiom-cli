@@ -1,0 +1,20 @@
+{
+  "task_id": "W-010",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-010-legacy-store-adoption",
+  "source_revision": "8119cf5a59f0f8e92f859563a6f3bc75ea709c97",
+  "local_commit_sha": "8119cf5a59f0f8e92f859563a6f3bc75ea709c97",
+  "verified_remote_branch_sha": "8119cf5a59f0f8e92f859563a6f3bc75ea709c97",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "delivery_state": "pushed",
+  "main_integration": "Not performed: explicit current workspace authorization covers feature pushes only",
+  "primary_checkout": ".",
+  "release": "not_published",
+  "note": "Source SHA identifies the verified implementation commit. Any later receipt-only commit does not change product bytes. Real installed user roots and immutable release 0.1.8 remain unchanged.",
+  "source_ci": {
+    "headSha": "8119cf5a59f0f8e92f859563a6f3bc75ea709c97",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/orchex006/axiom-cli/actions/runs/38681279727"
+  }
+}

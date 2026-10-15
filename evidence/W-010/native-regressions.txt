@@ -1,0 +1,12 @@
+Exact source: 8119cf5a59f0f8e92f859563a6f3bc75ea709c97
+native (macos-x64)	Required owner Rust checks	2026-10-15T04:25:37.4261110Z test layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable ... ok
+native (macos-x64)	Required owner Rust checks	2026-10-15T04:25:37.4399380Z test layout::tests::legacy_cli_store_refuses_linked_ownership_inputs ... ok
+native (macos-x64)	Required owner Rust checks	2026-10-15T04:25:37.5996050Z test layout::tests::legacy_cli_store_refuses_invalid_ownership_without_changes ... ok
+native (macos-x64)	Required owner Rust checks	2026-10-15T04:25:39.8606380Z test install_adopts_a_manifest_owned_legacy_cli_store ... ok
+native (windows-x64)	Required owner Rust checks	2026-10-15T04:25:12.4593738Z test layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable ... ok
+native (windows-x64)	Required owner Rust checks	2026-10-15T04:25:12.9359564Z test layout::tests::legacy_cli_store_refuses_invalid_ownership_without_changes ... ok
+native (windows-x64)	Required owner Rust checks	2026-10-15T04:25:16.2076449Z test install_adopts_a_manifest_owned_legacy_cli_store ... ok
+native (linux-x64)	Required owner Rust checks	2026-10-15T04:24:48.7532324Z test layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable ... ok
+native (linux-x64)	Required owner Rust checks	2026-10-15T04:24:48.7574925Z test layout::tests::legacy_cli_store_refuses_linked_ownership_inputs ... ok
+native (linux-x64)	Required owner Rust checks	2026-10-15T04:24:48.7752034Z test layout::tests::legacy_cli_store_refuses_invalid_ownership_without_changes ... ok
+native (linux-x64)	Required owner Rust checks	2026-10-15T04:24:56.3309603Z test install_adopts_a_manifest_owned_legacy_cli_store ... ok
