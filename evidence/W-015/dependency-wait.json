@@ -1,0 +1,34 @@
+{
+  "source_revision": "f6c84084ecdb18a2287aae35158bc31b4a6d1a8a",
+  "run_url": "https://github.com/orchex006/axiom-cli/actions/runs/38685323285",
+  "status": "in_progress",
+  "conclusion": "",
+  "reason": "Task-owned workflow was cancelled while native jobs waited for unpublished same-version peer Releases. Product checks are not waived. A new metadata-only source commit will trigger the complete required workflow after all peer inputs are published.",
+  "completed_checks": {
+    "published one-line install (macos-x64)": [
+      "Published bootstrapper, one confirmation and native lifecycle"
+    ],
+    "native (linux-x64)": [
+      "Public documentation and release-note checks",
+      "Required owner Rust checks",
+      "Native runtime regression checks"
+    ],
+    "native (macos-x64)": [
+      "Public documentation and release-note checks",
+      "Required owner Rust checks",
+      "Native runtime regression checks"
+    ],
+    "native (windows-x64)": [
+      "Public documentation and release-note checks",
+      "Required owner Rust checks"
+    ]
+  },
+  "payload_tests_claimed_passed": false,
+  "history_rewrite": false,
+  "peer_inputs_verified": {
+    "axiom-graphd": "58b054775de56f55f4d0f4407e33e334ebb63a5d",
+    "axiom-mcp": "95aa70104b9d89da4a843a4badff0940f864fbec",
+    "axiom-skills": "8a31b67a37dd3c1772883a706961ae8da58bc887"
+  },
+  "replacement_ci": "All peer 0.1.9 Releases now published and every downloaded checksum verified. This receipt-only commit triggers the complete required source workflow."
+}
