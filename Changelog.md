@@ -4,6 +4,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Bug Fixes
+
+- Restore adoption of unchanged 0.1.0 and 0.1.2 CLI stores by checking their original install manifest. Preserve the old executable and metadata, and refuse modified files or conflicting backups.
+
 ## 0.1.8
 
 ### New Features

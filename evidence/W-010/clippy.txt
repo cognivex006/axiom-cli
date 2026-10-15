@@ -1,0 +1,2 @@
+    Checking axiom-cli v0.1.8 (<cli-checkout>)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.64s

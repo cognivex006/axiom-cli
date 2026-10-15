@@ -41,6 +41,8 @@ The interactive install announces a per-user PATH change. Windows writes `HKCU\E
 
 `doctor` reports recognized older layouts, executables that shadow the current CLI and environment overrides. A legacy CLI store at the selected root can be adopted in place, with its old executable backed up. A bootstrap root elsewhere is left alongside the new installation unless `--adopt <path>` explicitly selects it. Project files, graph output and user data are retained.
 
+For pre-generation 0.1.0 and 0.1.2 CLI stores, adoption verifies the original install manifest's executable name, installed location, size and SHA-256. The old manifest and `cli/` store remain intact. An existing backup must match the recorded bytes; incomplete or ambiguous records and linked paths are refused. This correction to the 0.1.8 adoption failure is pending release.
+
 Remove leftover `AXIOM_CLI_INSTALL_ROOT`, `AXIOM_ENGINE_BIN` and `AXIOM_HOME` settings from the old installation procedure before upgrading. See [migration instructions](INSTALL.md#upgrading-from-010-or-012).
 
 ## Update and removal
