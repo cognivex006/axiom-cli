@@ -21,7 +21,7 @@ test_legacy_bootstrap_root_takes_the_verified_install_path (tests.test_bootstrap
 test_nothing_installed_refuses_without_change (tests.test_bootstrappers.UpdateShBehaviourTests.test_nothing_installed_refuses_without_change) ... skipped 'no sh on this host'
 test_older_command_layout_preserves_it_on_bootstrap_refusal (tests.test_bootstrappers.UpdateShBehaviourTests.test_older_command_layout_preserves_it_on_bootstrap_refusal) ... skipped 'no sh on this host'
 test_unknown_option_is_refused (tests.test_bootstrappers.UpdateShBehaviourTests.test_unknown_option_is_refused) ... skipped 'no sh on this host'
-test_archive_traversal_and_duplicate_members_refuse (tests.test_release_012.ReleaseTests.test_archive_traversal_and_duplicate_members_refuse) ... C:\Users\006006\AppData\Local\Programs\Python\Python313\Lib\zipfile\__init__.py:1661: UserWarning: Duplicate name: 'same'
+test_archive_traversal_and_duplicate_members_refuse (tests.test_release_012.ReleaseTests.test_archive_traversal_and_duplicate_members_refuse) ... <python-runtime>\Lib\zipfile\__init__.py:1661: UserWarning: Duplicate name: 'same'
   return self._open_to_write(zinfo, force_zip64=force_zip64)
 ok
 test_bootstrap_binds_future_package_version_before_provision (tests.test_release_012.ReleaseTests.test_bootstrap_binds_future_package_version_before_provision) ... skipped 'non-root POSIX bootstrap'
