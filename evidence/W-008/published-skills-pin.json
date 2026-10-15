@@ -1,0 +1,11 @@
+{
+  "actual_published_skills_input": true,
+  "scope": "Cross-platform execution of the exact Mac packager input validator; not a native Mac install claim.",
+  "result": {
+    "version": "0.1.8",
+    "revision": "81dfbf0579a6f421cf27a072107cdb80ce831a4e",
+    "spec_revision": "10b5e190695c75058fb176f35425ad01d840a4e8",
+    "manifest_sha256": "8dc05122b3d6e3e813692b88ba854aa2ee02a8f9cda5258d03d2955ed705b970",
+    "format": "owner-source"
+  }
+}

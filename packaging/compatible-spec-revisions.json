@@ -8,6 +8,10 @@
     {
       "revision": "4b90fb0a2586cbcf5b9d2f09f29955f3a58d2db2",
       "reason": "Published 0.1.6 owner inputs remain accepted for migration and repair. Functional SQLite readiness and named engine placement are enforced by current runtime code, independently of old input metadata."
+    },
+    {
+      "revision": "73aec1d1ed190bcd7066574853340fe15102ebbe",
+      "reason": "Retain the previously accepted 0.1.7 owner input pin after adopting the additive human-reviewed workflow contract. Existing wire/layout dimensions and runtime integrity/approval guards are unchanged."
     }
   ]
 }

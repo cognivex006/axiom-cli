@@ -13,6 +13,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Align native packaging with the approved workflow specification while retaining previous owner input pins for repair and migration.
+
 - Keep graph publications correct after the last source file is removed or recreated, retain the valid graph after malformed saves, and return repository-relative source locations.
 - Verify upgrades and exact rollback from both the previous canonical command layout and the older legacy layout. Check current public command names in the published Mac Intel smoke test.
 

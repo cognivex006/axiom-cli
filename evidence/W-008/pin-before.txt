@@ -1,0 +1,31 @@
+test_approved_workflow_and_previous_release_pins_are_accepted (tests.test_release_012.MacOwnerPinTests.test_approved_workflow_and_previous_release_pins_are_accepted) ...
+  test_approved_workflow_and_previous_release_pins_are_accepted (tests.test_release_012.MacOwnerPinTests.test_approved_workflow_and_previous_release_pins_are_accepted) (revision='10b5e190695c75058fb176f35425ad01d840a4e8') ... ERROR
+test_unreviewed_pin_and_changed_payload_are_refused (tests.test_release_012.MacOwnerPinTests.test_unreviewed_pin_and_changed_payload_are_refused) ... FAIL
+
+======================================================================
+ERROR: test_approved_workflow_and_previous_release_pins_are_accepted (tests.test_release_012.MacOwnerPinTests.test_approved_workflow_and_previous_release_pins_are_accepted) (revision='10b5e190695c75058fb176f35425ad01d840a4e8')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<owner-checkout>\tests\test_release_012.py", line 164, in test_approved_workflow_and_previous_release_pins_are_accepted
+    result = self.candidate().skills_bundle(root, "a" * 40, digest)
+  File "<owner-checkout>\packaging\macos\Build-EngineCandidate.py", line 135, in skills_bundle
+    raise ValueError("owner skills spec revision differs from the CLI pin")
+ValueError: owner skills spec revision differs from the CLI pin
+
+======================================================================
+FAIL: test_unreviewed_pin_and_changed_payload_are_refused (tests.test_release_012.MacOwnerPinTests.test_unreviewed_pin_and_changed_payload_are_refused)
+----------------------------------------------------------------------
+ValueError: owner skills spec revision differs from the CLI pin
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<owner-checkout>\tests\test_release_012.py", line 177, in test_unreviewed_pin_and_changed_payload_are_refused
+    with self.assertRaisesRegex(ValueError, "payload has changed"):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "payload has changed" does not match "owner skills spec revision differs from the CLI pin"
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.028s
+
+FAILED (failures=1, errors=1)

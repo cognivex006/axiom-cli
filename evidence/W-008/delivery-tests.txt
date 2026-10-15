@@ -21,6 +21,8 @@ test_legacy_bootstrap_root_takes_the_verified_install_path (tests.test_bootstrap
 test_nothing_installed_refuses_without_change (tests.test_bootstrappers.UpdateShBehaviourTests.test_nothing_installed_refuses_without_change) ... skipped 'no sh on this host'
 test_older_command_layout_preserves_it_on_bootstrap_refusal (tests.test_bootstrappers.UpdateShBehaviourTests.test_older_command_layout_preserves_it_on_bootstrap_refusal) ... skipped 'no sh on this host'
 test_unknown_option_is_refused (tests.test_bootstrappers.UpdateShBehaviourTests.test_unknown_option_is_refused) ... skipped 'no sh on this host'
+test_approved_workflow_and_previous_release_pins_are_accepted (tests.test_release_012.MacOwnerPinTests.test_approved_workflow_and_previous_release_pins_are_accepted) ... ok
+test_unreviewed_pin_and_changed_payload_are_refused (tests.test_release_012.MacOwnerPinTests.test_unreviewed_pin_and_changed_payload_are_refused) ... ok
 test_archive_traversal_and_duplicate_members_refuse (tests.test_release_012.ReleaseTests.test_archive_traversal_and_duplicate_members_refuse) ... <python-runtime>\Lib\zipfile\__init__.py:1661: UserWarning: Duplicate name: 'same'
   return self._open_to_write(zinfo, force_zip64=force_zip64)
 ok
@@ -30,6 +32,6 @@ test_existing_output_is_preserved (tests.test_release_012.ReleaseTests.test_exis
 test_three_checked_archives_collect_with_source_and_checksums (tests.test_release_012.ReleaseTests.test_three_checked_archives_collect_with_source_and_checksums) ... ok
 
 ----------------------------------------------------------------------
-Ran 28 tests in 1.134s
+Ran 30 tests in 1.596s
 
 OK (skipped=10)

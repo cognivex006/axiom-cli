@@ -130,5 +130,53 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual((out / "human").read_text(), "keep")
 
 
+class MacOwnerPinTests(unittest.TestCase):
+    """Synthetic packaging inputs exercise the real immutable-pin boundary."""
+
+    def candidate(self):
+        spec = importlib.util.spec_from_file_location(
+            "mac_owner_candidate", ROOT / "packaging/macos/Build-EngineCandidate.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def owner(self, root, revision):
+        payload = b"synthetic skill packaging fixture\n"
+        path = root / "skills/axge/SKILL.md"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(payload)
+        manifest = root / "skills-manifest.json"
+        manifest.write_text(json.dumps({
+            "manifest_version": 1, "component": "axiom-skills",
+            "component_version": "0.1.8", "spec_revision": revision,
+            "files": [{"path": "skills/axge/SKILL.md", "bytes": len(payload),
+                       "sha256": hashlib.sha256(payload).hexdigest()}],
+        }), encoding="utf-8")
+        return hashlib.sha256(manifest.read_bytes()).hexdigest()
+
+    def test_approved_workflow_and_previous_release_pins_are_accepted(self):
+        for revision in ("10b5e190695c75058fb176f35425ad01d840a4e8",
+                         "73aec1d1ed190bcd7066574853340fe15102ebbe"):
+            with self.subTest(revision=revision), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                digest = self.owner(root, revision)
+                result = self.candidate().skills_bundle(root, "a" * 40, digest)
+                self.assertEqual(result["spec_revision"], revision)
+
+    def test_unreviewed_pin_and_changed_payload_are_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            digest = self.owner(root, "f" * 40)
+            with self.assertRaisesRegex(ValueError, "spec revision differs"):
+                self.candidate().skills_bundle(root, "a" * 40, digest)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            digest = self.owner(root, "10b5e190695c75058fb176f35425ad01d840a4e8")
+            (root / "skills/axge/SKILL.md").write_text("changed")
+            with self.assertRaisesRegex(ValueError, "payload has changed"):
+                self.candidate().skills_bundle(root, "a" * 40, digest)
+
+
 if __name__ == "__main__":
     unittest.main()

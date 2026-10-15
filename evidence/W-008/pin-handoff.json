@@ -1,0 +1,15 @@
+{
+  "previous_revision": "73aec1d1ed190bcd7066574853340fe15102ebbe",
+  "selected_revision": "10b5e190695c75058fb176f35425ad01d840a4e8",
+  "verified_committed_contract_count": 28,
+  "contract_rollup_sha256": "ea455573b98ebf6308cbf6034661657cf6a1aa72aa1ff6a83673e0ce4e69df37",
+  "verification": "Every digest recomputed from immutable canonical Git bytes; approved workflow contract is integrated into specs main.",
+  "compatibility": "Previously accepted 0.1.7 owner input retained explicitly; unknown pins and tampered payloads still refused.",
+  "failed_native_ci": {
+    "run_id": 38672675685,
+    "platform": "macos-x64",
+    "source_revision": "6cfcebb3440addbf3f21d25294135dd1b2fa0d49",
+    "cause": "CLI stale spec revision refused current verified skills owner manifest"
+  },
+  "regressions": "MacOwnerPinTests reproduced the stale-pin failure before correction; approved current and retained input pins now pass; unknown pin and payload corruption fail."
+}

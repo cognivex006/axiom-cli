@@ -1,2 +1,1 @@
-   Compiling axiom-cli v0.1.8 (<owner-checkout>)
-    Finished `release` profile [optimized] target(s) in 58.72s
+    Finished `release` profile [optimized] target(s) in 0.03s
