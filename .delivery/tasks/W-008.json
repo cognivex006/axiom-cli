@@ -1,0 +1,24 @@
+{
+  "task_id": "W-008",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-008-release-018",
+  "source_revision": "e412f7a7db20ef391b36eb24de717ac4bdae4d22",
+  "local_commit_sha": "e412f7a7db20ef391b36eb24de717ac4bdae4d22",
+  "verified_remote_branch_sha": "e412f7a7db20ef391b36eb24de717ac4bdae4d22",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "release_source_revision": "e412f7a7db20ef391b36eb24de717ac4bdae4d22",
+  "component_version": "0.1.8",
+  "delivery_state": "integrated",
+  "main_integration": "verified release source integrated",
+  "primary_checkout": ".",
+  "release": "published",
+  "release_url": "https://github.com/orchex006/axiom-cli/releases/tag/v0.1.8",
+  "all_downloaded_checksums_verified": true,
+  "source_ci": {
+    "conclusion": "success",
+    "headSha": "e412f7a7db20ef391b36eb24de717ac4bdae4d22",
+    "status": "completed",
+    "url": "https://github.com/orchex006/axiom-cli/actions/runs/38675779371"
+  },
+  "note": "This is an evidence-only follow-up. Immutable release tags/assets are unchanged; the canonical publication receipt records the final delivery commit."
+}
