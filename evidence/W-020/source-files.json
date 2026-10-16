@@ -22,5 +22,6 @@
   "src/version.rs": "3ea88893cb692bc0479d15a794dadebb473ad81563a298b13e871ee005e113d0",
   "tests/l007_fresh_runner.py": "503e4521eda49177553fa2324dd4f5fa14238bc23b1eb40d3695494d28d05e67",
   "tests/legacy_cli_store_upgrade.py": "a0c5a0655af8df6e60d04d09aa8beda474479bb827b43d4a3d90817a395e5160",
-  "tests/m001_published_oneliner.py": "a0c253323da6b3a87d0725e04d7c1016796affdc2b997d4d08cd1ecf510aa5d8"
+  "tests/m001_published_oneliner.py": "a0c253323da6b3a87d0725e04d7c1016796affdc2b997d4d08cd1ecf510aa5d8",
+  "packaging/compatible-spec-revisions.json": "fad458eea47e24d662a007ca4cdb07dd31bfbc80a79a0b5b524a2e6f29c6b3c1"
 }

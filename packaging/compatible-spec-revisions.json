@@ -12,6 +12,10 @@
     {
       "revision": "73aec1d1ed190bcd7066574853340fe15102ebbe",
       "reason": "Retain the previously accepted 0.1.7 owner input pin after adopting the additive human-reviewed workflow contract. Existing wire/layout dimensions and runtime integrity/approval guards are unchanged."
+    },
+    {
+      "revision": "10b5e190695c75058fb176f35425ad01d840a4e8",
+      "reason": "Retain the exact human-reviewed and published 0.1.8/0.1.9 workflow input pin during the agent-onboarding transition. Legacy bundle acceptance does not assert it contains the new axsk workflow or gateway feature; source and hash checks remain required."
     }
   ]
 }

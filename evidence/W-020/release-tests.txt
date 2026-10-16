@@ -1,0 +1,14 @@
+test_approved_workflow_and_previous_release_pins_are_accepted (tests.test_release_012.MacOwnerPinTests.test_approved_workflow_and_previous_release_pins_are_accepted) ... ok
+test_unreviewed_pin_and_changed_payload_are_refused (tests.test_release_012.MacOwnerPinTests.test_unreviewed_pin_and_changed_payload_are_refused) ... ok
+test_archive_traversal_and_duplicate_members_refuse (tests.test_release_012.ReleaseTests.test_archive_traversal_and_duplicate_members_refuse) ... <user-path> UserWarning: Duplicate name: 'same'
+  return self._open_to_write(zinfo, force_zip64=force_zip64)
+ok
+test_bootstrap_binds_future_package_version_before_provision (tests.test_release_012.ReleaseTests.test_bootstrap_binds_future_package_version_before_provision) ... skipped 'non-root POSIX bootstrap'
+test_changed_archive_or_missing_lane_refuses_before_output (tests.test_release_012.ReleaseTests.test_changed_archive_or_missing_lane_refuses_before_output) ... ok
+test_existing_output_is_preserved (tests.test_release_012.ReleaseTests.test_existing_output_is_preserved) ... ok
+test_three_checked_archives_collect_with_source_and_checksums (tests.test_release_012.ReleaseTests.test_three_checked_archives_collect_with_source_and_checksums) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.154s
+
+OK (skipped=1)

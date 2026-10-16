@@ -87,5 +87,18 @@
     "exit_code": 0,
     "artifact": "evidence/W-020/editorial-tests.txt",
     "sha256": "14751d88d6f35e1b299319073c022ce36fe7c1b649aab9cbc2b99b5aa478d874"
+  },
+  {
+    "id": "release-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_release_012",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/release-tests.txt",
+    "sha256": "215f85992244063b1467d083e7a829581d3dc60126ef1bf332fcad060942275a"
   }
 ]
