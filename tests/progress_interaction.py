@@ -124,7 +124,7 @@ def verify(cli):
                     assert "approved plan pins" in stdout + stderr, (stdout, stderr)
                 if mode == "terminal":
                     assert stderr.count("\rDownloading") >= 3, stderr
-                    assert stderr.count("Receiving data; integrity is checked after transfer") <= 2, stderr
+                    assert stderr.count("Receiving data; integrity is checked after transfer") == stderr.count("[Received]"), stderr
                 if mode == "unknown": assert "%" not in stderr and "ETA" not in stderr, stderr
                 if mode == "json": json.loads(stdout); assert stderr == "", stderr
                 if mode == "off": assert "MB received" not in stderr and "ETA" not in stderr
