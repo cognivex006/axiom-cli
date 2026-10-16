@@ -15,6 +15,8 @@ Interactive progress updates its elapsed counter or measured download estimate o
 one terminal line, with stage details shown once. Redirected output uses throttled
 plain lines. Set `AXIOM_PROGRESS=plain` to force that log format, or
 `AXIOM_PROGRESS=off` to hide progress. `--json` also hides human progress.
+Version and component metadata probes do not show operation progress, even when
+the component process responds slowly.
 
 Reinstalling can reuse a complete, verified Windows MCP runtime retained after
 uninstall or rollback. The installer verifies its files and approved inputs before

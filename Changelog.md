@@ -6,6 +6,7 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Keep version and component metadata probes quiet even when a cold process takes longer to respond.
 - Update terminal progress counters and download estimates in place, with stage details shown once and a clean final line. Redirected output keeps readable throttled lines.
 
 ## 0.1.11

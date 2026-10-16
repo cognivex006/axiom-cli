@@ -65,18 +65,25 @@ impl Engine {
         for (key, value) in env {
             command.env(key, value);
         }
-        let stage = match args.get(1).map(String::as_str) {
-            Some("plan") => "Planning components",
-            Some("apply") => "Applying components",
-            Some("rollback") => "Restoring previous generation",
-            _ => "Component operation",
+        let output = match args.first().map(String::as_str) {
+            Some("install" | "uninstall" | "update") => {
+                let stage = match args.get(1).map(String::as_str) {
+                    Some("plan") => "Planning components",
+                    Some("apply") => "Applying components",
+                    Some("rollback") => "Restoring previous generation",
+                    _ => "Component operation",
+                };
+                crate::progress::capture(
+                    &mut command,
+                    stage,
+                    "Waiting for the installation engine to finish the requested plan or transaction",
+                )
+            }
+            // Metadata/help/diagnostic probes are reads, even when a cold child
+            // takes longer than the progress display's delay threshold.
+            _ => command.env("AXIOM_PROGRESS", "off").output(),
         };
-        let output = crate::progress::capture(
-            &mut command,
-            stage,
-            "Waiting for the installation engine to finish the requested plan or transaction",
-        )
-        .map_err(|error| {
+        let output = output.map_err(|error| {
             Refusal::io(
                 "engine_unlaunchable",
                 &self.program.display().to_string(),

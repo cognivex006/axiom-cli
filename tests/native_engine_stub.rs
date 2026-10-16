@@ -45,6 +45,8 @@ fn main() {
                     print!("{data}");
                 }
             }
+        } else if let Some(value) = line.strip_prefix("sleep ") {
+            std::thread::sleep(std::time::Duration::from_secs_f64(value.parse().unwrap()));
         } else if let Some(value) = line.strip_prefix("exit ") {
             exit = value.parse().unwrap_or(90);
             break;

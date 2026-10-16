@@ -988,6 +988,41 @@ fn assert_refusal(out: &Outcome, code: i32, status: &str, reason_contains: &str)
 // ---------------------------------------------------------------------------
 
 #[test]
+fn slow_version_probe_never_shows_transaction_progress() {
+    let fx = Fixture::new("version-slow-probe", Mode::Present);
+    let Some(engine) = shell_engine(
+        &fx.dir,
+        "slow-version-engine",
+        "#!/bin/sh\nsleep 0.35\nprintf '{\"version\":\"fixture\"}\\n'\nexit 0\n",
+    ) else {
+        return;
+    };
+    for args in [
+        vec!["version"],
+        vec!["version", "--verbose"],
+        vec!["version", "--json"],
+    ] {
+        let start = std::time::Instant::now();
+        let out = Run::new(&fx.root).with_engine(&engine).out(&args);
+        assert_eq!(out.code, SUCCESS, "{}", out.stdout);
+        assert!(start.elapsed() >= std::time::Duration::from_millis(300));
+        assert!(
+            !out.stderr.contains("Component operation"),
+            "{}",
+            out.stderr
+        );
+        assert!(!out.stderr.contains("[Working]"), "{}", out.stderr);
+        if !args.contains(&"--verbose") {
+            assert!(
+                out.stderr.is_empty(),
+                "version emitted progress: {}",
+                out.stderr
+            );
+        }
+    }
+}
+
+#[test]
 fn version_succeeds_with_nothing_installed() {
     let fx = Fixture::new("version-clean", Mode::Present);
     let out = Run::new(&fx.root).out(&["version", "--json"]);
