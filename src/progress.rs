@@ -10,6 +10,53 @@ use std::time::{Duration, Instant};
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static TERMINAL: AtomicBool = AtomicBool::new(false);
 
+struct Renderer {
+    terminal: bool,
+    width: usize,
+    started: bool,
+    detail: String,
+}
+
+impl Renderer {
+    fn new(terminal: bool, detail: String) -> Self {
+        Self {
+            terminal,
+            width: 0,
+            started: false,
+            detail,
+        }
+    }
+
+    fn render(
+        &mut self,
+        output: &mut impl Write,
+        heading: &str,
+        details: &str,
+        inline: &str,
+        finished: bool,
+    ) -> std::io::Result<()> {
+        if self.terminal {
+            if !self.started {
+                writeln!(output, "{}", self.detail)?;
+                self.started = true;
+            }
+            let width = inline.chars().count();
+            write!(
+                output,
+                "\r{inline}{}",
+                " ".repeat(self.width.saturating_sub(width))
+            )?;
+            self.width = width;
+            if finished {
+                writeln!(output)?;
+            }
+        } else {
+            writeln!(output, "{heading}\n  {details}")?;
+        }
+        output.flush()
+    }
+}
+
 pub fn configure(args: &[std::ffi::OsString]) {
     let mode = std::env::var("AXIOM_PROGRESS").unwrap_or_default();
     ENABLED.store(
@@ -54,12 +101,10 @@ impl Progress {
             .as_ref()
             .and_then(|(p, _)| std::fs::metadata(p).ok())
             .map(|m| (m.len(), m.modified().ok()));
-        let interval = if TERMINAL.load(Ordering::Relaxed) {
-            1
-        } else {
-            5
-        };
+        let terminal = TERMINAL.load(Ordering::Relaxed);
+        let interval = if terminal { 1 } else { 5 };
         let worker = thread::spawn(move || {
+            let mut renderer = Renderer::new(terminal, detail.clone());
             let start = Instant::now();
             let mut rendered = false;
             let mut last = Instant::now();
@@ -85,7 +130,7 @@ impl Progress {
                         Some(false) => "Failed",
                         None => "Working",
                     };
-                    let (heading, details) = if let Some((path, total)) = &file {
+                    let (heading, details, inline) = if let Some((path, total)) = &file {
                         let bytes = std::fs::metadata(path)
                             .map(|m| {
                                 if finish != Some(true)
@@ -99,14 +144,12 @@ impl Progress {
                             .unwrap_or(0);
                         transfer(&label, &detail, bytes, *total, elapsed, finish)
                     } else {
-                        (
-                            format!("{label} [{status}] elapsed {:.0}s", elapsed),
-                            detail.clone(),
-                        )
+                        let heading = format!("{label} [{status}] elapsed {:.0}s", elapsed);
+                        (heading.clone(), detail.clone(), heading)
                     };
                     let mut stderr = std::io::stderr().lock();
-                    let _ = writeln!(stderr, "{heading}\n  {details}");
-                    let _ = stderr.flush();
+                    let _ =
+                        renderer.render(&mut stderr, &heading, &details, &inline, finish.is_some());
                     rendered = true;
                     last = Instant::now();
                 }
@@ -148,7 +191,7 @@ fn transfer(
     total: Option<u64>,
     seconds: f64,
     finish: Option<bool>,
-) -> (String, String) {
+) -> (String, String, String) {
     let status = match finish {
         Some(true) => "Received",
         Some(false) => "Failed",
@@ -164,6 +207,7 @@ fn transfer(
         return (
             format!("{label} [{status}] {mb:.1} MB received; elapsed {seconds:.0}s"),
             format!("{detail}; total size unknown"),
+            format!("{label} [{status}] {mb:.1} MB received; elapsed {seconds:.0}s"),
         );
     };
     let complete = finish == Some(true) && bytes == total;
@@ -189,6 +233,16 @@ fn transfer(
             "{mb:.1}/{:.1} MB; {:.1} MB/s; elapsed {seconds:.0}s{eta}. {detail}",
             total as f64 / 1_000_000.0,
             speed / 1_000_000.0
+        ),
+        format!(
+            "{label} {percent}% | {mb:.1}/{:.1} MB | {:.1} MB/s{eta}{}",
+            total as f64 / 1_000_000.0,
+            speed / 1_000_000.0,
+            match finish {
+                Some(true) => " [Received]",
+                Some(false) => " [Failed]",
+                None => "",
+            }
         ),
     )
 }
@@ -217,11 +271,72 @@ pub fn during<T, E>(label: &str, detail: &str, run: impl FnOnce() -> Result<T, E
 
 #[cfg(test)]
 mod tests {
-    use super::transfer;
+    use super::{transfer, Renderer};
+    #[test]
+    fn terminal_repaints_one_line_and_clears_shorter_frames() {
+        let mut output = Vec::new();
+        let mut renderer = Renderer::new(true, "Preparing runtime".to_string());
+        renderer
+            .render(&mut output, "", "", "Working 100s", false)
+            .unwrap();
+        renderer
+            .render(&mut output, "", "", "Working 9s", false)
+            .unwrap();
+        renderer.render(&mut output, "", "", "Done", true).unwrap();
+        assert_eq!(
+            output,
+            b"Preparing runtime\n\rWorking 100s\rWorking 9s  \rDone      \n"
+        );
+    }
+    #[test]
+    fn failed_terminal_frame_finishes_before_following_diagnostics() {
+        let mut output = Vec::new();
+        let mut renderer = Renderer::new(true, "Receiving data".to_string());
+        let (heading, details, inline) =
+            transfer("Downloading", "", 50, Some(100), 2.0, Some(false));
+        renderer
+            .render(&mut output, &heading, &details, &inline, true)
+            .unwrap();
+        let text = String::from_utf8(output).unwrap();
+        assert!(text.ends_with(" [Failed]\n"));
+        assert!(!text.contains("100%"));
+    }
+    #[test]
+    fn redirected_output_has_readable_lines_without_cursor_controls() {
+        let mut output = Vec::new();
+        let mut renderer = Renderer::new(false, "Ignored".to_string());
+        renderer
+            .render(&mut output, "Working", "Preparing runtime", "", false)
+            .unwrap();
+        renderer
+            .render(&mut output, "Done", "Prepared runtime", "", true)
+            .unwrap();
+        assert_eq!(
+            output,
+            b"Working\n  Preparing runtime\nDone\n  Prepared runtime\n"
+        );
+    }
+    #[test]
+    fn inline_transfer_retains_measured_eta_without_the_long_explanation() {
+        let (_, _, inline) = transfer(
+            "Downloading",
+            "Integrity checked after transfer",
+            1_000_000,
+            Some(2_000_000),
+            2.0,
+            None,
+        );
+        assert!(
+            inline.contains("50%") && inline.contains("0.5 MB/s") && inline.contains("ETA ~2s")
+        );
+        assert!(!inline.contains("Integrity"));
+        assert!(inline.len() < 80);
+    }
     #[test]
     fn unknown_work_never_claims_percent_or_eta() {
-        let (top, detail) = transfer("Download", "Waiting", 100, None, 2.0, None);
+        let (top, detail, inline) = transfer("Download", "Waiting", 100, None, 2.0, None);
         assert!(!top.contains('%') && !detail.contains("ETA"));
+        assert!(!inline.contains('%') && !inline.contains("ETA"));
         assert!(detail.contains("unknown"));
     }
     #[test]

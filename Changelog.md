@@ -4,6 +4,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Bug Fixes
+
+- Update terminal progress counters and download estimates in place, with stage details shown once and a clean final line. Redirected output keeps readable throttled lines.
+
 ## 0.1.11
 
 ### Bug Fixes

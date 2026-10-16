@@ -11,6 +11,11 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
+Interactive progress updates its elapsed counter or measured download estimate on
+one terminal line, with stage details shown once. Redirected output uses throttled
+plain lines. Set `AXIOM_PROGRESS=plain` to force that log format, or
+`AXIOM_PROGRESS=off` to hide progress. `--json` also hides human progress.
+
 Reinstalling can reuse a complete, verified Windows MCP runtime retained after
 uninstall or rollback. The installer verifies its files and approved inputs before
 activating it. Modified or incomplete runtime directories are preserved and refused.

@@ -55,7 +55,10 @@ def verify(cli):
         server.RequestHandlerClass = Handler
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         try:
-            for mode in ["human", "unknown", "json", "off"]:
+            modes = ["human", "unknown", "json", "off"]
+            if os.name != "nt":
+                modes.append("terminal")
+            for mode in modes:
                 home = work / mode; home.mkdir()
                 manifest = (ROOT / "channels/stable.json").read_bytes()
                 (home / "recorded-manifest.json").write_bytes(manifest)
@@ -63,27 +66,44 @@ def verify(cli):
                 original = json.dumps(record).encode(); (home / "installed.json").write_bytes(original)
                 env = {k:v for k,v in os.environ.items() if not k.startswith("AXIOM_")}
                 # The existing CI seam applies only to this owned synthetic root; no install occurs.
-                env.update(AXIOM_CLI_INSTALL_ROOT=str(home), AXIOM_CLI_TEST_ALLOW_ELEVATED="1", AXIOM_PROGRESS="off" if mode == "off" else "plain")
+                env.update(AXIOM_CLI_INSTALL_ROOT=str(home), AXIOM_CLI_TEST_ALLOW_ELEVATED="1", AXIOM_PROGRESS="off" if mode == "off" else "" if mode == "terminal" else "plain")
                 unknown[0] = mode == "unknown"; automatic[0] = mode in ["json", "off"]; released.clear()
                 words = [str(cli), "update", "--channel", f"http://127.0.0.1:{server.server_port}/channel?private-token-do-not-log"]
                 words.append("--dry-run" if mode == "unknown" else "--yes")
                 if mode == "json": words.append("--json")
-                proc = subprocess.Popen(words, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                master = slave = None
+                if mode == "terminal":
+                    import pty
+                    master, slave = pty.openpty()
+                proc = subprocess.Popen(words, env=env, stdout=subprocess.PIPE,
+                                        stderr=slave if slave is not None else subprocess.PIPE, text=True)
+                if slave is not None:
+                    os.close(slave)
                 lines = []; seen = queue.Queue()
                 def read():
+                    if master is not None:
+                        while True:
+                            try:
+                                chunk = os.read(master, 4096)
+                            except OSError:
+                                return
+                            if not chunk:
+                                return
+                            text = chunk.decode("utf-8", errors="replace")
+                            lines.append(text); seen.put(text)
                     for line in proc.stderr:
                         lines.append(line); seen.put(line)
                 reader = threading.Thread(target=read, daemon=True); reader.start()
                 observed = False
                 try:
-                    if mode in ["human", "unknown"]:
+                    if mode in ["human", "terminal", "unknown"]:
                         deadline = time.monotonic() + 13
                         while time.monotonic() < deadline:
                             try:
                                 line = seen.get(timeout=max(0.1, deadline - time.monotonic()))
                             except queue.Empty:
                                 raise AssertionError((mode, lines, proc.poll())) from None
-                            if (mode == "human" and "ETA ~" in line) or (mode == "unknown" and "total size unknown" in line):
+                            if (mode in ["human", "terminal"] and "ETA ~" in line) or (mode == "unknown" and "total size unknown" in line):
                                 assert proc.poll() is None, "progress must appear while transfer is blocked"
                                 observed = True; break
                         assert observed, lines
@@ -94,13 +114,17 @@ def verify(cli):
                 finally:
                     released.set()
                     if proc.poll() is None: proc.kill(); proc.wait(timeout=5)
+                    if master is not None: os.close(master)
                 stderr = "".join(lines)
                 assert code == (0 if mode == "unknown" else 2), (mode, code, stdout, stderr)
                 assert (home / "installed.json").read_bytes() == original
                 assert "private-token-do-not-log" not in stderr and "\x1b" not in stderr
-                if mode == "human":
+                if mode in ["human", "terminal"]:
                     assert any(f"{n}%" in stderr for n in range(40, 51)) and "100%" in stderr and "MB/s" in stderr, stderr
                     assert "approved plan pins" in stdout + stderr, (stdout, stderr)
+                if mode == "terminal":
+                    assert stderr.count("\rDownloading") >= 3, stderr
+                    assert stderr.count("Receiving data; integrity is checked after transfer") <= 2, stderr
                 if mode == "unknown": assert "%" not in stderr and "ETA" not in stderr, stderr
                 if mode == "json": json.loads(stdout); assert stderr == "", stderr
                 if mode == "off": assert "MB received" not in stderr and "ETA" not in stderr
