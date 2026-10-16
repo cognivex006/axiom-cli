@@ -1,0 +1,20 @@
+{
+  "src/progress.rs": "8b7934df5e1e322e3afd1d177e64dd290054a67ded6dc364e5d02eeaf878cc9d",
+  "tests/progress_interaction.py": "d02eddf32729772fec7b2aa3cecfbeaccb8eaac13013b247d098b4144c7df1cc",
+  "tests/progress_powershell.py": "4f6c3009afacdf0f919f5a7eb73173df76797d6c45fc3bbb9910ea0d911b09a6",
+  ".github/workflows/distribution-ci.yml": "870e589beff91ddacb0ce261f350b104efd4e310d13f91e82c6a3c2a17da7b7c",
+  "Changelog.md": "0ae05b1a7ff98dd81e87a17f405b30e5f7ffd2539fd08b6d72af03c35ceec239",
+  "docs/INSTALL.md": "a6eb6bc91340f8b866dc20579be857b4e56b3f936866dd628a71e0d4ace11192",
+  "installers/oneline/install.ps1.in": "0c3f7bba0ba1157f6742344adcc34d6e68fe07e042af65477850c42526bab99d",
+  "installers/oneline/install.sh.in": "6504c3630b45435c0af55c4ceb1de9f9670cb18899055be7cd1235cf6c332f8a",
+  "installers/oneline/update.ps1.in": "c2b10770b714e0addeb0b73007dc4ce4e6030d8764c27543d1b821d924928270",
+  "installers/oneline/update.sh.in": "7dad115b76ba2f7d62bcf9f81b350aceaab1237486c7eb062057b7893d2104cc",
+  "src/bundle.rs": "382e5c178c5d70f1af5e62f7ff484d78fb146163848520236bad854b64dc8661",
+  "src/engine.rs": "e205a11f86f7e4e614322b2c903ae586f4084af6c0fc1013bccf41f780442b37",
+  "src/host_skills.rs": "dae757409426e404897b4641291417f823fcb9344fdadab908948e55643ea3a3",
+  "src/lifecycle.rs": "7f0033607220431b1737a9b2217e9056f3f212389e8e327eb42951ada6376f6a",
+  "src/main.rs": "7a352f36e505afe1ec2bfc8429da51d7299defa1cbe06bd146d27e758c680ef5",
+  "src/runtime.rs": "4acab1cbfd89850edacecd0e764cf4ce30091e8b760443bec9c54a3ebc5aedbd",
+  "src/update/composite.rs": "c76e041d0783b29c89511e47adadd19beffa8bfc4b3102d2a45517bed8b418e5",
+  "src/update/oneshot.rs": "a27623b2013ff12978f29bd9ba63adaf216f5c12410a115c1fe4bc68e9ce1e23"
+}

@@ -1534,6 +1534,14 @@ fn seal(plan: &mut Json, digest: &str) -> Result<(), Refusal> {
 /// is used. An artifact that is not available locally is a refusal, never a silent skip: an
 /// unverified artifact must not be mistaken for a verified one.
 fn verify_artifacts(set: &ReleaseSet) -> Result<Vec<Json>, Refusal> {
+    crate::progress::during(
+        "Verifying components",
+        "Checking declared file sizes and SHA-256 before use",
+        || verify_artifacts_inner(set),
+    )
+}
+
+fn verify_artifacts_inner(set: &ReleaseSet) -> Result<Vec<Json>, Refusal> {
     let host = set.plan.get("host").and_then(Json::as_text).unwrap_or("");
     let Some(components) = set.plan.get("components").and_then(Json::as_array) else {
         return Ok(Vec::new());

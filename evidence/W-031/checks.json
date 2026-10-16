@@ -1,0 +1,122 @@
+[
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/format.txt",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/clippy.txt",
+    "sha256": "c92508a29848820f033cd2ea015c85dde0953c88b07cc967ce34b7c08f610549"
+  },
+  {
+    "id": "rust-tests",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/rust-tests.txt",
+    "sha256": "ca4020b786f923b7695a76253bf070d90e8544af4be59c2baf4ddcced4820078"
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/build.txt",
+    "sha256": "9576f1f7e73fc2bb1ec2336aae60cb485c591eadc60a1b998573411c34057e08"
+  },
+  {
+    "id": "live-progress",
+    "command": [
+      "python",
+      "tests/progress_interaction.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\progress-live-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/live-progress.txt",
+    "sha256": "e62cbf13eacf1610264af811391b5fdfa1cc1c1b50552e052563dcfa2ba3ca8f"
+  },
+  {
+    "id": "powershell-progress",
+    "command": [
+      "python",
+      "tests/progress_powershell.py",
+      "--out",
+      "<workspace>\\_coord\\progress-powershell-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/powershell-progress.txt",
+    "sha256": "af3c85d9e66660a619396e42092f73c33e41fcbef99def141fe7b118f0cc6c15"
+  },
+  {
+    "id": "host-lifecycle",
+    "command": [
+      "python",
+      "tests/host_onboarding.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\progress-host-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/host-lifecycle.txt",
+    "sha256": "0f53314e7a624e5d9622c2b9707deefec82c1e9f9b83a453af124008bd027b4c"
+  },
+  {
+    "id": "public-docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/public-docs.txt",
+    "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
+  },
+  {
+    "id": "editorial",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "tests.test_release_012",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-031/editorial.txt",
+    "sha256": "8d79f1931bece3016414791a03a3c4384339395d95291016b18066687710a235"
+  }
+]

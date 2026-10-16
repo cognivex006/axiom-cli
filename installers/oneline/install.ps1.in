@@ -22,6 +22,38 @@ $AxiomAsset = '@@WINDOWS_ASSET@@'
 $AxiomSha256 = '@@WINDOWS_SHA256@@'
 $AxiomCli = '@@CLI_PATH_WINDOWS@@'
 
+function Receive-AxiomArchive([string]$Uri, [string]$Destination) {
+    $client = New-Object Net.WebClient
+    $client.Headers['User-Agent'] = 'axiom-bootstrapper'
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    try {
+        $task = $client.DownloadFileTaskAsync([Uri]$Uri, $Destination)
+        while (-not $task.IsCompleted) {
+            $bytes = if (Test-Path -LiteralPath $Destination) { (Get-Item -LiteralPath $Destination).Length } else { 0 }
+            $total = [long]0
+            if ($client.ResponseHeaders) { [long]::TryParse($client.ResponseHeaders['Content-Length'], [ref]$total) | Out-Null }
+            $percent = -1
+            $status = ('{0:N1} MB received; elapsed {1:N0}s' -f ($bytes / 1000000), $clock.Elapsed.TotalSeconds)
+            if ($total -gt 0) {
+                $percent = [int][Math]::Min(99, [Math]::Floor(100.0 * $bytes / $total))
+                $status = ('{0:N1}/{1:N1} MB; elapsed {2:N0}s' -f ($bytes / 1000000), ($total / 1000000), $clock.Elapsed.TotalSeconds)
+                if ($bytes -gt 0 -and $clock.Elapsed.TotalSeconds -ge 1) {
+                    $rate = $bytes / $clock.Elapsed.TotalSeconds
+                    $status += ('; {0:N1} MB/s; ETA ~{1:N0}s' -f ($rate / 1000000), ([Math]::Max(0, $total - $bytes) / $rate))
+                }
+            }
+            if ($env:AXIOM_PROGRESS -ne 'off') { Write-Progress -Id 731 -Activity 'Downloading Axiom archive' -Status $status -PercentComplete $percent -CurrentOperation 'Receiving data; SHA-256 verification follows' }
+            Start-Sleep -Milliseconds 200
+        }
+        $task.GetAwaiter().GetResult()
+    }
+    finally {
+        if ($env:AXIOM_PROGRESS -ne 'off') { Write-Progress -Id 731 -Activity 'Downloading Axiom archive' -Completed }
+        $client.Dispose()
+    }
+}
+
+
 # Failures throw instead of calling `exit`: under `irm | iex` an `exit` would close the
 # user's PowerShell session. Under `powershell -c` an unhandled throw exits non-zero.
 function Stop-AxiomInstall([string]$Message) {
@@ -79,12 +111,14 @@ try {
     $archive = Join-Path $temp $AxiomAsset
     $url = "$AxiomBaseUrl/$AxiomTag/$AxiomAsset"
     Write-Host "axiom install: downloading $AxiomTag ($AxiomAsset)"
-    try { Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $archive }
+    try { Receive-AxiomArchive -Uri $url -Destination $archive }
     catch { Stop-AxiomInstall "download failed for $url ($($_.Exception.Message)); nothing was changed" }
+    Write-Host "axiom install: verifying archive SHA-256"
     $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $AxiomSha256) {
         Stop-AxiomInstall "SHA-256 mismatch for $AxiomAsset (expected $AxiomSha256, got $actual); the archive was not extracted and nothing was changed"
     }
+    Write-Host "axiom install: extracting verified archive"
     $extract = Join-Path $temp 'release'
     try { Expand-Archive -LiteralPath $archive -DestinationPath $extract }
     catch { Stop-AxiomInstall "the verified archive could not be extracted ($($_.Exception.Message)); nothing was changed" }

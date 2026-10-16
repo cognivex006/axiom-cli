@@ -1,0 +1,156 @@
+{
+  "checks": [
+    {
+      "case": "combined host selection is approval-bound; dry run is read-only",
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--dry-run"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex"
+      ],
+      "exit_code": 4
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 10
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "doctor",
+        "codex"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "list"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "update",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "doctor",
+        "codex"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 4
+    },
+    {
+      "arguments": [
+        "update",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 6
+    },
+    {
+      "arguments": [
+        "update",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "uninstall",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 20
+    },
+    {
+      "arguments": [
+        "recover",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "uninstall",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 6
+    },
+    {
+      "arguments": [
+        "list"
+      ],
+      "exit_code": 0
+    },
+    {
+      "arguments": [
+        "install",
+        "unknown",
+        "--yes"
+      ],
+      "exit_code": 2
+    }
+  ],
+  "host_execution": "native contract fixture, not a real Codex installation",
+  "passed": true,
+  "platform": "nt"
+}

@@ -19,6 +19,7 @@ mod layout;
 mod legacy;
 mod lifecycle;
 mod pathenv;
+mod progress;
 mod runtime;
 mod target;
 mod update;
@@ -26,6 +27,7 @@ mod version;
 
 fn main() {
     let arguments: Vec<_> = std::env::args_os().collect();
+    progress::configure(&arguments);
     let code = commands::run(&arguments).unwrap_or_else(|| cli::run(arguments));
     std::process::exit(code);
 }

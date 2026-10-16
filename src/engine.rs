@@ -65,7 +65,18 @@ impl Engine {
         for (key, value) in env {
             command.env(key, value);
         }
-        let output = command.output().map_err(|error| {
+        let stage = match args.get(1).map(String::as_str) {
+            Some("plan") => "Planning components",
+            Some("apply") => "Applying components",
+            Some("rollback") => "Restoring previous generation",
+            _ => "Component operation",
+        };
+        let output = crate::progress::capture(
+            &mut command,
+            stage,
+            "Waiting for the installation engine to finish the requested plan or transaction",
+        )
+        .map_err(|error| {
             Refusal::io(
                 "engine_unlaunchable",
                 &self.program.display().to_string(),

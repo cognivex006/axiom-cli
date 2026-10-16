@@ -179,7 +179,12 @@ pub fn provision(
         }
         command
     };
-    let output = command.output().map_err(|error| {
+    let output = crate::progress::capture(
+        &mut command,
+        "Preparing MCP runtime",
+        "Verifying and provisioning the pinned Python environment",
+    )
+    .map_err(|error| {
         Refusal::not_ready(
             "runtime_provisioner_unavailable",
             format!(

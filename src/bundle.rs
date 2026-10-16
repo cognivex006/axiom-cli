@@ -138,7 +138,11 @@ pub fn update(engine: &Engine, request: &Request<'_>) -> Result<Report, Refusal>
 }
 
 fn run(engine: &Engine, request: &Request<'_>, updating: bool) -> Result<Report, Refusal> {
-    let assembly = assemble(request)?;
+    let assembly = crate::progress::during(
+        "Staging components",
+        "Preparing verified component files and skills for the engine",
+        || assemble(request),
+    )?;
     let plan_file = request.staging_root.join("engine-plan.json");
     let engine_env = engine_environment(&request.install_root, request.mcp_runtime_bin.as_deref());
 

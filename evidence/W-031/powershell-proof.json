@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": "known",
+      "native_powershell": true,
+      "exact_download_bytes": true,
+      "observed_frames": 7
+    },
+    {
+      "case": "unknown",
+      "native_powershell": true,
+      "exact_download_bytes": true,
+      "observed_frames": 7
+    }
+  ],
+  "scope": "Native PowerShell transfer helper only, private temporary files and loopback server; no installation"
+}

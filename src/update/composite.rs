@@ -139,7 +139,11 @@ pub fn run(root: &Path, kit: &Path, request: &Request, json_output: bool) -> i32
             }
         }
     }
-    let output = match process.output() {
+    let output = match crate::progress::capture(
+        &mut process,
+        "Updating components",
+        "Waiting for the approved runtime and component transaction",
+    ) {
         Ok(output) => output,
         Err(error_message) => {
             return error(&format!(

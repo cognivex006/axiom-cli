@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "version": "0.1.10",
+  "target": "pending 0.1.11",
+  "scope": "Task-owned CLI diagnostics, bootstrap templates, docs, native CI and test evidence",
+  "compatibility": "No changes to approval, digest, protocol, rollback or final JSON. Downloads measured from received file bytes; opaque workers show elapsed activity.",
+  "limitations": "Old initiating binaries do not gain telemetry retroactively. Native CI required before canonical closure; Mac ARM, real WSL and real agent sessions are unverified. Raw child output is captured rather than streamed. No merge, version bump, tag or release."
+}

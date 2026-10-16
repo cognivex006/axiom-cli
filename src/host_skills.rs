@@ -236,6 +236,10 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
                 "Codex CLI is unavailable; install a supported Codex client first",
             )
         })?;
+    let progress = crate::progress::Progress::waiting(
+        "Waiting for Codex",
+        "Waiting for the native Codex client response; registration and discovery are separate",
+    );
     let out = child.stdout.take().unwrap();
     let err = child.stderr.take().unwrap();
     let output = std::thread::spawn(move || {
@@ -270,7 +274,7 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
     if !status.success() {
         return Err(Refusal::not_ready("host_command_failed", format!("Codex plugin command failed (exit {}); retained content and pending recovery record were kept", status.code().unwrap_or(8))));
     }
-    if args.contains(&"--json") {
+    let result = if args.contains(&"--json") {
         if bytes.len() > 4_194_304 {
             return Err(invalid("host output exceeds budget"));
         }
@@ -278,7 +282,9 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
             .map_err(invalid)
     } else {
         Ok(Json::Null)
-    }
+    };
+    progress.finish(result.is_ok());
+    result
 }
 
 fn marketplace() -> Result<Option<PathBuf>, Refusal> {

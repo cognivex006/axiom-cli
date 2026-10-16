@@ -53,6 +53,18 @@ jobs:
             exe=".exe"
           fi
           python tests/host_onboarding.py --cli "target/release/axiom-cli${exe}" --out "${RUNNER_TEMP}/host-adapter.json"
+      - name: Live download progress and machine output isolation
+        shell: bash
+        run: |
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python tests/progress_interaction.py --cli "target/release/axiom-cli${exe}" --out "${RUNNER_TEMP}/progress-proof.json"
+      - name: Native Windows bootstrap byte progress
+        if: runner.os == 'Windows'
+        shell: python
+        run: |
+          import os, subprocess, sys
+          subprocess.run([sys.executable, 'tests/progress_powershell.py', '--out', os.path.join(os.environ['RUNNER_TEMP'], 'bootstrap-progress.json')], check=True)
       - name: Native runtime regression checks
         if: runner.os != 'Windows'
         shell: bash

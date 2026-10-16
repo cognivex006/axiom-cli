@@ -4,6 +4,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### New Features
+
+- Show live download byte percentages, transfer speed and estimated remaining time, with elapsed activity and stage details during installation, runtime preparation and updates. Keep machine JSON quiet and provide bootstrap activity while older installed updaters run.
+
 ## 0.1.10
 
 ### Bug Fixes

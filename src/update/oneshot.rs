@@ -211,6 +211,10 @@ pub fn semver_cmp(a: &str, b: &str) -> std::cmp::Ordering {
 
 /// Copy a local file or download an http(s) URL to `dest` (program + argv, never a shell).
 pub fn fetch(source: &str, dest: &Path) -> Result<(), Refusal> {
+    fetch_sized(source, dest, None)
+}
+
+fn fetch_sized(source: &str, dest: &Path, total: Option<u64>) -> Result<(), Refusal> {
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent).map_err(|error| {
             Refusal::io("staging_unwritable", &parent.display().to_string(), &error)
@@ -225,6 +229,7 @@ pub fn fetch(source: &str, dest: &Path) -> Result<(), Refusal> {
         return Ok(());
     }
     let curl = system_tool("curl");
+    let progress = crate::progress::Progress::download(dest.to_path_buf(), total);
     let status = Command::new(&curl)
         .args(["-fsSL", "--retry", "2", "-o"])
         .arg(dest)
@@ -239,6 +244,10 @@ pub fn fetch(source: &str, dest: &Path) -> Result<(), Refusal> {
                 ),
             )
         })?;
+    progress.finish(
+        status.success()
+            && total.is_none_or(|size| std::fs::metadata(dest).is_ok_and(|m| m.len() == size)),
+    );
     if !status.success() {
         let _ = std::fs::remove_file(dest);
         return Err(Refusal::new(
@@ -454,11 +463,15 @@ pub fn apply(
         .unwrap_or("release-archive")
         .to_string();
     let archive = staging.join(&archive_name);
-    fetch(&offer.url, &archive)?;
-    let bytes = state::read_bytes(&archive, "archive_unreadable")?;
-    if bytes.len() as i64 != offer.size_bytes || digest_of(&bytes) != offer.sha256 {
-        let _ = std::fs::remove_file(&archive);
-        return Err(Refusal::validation(
+    fetch_sized(&offer.url, &archive, Some(offer.size_bytes as u64))?;
+    crate::progress::during(
+        "Verifying archive",
+        "Checking approved byte length and SHA-256; extraction waits for verification",
+        || {
+            let bytes = state::read_bytes(&archive, "archive_unreadable")?;
+            if bytes.len() as i64 != offer.size_bytes || digest_of(&bytes) != offer.sha256 {
+                let _ = std::fs::remove_file(&archive);
+                return Err(Refusal::validation(
             "artifact_digest_mismatch",
             format!(
                 "{archive_name} is {} bytes with sha256 {}, but the approved plan pins {} bytes and {}; \
@@ -469,7 +482,10 @@ pub fn apply(
                 offer.sha256
             ),
         ));
-    }
+            }
+            Ok(())
+        },
+    )?;
     let release = staging.join("release");
     let _ = std::fs::remove_dir_all(&release);
     std::fs::create_dir_all(&release).map_err(|error| {
@@ -481,12 +497,15 @@ pub fn apply(
     } else {
         "-xzf"
     };
-    let extracted = Command::new(&tar)
-        .arg(flags)
-        .arg(&archive)
-        .arg("-C")
-        .arg(&release)
-        .status();
+    let extracted = crate::progress::status(
+        Command::new(&tar)
+            .arg(flags)
+            .arg(&archive)
+            .arg("-C")
+            .arg(&release),
+        "Extracting archive",
+        "Unpacking the checksum-verified release into staging",
+    );
     if !matches!(extracted, Ok(status) if status.success()) {
         return Err(Refusal::validation(
             "archive_unextractable",
@@ -511,16 +530,23 @@ pub fn apply(
         state::read_bytes(&st.recorded_manifest_path(), "recorded_manifest_unreadable")?;
     let mcp_before = std::fs::read(mcp_pointer(root)).ok();
     let child = |args: &[&str]| -> Result<(i32, String), Refusal> {
-        let output = Command::new(&new_cli)
-            .args(args)
-            .env(state::INSTALL_ROOT_ENV, root)
-            .env("AXIOM_CLI_COMPOSITE_UPDATE", "1")
-            .env_remove("AXIOM_ENGINE_BIN")
-            .env_remove(crate::confirm::YES_ENV)
-            .output()
-            .map_err(|error| {
-                Refusal::io("new_cli_unrunnable", &new_cli.display().to_string(), &error)
-            })?;
+        let output = crate::progress::capture(
+            Command::new(&new_cli)
+                .args(args)
+                .env(state::INSTALL_ROOT_ENV, root)
+                .env("AXIOM_CLI_COMPOSITE_UPDATE", "1")
+                .env_remove("AXIOM_ENGINE_BIN")
+                .env_remove(crate::confirm::YES_ENV),
+            if args.contains(&"--dry-run") {
+                "Planning new release"
+            } else {
+                "Installing new release"
+            },
+            "The verified worker is preparing components and runtime from the approved plan",
+        )
+        .map_err(|error| {
+            Refusal::io("new_cli_unrunnable", &new_cli.display().to_string(), &error)
+        })?;
         Ok((
             output.status.code().unwrap_or(1),
             String::from_utf8_lossy(&output.stdout).into_owned(),
@@ -681,6 +707,14 @@ pub fn apply(
 
 /// The new bin answers `version` and the engine answers `version`.
 fn health(root: &Path) -> Result<(), String> {
+    crate::progress::during(
+        "Checking installation",
+        "Probing the installed CLI and engine before committing update success",
+        || health_inner(root),
+    )
+}
+
+fn health_inner(root: &Path) -> Result<(), String> {
     if std::env::var_os(FAIL_HEALTH_TEST_ENV).is_some() {
         return Err("forced by the test seam".to_string());
     }

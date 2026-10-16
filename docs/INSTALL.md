@@ -294,3 +294,27 @@ graph caching. Current immutable releases remain unchanged by these source edits
 Forced termination during a host command can leave the existing installation coordinator lock in place. Recovery refuses while that lock remains owned; it never removes a lock or kills an external host process implicitly. Retained snapshots and pending metadata remain available for operator recovery.
 
 Managed updates preserve disabled Codex plugins without refreshing or enabling them. Explicit install refuses a disabled plugin until the client owner enables it. Recovery also refuses an observed disabled-state conflict, keeping its inputs for client-managed recovery.
+
+## Progress display (pending next release)
+
+Development builds prepared for 0.1.11 show download bars, received/total MB,
+measured average transfer speed and an estimated remaining time when the approved
+archive size is known. A download reaching 100% means transfer completion; SHA-256
+verification and installation still follow. Unknown totals and opaque workers show
+activity, elapsed time and the current operation instead of an invented percentage.
+
+Details below each progress snapshot explain archive verification, extraction,
+component staging, Python runtime preparation, delegated installation and health
+checks. Child protocol output and credentials are not streamed into these details.
+TTY snapshots update about once a second; redirected diagnostics are throttled
+to plain lines about every five seconds, without ANSI cursor controls.
+`AXIOM_PROGRESS=off` suppresses human activity; `AXIOM_PROGRESS=plain` selects
+the throttled plain display. `--json` keeps one final stdout JSON result and
+suppresses human progress throughout the worker chain. Exit codes, checksum
+refusal, approval and rollback stay unchanged.
+
+The Windows bootstrappers show their own download progress, and POSIX scripts
+use the available native transfer meter on a terminal. Update script handoff
+shows an elapsed activity indicator even when the installed older updater cannot
+report byte telemetry. Previously published initiating binaries remain unchanged;
+new CLI download percentages begin when a build containing this feature is used.

@@ -86,7 +86,28 @@ run_cli() {
 if [ -n "$root" ] && [ -x "$root/bin/axm" ] && [ -f "$root/bin/graphd-engine/axiom" ]; then
     echo "axiom update: found the installation at $root; running its axm update"
     status=0
+    progress_pid=''
+    stop_progress() {
+        if [ -n "$progress_pid" ]; then
+            kill "$progress_pid" 2>/dev/null || :
+            wait "$progress_pid" 2>/dev/null || :
+            progress_pid=''
+        fi
+    }
+    if [ "${AXIOM_PROGRESS:-auto}" != off ]; then
+        (
+            elapsed=0
+            while sleep 2; do
+                elapsed=$((elapsed + 2))
+                printf 'Axiom updater active; elapsed %ss\n  Review any console confirmation; the installed CLI owns the transaction.\n' "$elapsed" >&2
+            done
+        ) &
+        progress_pid=$!
+    fi
+    trap 'stop_progress; exit 130' HUP INT TERM
     run_cli "$installed_cli" update || status=$?
+    stop_progress
+    trap - HUP INT TERM
     exit "$status"
 fi
 
@@ -113,9 +134,21 @@ case "$(uname -s) $(uname -m)" in
 esac
 
 if command -v curl >/dev/null 2>&1; then
-    fetch() { curl -fsSL --retry 2 -o "$2" "$1"; }
+    fetch() {
+        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ]; then
+            curl -fL --progress-bar --retry 2 -o "$2" "$1"
+        else
+            curl -fsSL --retry 2 -o "$2" "$1"
+        fi
+    }
 elif command -v wget >/dev/null 2>&1; then
-    fetch() { wget -q -O "$2" "$1"; }
+    fetch() {
+        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ] && wget --help 2>&1 | grep -q -- --show-progress; then
+            wget -q --show-progress -O "$2" "$1"
+        else
+            wget -q -O "$2" "$1"
+        fi
+    }
 else
     fail 'curl or wget is required'
 fi
@@ -132,9 +165,11 @@ trap 'rm -rf "$tmp"' EXIT INT TERM
 echo "axiom update: downloading $AXIOM_TAG ($asset)"
 fetch "$AXIOM_BASE_URL/$AXIOM_TAG/$asset" "$tmp/$asset" ||
     fail "download failed for $AXIOM_BASE_URL/$AXIOM_TAG/$asset; nothing was changed"
+echo "axiom update: verifying archive SHA-256" >&2
 actual=$(digest "$tmp/$asset")
 [ "$actual" = "$expected" ] ||
     fail "SHA-256 mismatch for $asset (expected $expected, got $actual); the archive was not extracted and nothing was changed"
+echo "axiom update: extracting verified archive" >&2
 mkdir "$tmp/release"
 tar -xzf "$tmp/$asset" -C "$tmp/release" ||
     fail 'the verified archive could not be extracted; nothing was changed'
