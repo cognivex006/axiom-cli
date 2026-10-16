@@ -1,0 +1,146 @@
+[
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/format.txt",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/clippy.txt",
+    "sha256": "59639588a6f1826f129cbcd121edc07279dab94786f5fa5bde6b3439b2e845cc"
+  },
+  {
+    "id": "rust-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/rust-tests.txt",
+    "sha256": "2844773c0b144ed516ea329972c3a2625c3339b110945bbff6590ae154414a63"
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/build.txt",
+    "sha256": "36fe39feee4d7ebc20b128e8498e27b9d415fa67dc88b2e58132eb0c57aa260a"
+  },
+  {
+    "id": "host-lifecycle",
+    "command": [
+      "python",
+      "tests/host_onboarding.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\release011-host-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/host-lifecycle.txt",
+    "sha256": "0f53314e7a624e5d9622c2b9707deefec82c1e9f9b83a453af124008bd027b4c"
+  },
+  {
+    "id": "public-docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/public-docs.txt",
+    "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
+  },
+  {
+    "id": "editorial-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/editorial-tests.txt",
+    "sha256": "1bdaebc15a4f645b712b6cb0d353eafea24afbf034771bdec298b1067e675299"
+  },
+  {
+    "id": "release-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_release_012",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/release-tests.txt",
+    "sha256": "8548e33326d0945f941b379d1b46580a4d4b34e61ca2d28e1eb6b4531989641f"
+  },
+  {
+    "id": "live-progress",
+    "command": [
+      "python",
+      "tests/progress_interaction.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\release011-progress-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/live-progress.txt",
+    "sha256": "e62cbf13eacf1610264af811391b5fdfa1cc1c1b50552e052563dcfa2ba3ca8f"
+  },
+  {
+    "id": "powershell-progress",
+    "command": [
+      "python",
+      "tests/progress_powershell.py",
+      "--out",
+      "<workspace>\\_coord\\release011-powershell-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/powershell-progress.txt",
+    "sha256": "0f83e3f883b25078ce426e3af8441c8c0b3e9b62e65fca1ad11658fe5589ab65"
+  },
+  {
+    "id": "native-claude",
+    "command": [
+      "python",
+      "tests/claude_native_smoke.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--client",
+      "<user-path>",
+      "--out",
+      "<workspace>\\_coord\\release011-claude-native-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-034/native-claude.txt",
+    "sha256": "31ca80a72eabe18fcfa56516bd019cfaf1232aae98a12fdf12aaba5df4c4b727"
+  }
+]

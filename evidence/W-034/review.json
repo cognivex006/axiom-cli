@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "task_id": "W-034",
+  "version": "0.1.11",
+  "pin": "336756510dd7ca03fc6d6dbb49c3d36e9253a48e",
+  "scope": "Task-owned source/docs/release metadata and required regression evidence only; preserve foreign user state and older Releases.",
+  "independent_contract_review": "Human owner approved ADR-0042 and both changed operational contracts at the exact pinned source.",
+  "native_status": "Required source CI pending after this source push; local Windows checks passed within their recorded scope.",
+  "limitations": "No AI-session discovery/universal host/complete call graph/Mac ARM/separate WSL claim. Native Claude local proof uses isolated private state. Actual 0.1.10 upgrade/rollback and artifact release binding remain mandatory delivery gates."
+}

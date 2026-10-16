@@ -149,12 +149,12 @@ fn mcp(args: &[OsString]) -> i32 {
         .first()
         .is_some_and(|arg| arg == "--help" || arg == "-h")
     {
-        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [serve|stdio|http|version|doctor|update|entrypoints] [options]\nserve: named HTTP gateway; three-hour idle default, optional owner PID.\nDefault: stdio (compatibility). HTTP requires explicit Host/Origin allowlists.\nBackground lifecycle: axm mcp start|status|stop.\nRun axmp <command> --help for command options.");
+        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [serve|start|list|status|stop|stdio|http|version|doctor|update|entrypoints] [options]\nserve: named HTTP gateway; three-hour idle default, optional owner PID.\nDefault: stdio (compatibility). HTTP requires explicit Host/Origin allowlists.\nBackground lifecycle: axm mcp start|list|status|stop.\nRun axmp <command> --help for command options.");
         return 0;
     }
     let (module, forwarded) =
         match args.first().and_then(|arg| arg.to_str()) {
-            Some("serve" | "start" | "status" | "stop") => ("axiom_mcp.gateway", args),
+            Some("serve" | "start" | "list" | "status" | "stop") => ("axiom_mcp.gateway", args),
             Some("stdio") => ("axiom_mcp.stdio", &args[1..]),
             Some("http") => ("axiom_mcp.http", &args[1..]),
             Some("entrypoints") => ("axiom_mcp.entrypoints", &args[1..]),
@@ -164,7 +164,7 @@ fn mcp(args: &[OsString]) -> i32 {
                 "axmp",
                 Refusal::validation(
                     "command_unknown",
-                    "expected stdio, http, version, doctor, update or entrypoints; use axmp --help",
+                    "expected serve, start, list, status, stop, stdio, http, version, doctor, update or entrypoints; use axmp --help",
                 ),
                 args,
             ),

@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "platform": "win32",
+  "cases": [
+    {
+      "case": "human",
+      "exit_code": 2,
+      "live_progress_before_completion": true,
+      "approved_state_preserved": true
+    },
+    {
+      "case": "unknown",
+      "exit_code": 0,
+      "live_progress_before_completion": true,
+      "approved_state_preserved": true
+    },
+    {
+      "case": "json",
+      "exit_code": 2,
+      "live_progress_before_completion": false,
+      "approved_state_preserved": true
+    },
+    {
+      "case": "off",
+      "exit_code": 2,
+      "live_progress_before_completion": false,
+      "approved_state_preserved": true
+    }
+  ],
+  "scope": "Real CLI, bounded local HTTP transfer and private synthetic state; no real user installation or remote release changes"
+}

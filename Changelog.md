@@ -4,9 +4,13 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.11
+
 ### New Features
 
 - Show live download byte percentages, transfer speed and estimated remaining time, with elapsed activity and stage details during installation, runtime preparation and updates. Keep machine JSON quiet and provide bootstrap activity while older installed updaters run.
+- Add managed Claude Code skills lifecycle with verified local payloads, isolated ownership and preservation of modified or disabled host state.
+- List local MCP instances and route status/stop selection to the owned gateway manager.
 
 ## 0.1.10
 

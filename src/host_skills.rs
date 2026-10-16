@@ -11,7 +11,233 @@ use crate::update::json::{self, Json};
 use crate::update::report::Report;
 use crate::update::{sha256, state::State};
 
-pub const HELP: &str = "axm skills - install Axiom skills into your agent\n\nUSAGE: axm skills <install|update|doctor|uninstall|recover> codex [--yes] [--dry-run] [--json]\n       axm skills list [--json]\n       axm skills version|check [options]\n\nCodex is the first managed host adapter. Other hosts are reported unsupported.\nThe verified installed bundle supplies the plugin; no Git main download is used.\nHost registration, next-session skill discovery and MCP query readiness are separate.\nUse $axsk <intent> in your agent. Terminal axsk is deprecated compatibility only.";
+pub const HELP: &str = "axm skills - install Axiom skills into your agent\n\nUSAGE: axm skills <install|update|doctor|uninstall|recover> <codex|claude> [--yes] [--dry-run] [--json]\n       axm skills list [--json]\n       axm skills version|check [options]\n\nManaged adapters: Codex and Claude Code (user scope). Other hosts are unsupported.\nThe verified installed bundle supplies the plugin; no Git main download is used.\nHost registration, next-session skill discovery and MCP query readiness are separate.\nCodex: $axsk <intent>. Claude Code: /axiom:axsk <intent>. Terminal axsk is deprecated compatibility only.";
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Adapter {
+    Codex,
+    Claude,
+}
+
+impl Adapter {
+    const ALL: [Self; 2] = [Self::Codex, Self::Claude];
+
+    fn parse(name: &str) -> Result<Self, Refusal> {
+        match name {
+            "codex" => Ok(Self::Codex),
+            "claude" => Ok(Self::Claude),
+            _ => Err(invalid(
+                "supported managed hosts: codex, claude; use axm skills --help",
+            )),
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Codex => "codex",
+            Self::Claude => "claude",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Codex => "Codex",
+            Self::Claude => "Claude Code",
+        }
+    }
+
+    fn receipt(self) -> String {
+        format!("host-integrations/{}.json", self.name())
+    }
+
+    fn arguments(self, args: &[&str]) -> Vec<String> {
+        if self == Self::Codex {
+            return args.iter().map(|a| (*a).into()).collect();
+        }
+        let query = args.starts_with(&["plugin", "list"])
+            || args.starts_with(&["plugin", "marketplace", "list"]);
+        let mut words: Vec<String> = args
+            .iter()
+            .filter(|a| query || **a != "--json")
+            .map(|a| (*a).into())
+            .collect();
+        if args.starts_with(&["plugin", "list"]) {
+            words = vec!["plugin".into(), "list".into(), "--json".into()];
+        }
+        if args.starts_with(&["plugin", "add"]) {
+            words[1] = "install".into();
+        }
+        if args.starts_with(&["plugin", "remove"]) {
+            words[1] = "uninstall".into();
+            words.push("--keep-data".into());
+        }
+        if !query {
+            words.extend(["--scope".into(), "user".into()]);
+        }
+        words
+    }
+
+    fn normalize(self, args: &[&str], result: Json) -> Result<Json, Refusal> {
+        if self == Self::Codex {
+            return Ok(result);
+        }
+        if args.starts_with(&["plugin", "marketplace", "list"]) {
+            let rows = result
+                .as_array()
+                .ok_or_else(|| invalid("unsupported Claude marketplace response"))?;
+            let mut markets = Vec::new();
+            for row in rows {
+                if row.get("name").and_then(Json::as_text) != Some("axiom-skills") {
+                    continue;
+                }
+                if row.get("source").and_then(Json::as_text) != Some("directory") {
+                    return Err(Refusal::new(Class::Conflict, "host_marketplace_foreign", "Claude axiom-skills marketplace is not a managed local directory; it was preserved"));
+                }
+                markets.push(Json::from_pairs(vec![
+                    ("name", Json::text("axiom-skills")),
+                    ("root", Json::text(text(row, "path")?)),
+                ]));
+            }
+            return Ok(Json::from_pairs(vec![(
+                "marketplaces",
+                Json::array(markets),
+            )]));
+        }
+        if args.starts_with(&["plugin", "list"]) {
+            let rows = result
+                .as_array()
+                .ok_or_else(|| invalid("unsupported Claude plugin response"))?;
+            let mut plugins = Vec::new();
+            for row in rows {
+                let id = text(row, "id")?;
+                if !id.ends_with("@axiom-skills") {
+                    continue;
+                }
+                if id != "axiom@axiom-skills" || text(row, "scope")? != "user" {
+                    return Err(Refusal::new(Class::Conflict, "host_scope_conflict", "Claude has another plugin or scope using axiom-skills; its configuration was preserved"));
+                }
+                plugins.push(Json::from_pairs(vec![
+                    ("name", Json::text("axiom")),
+                    ("marketplaceName", Json::text("axiom-skills")),
+                    ("installed", Json::bool(true)),
+                    (
+                        "enabled",
+                        Json::bool(
+                            row.get("enabled")
+                                .and_then(Json::as_bool)
+                                .ok_or_else(|| invalid("Claude enabled state unavailable"))?,
+                        ),
+                    ),
+                    ("version", Json::text(text(row, "version")?)),
+                    (
+                        "installPath",
+                        Json::text(
+                            row.get("readFromFolder")
+                                .and_then(Json::as_text)
+                                .filter(|s| !s.is_empty())
+                                .or_else(|| {
+                                    row.get("installPath")
+                                        .and_then(Json::as_text)
+                                        .filter(|s| !s.is_empty())
+                                })
+                                .ok_or_else(|| invalid("Claude plugin location missing"))?,
+                        ),
+                    ),
+                ]));
+            }
+            if plugins.len() > 1 {
+                return Err(invalid("ambiguous Claude user plugin installation"));
+            }
+            return Ok(Json::from_pairs(vec![("installed", Json::array(plugins))]));
+        }
+        Ok(result)
+    }
+}
+
+fn verify_host_bundle(adapter: Adapter, bundle: &Bundle) -> Result<(), Refusal> {
+    if adapter == Adapter::Codex {
+        return Ok(());
+    }
+    let market = read(&safe_path(
+        &bundle.source,
+        ".claude-plugin/marketplace.json",
+    )?)?;
+    if text(&market, "name")? != "axiom-skills" {
+        return Err(invalid("unexpected Claude marketplace identity"));
+    }
+    let plugins = market
+        .get("plugins")
+        .and_then(Json::as_array)
+        .ok_or_else(|| invalid("Claude marketplace plugins missing"))?;
+    if plugins.len() != 1
+        || text(&plugins[0], "name")? != "axiom"
+        || text(&plugins[0], "source")? != "./plugins/axiom"
+    {
+        return Err(invalid(
+            "Claude marketplace must reference only the verified local Axiom plugin",
+        ));
+    }
+    let plugin = read(&safe_path(
+        &bundle.source,
+        "plugins/axiom/.claude-plugin/plugin.json",
+    )?)?;
+    if text(&plugin, "name")? != "axiom" || text(&plugin, "version")? != bundle.version {
+        return Err(invalid("Claude plugin identity/version mismatch"));
+    }
+    Ok(())
+}
+
+fn verify_host_cache(adapter: Adapter, receipt: &Json) -> Result<(), Refusal> {
+    if adapter != Adapter::Claude {
+        return Ok(());
+    }
+    let result = host(adapter, &["plugin", "list", "--json"])?;
+    let rows = result
+        .get("installed")
+        .and_then(Json::as_array)
+        .ok_or_else(|| invalid("missing installed Claude plugins"))?;
+    let Some(plugin) = rows.first() else {
+        return Ok(());
+    };
+    let cache = PathBuf::from(text(plugin, "installPath")?);
+    let manifest = receipt
+        .get("manifest")
+        .ok_or_else(|| invalid("owned cache manifest missing"))?;
+    let rows = manifest
+        .get("entries")
+        .and_then(Json::as_array)
+        .ok_or_else(|| invalid("owned plugin entries missing"))?;
+    let mut entries = Vec::new();
+    for row in rows {
+        if let Some(relative) = text(row, "path")?.strip_prefix("plugins/axiom/") {
+            let mut entry = row.clone();
+            entry.set("path", Json::text(relative)).map_err(invalid)?;
+            entries.push(entry);
+        }
+    }
+    verify_entries(
+        &cache,
+        &Json::from_pairs(vec![("entries", Json::array(entries))]),
+    )
+    .map_err(|_| {
+        Refusal::new(
+            Class::Conflict,
+            "host_cache_modified",
+            "Claude plugin cache differs from the managed verified payload; it was preserved",
+        )
+    })
+}
+
+pub fn managed_hosts() -> Vec<String> {
+    let Some(root) = crate::update::state::default_root() else {
+        return Vec::new();
+    };
+    Adapter::ALL
+        .into_iter()
+        .filter(|a| root.join(a.receipt()).is_file())
+        .map(|a| a.name().into())
+        .collect()
+}
 
 fn invalid(message: impl Into<String>) -> Refusal {
     Refusal::validation("host_skills_invalid", message)
@@ -219,13 +445,14 @@ fn write(path: &Path, value: &Json) -> Result<(), Refusal> {
     std::fs::rename(temporary, path).map_err(io)
 }
 
-fn host(args: &[&str]) -> Result<Json, Refusal> {
+fn host(adapter: Adapter, args: &[&str]) -> Result<Json, Refusal> {
     let executable = std::env::var_os("PATH").and_then(|path| {
-        std::env::split_paths(&path).map(|p| p.join(crate::layout::program_file("codex")))
+        std::env::split_paths(&path).map(|p| p.join(crate::layout::program_file(adapter.name())))
             .find(|p| p.is_file())
-    }).ok_or_else(|| Refusal::not_ready("host_missing", "A native Codex CLI executable is unavailable on PATH; install a supported Codex client first"))?;
+    }).ok_or_else(|| Refusal::not_ready("host_missing", "A native Agent CLI executable is unavailable on PATH; install a supported Agent client first"))?;
+    let words = adapter.arguments(args);
     let mut child = Command::new(executable)
-        .args(args)
+        .args(&words)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -233,12 +460,12 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
         .map_err(|_| {
             Refusal::not_ready(
                 "host_missing",
-                "Codex CLI is unavailable; install a supported Codex client first",
+                "Agent CLI is unavailable; install a supported Agent client first",
             )
         })?;
     let progress = crate::progress::Progress::waiting(
-        "Waiting for Codex",
-        "Waiting for the native Codex client response; registration and discovery are separate",
+        &format!("Waiting for {}", adapter.label()),
+        "Waiting for the native Agent client response; registration and discovery are separate",
     );
     let out = child.stdout.take().unwrap();
     let err = child.stderr.take().unwrap();
@@ -262,7 +489,11 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
             let _ = child.wait();
             return Err(Refusal::not_ready(
                 "host_timeout",
-                "Codex command timed out; inspect axm skills doctor codex before retrying",
+                format!(
+                    "{} command timed out; inspect axm skills doctor {} before retrying",
+                    adapter.label(),
+                    adapter.name()
+                ),
             ));
         }
         std::thread::sleep(Duration::from_millis(50));
@@ -272,14 +503,15 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
         .map_err(|_| invalid("host output reader failed"))?;
     let _ = errors.join();
     if !status.success() {
-        return Err(Refusal::not_ready("host_command_failed", format!("Codex plugin command failed (exit {}); retained content and pending recovery record were kept", status.code().unwrap_or(8))));
+        return Err(Refusal::not_ready("host_command_failed", format!("Agent plugin command failed (exit {}); retained content and pending recovery record were kept", status.code().unwrap_or(8))));
     }
-    let result = if args.contains(&"--json") {
+    let result = if words.iter().any(|a| a == "--json") {
         if bytes.len() > 4_194_304 {
             return Err(invalid("host output exceeds budget"));
         }
         json::parse(std::str::from_utf8(&bytes).map_err(|_| invalid("host output is not UTF-8"))?)
             .map_err(invalid)
+            .and_then(|result| adapter.normalize(args, result))
     } else {
         Ok(Json::Null)
     };
@@ -287,18 +519,18 @@ fn host(args: &[&str]) -> Result<Json, Refusal> {
     result
 }
 
-fn marketplace() -> Result<Option<PathBuf>, Refusal> {
-    let result = host(&["plugin", "marketplace", "list", "--json"])?;
+fn marketplace(adapter: Adapter) -> Result<Option<PathBuf>, Refusal> {
+    let result = host(adapter, &["plugin", "marketplace", "list", "--json"])?;
     let rows = result
         .get("marketplaces")
         .and_then(Json::as_array)
-        .ok_or_else(|| invalid("unsupported Codex marketplace response"))?;
+        .ok_or_else(|| invalid("unsupported Agent marketplace response"))?;
     let found: Vec<_> = rows
         .iter()
         .filter(|r| r.get("name").and_then(Json::as_text) == Some("axiom-skills"))
         .collect();
     if found.len() > 1 {
-        return Err(invalid("ambiguous Codex marketplace"));
+        return Err(invalid("ambiguous Agent marketplace"));
     }
     found
         .first()
@@ -306,12 +538,15 @@ fn marketplace() -> Result<Option<PathBuf>, Refusal> {
         .transpose()
 }
 
-fn plugin(version: &str) -> Result<bool, Refusal> {
-    let result = host(&["plugin", "list", "--marketplace", "axiom-skills", "--json"])?;
+fn plugin(adapter: Adapter, version: &str) -> Result<bool, Refusal> {
+    let result = host(
+        adapter,
+        &["plugin", "list", "--marketplace", "axiom-skills", "--json"],
+    )?;
     let rows = result
         .get("installed")
         .and_then(Json::as_array)
-        .ok_or_else(|| invalid("unsupported Codex plugin response"))?;
+        .ok_or_else(|| invalid("unsupported Agent plugin response"))?;
     Ok(rows.iter().any(|r| {
         r.get("name").and_then(Json::as_text) == Some("axiom")
             && r.get("marketplaceName").and_then(Json::as_text) == Some("axiom-skills")
@@ -321,12 +556,15 @@ fn plugin(version: &str) -> Result<bool, Refusal> {
     }))
 }
 
-fn plugin_enabled() -> Result<Option<bool>, Refusal> {
-    let result = host(&["plugin", "list", "--marketplace", "axiom-skills", "--json"])?;
+fn plugin_enabled(adapter: Adapter) -> Result<Option<bool>, Refusal> {
+    let result = host(
+        adapter,
+        &["plugin", "list", "--marketplace", "axiom-skills", "--json"],
+    )?;
     let rows = result
         .get("installed")
         .and_then(Json::as_array)
-        .ok_or_else(|| invalid("unsupported Codex plugin response"))?;
+        .ok_or_else(|| invalid("unsupported Agent plugin response"))?;
     rows.iter()
         .find(|r| {
             r.get("name").and_then(Json::as_text) == Some("axiom")
@@ -341,29 +579,32 @@ fn plugin_enabled() -> Result<Option<bool>, Refusal> {
         .transpose()
 }
 
-fn remove_plugin_if_present() -> Result<(), Refusal> {
-    let result = host(&["plugin", "list", "--marketplace", "axiom-skills", "--json"])?;
+fn remove_plugin_if_present(adapter: Adapter) -> Result<(), Refusal> {
+    let result = host(
+        adapter,
+        &["plugin", "list", "--marketplace", "axiom-skills", "--json"],
+    )?;
     let rows = result
         .get("installed")
         .and_then(Json::as_array)
-        .ok_or_else(|| invalid("unsupported Codex plugin response"))?;
+        .ok_or_else(|| invalid("unsupported Agent plugin response"))?;
     if rows.iter().any(|r| {
         r.get("name").and_then(Json::as_text) == Some("axiom")
             && r.get("marketplaceName").and_then(Json::as_text) == Some("axiom-skills")
             && r.get("installed").and_then(Json::as_bool) == Some(true)
     }) {
-        host(&["plugin", "remove", "axiom@axiom-skills"])?;
+        host(adapter, &["plugin", "remove", "axiom@axiom-skills"])?;
     }
     Ok(())
 }
 
-fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
-    let receipt_path = safe_path(root, "host-integrations/codex.json")?;
+fn recover(adapter: Adapter, root: &Path, args: &[&str]) -> Result<Report, Refusal> {
+    let receipt_path = safe_path(root, &adapter.receipt())?;
     let pending_path = receipt_path.with_extension("pending.json");
     let pending = read(&pending_path)?;
-    let current = marketplace()?;
+    let current = marketplace(adapter)?;
     if pending.get("previous_enabled").and_then(Json::as_bool) == Some(false)
-        || (current.is_some() && plugin_enabled()? == Some(false))
+        || (current.is_some() && plugin_enabled(adapter)? == Some(false))
     {
         return Err(Refusal::new(Class::Conflict, "host_disabled_preserved", "Recovery would affect a disabled plugin; its host settings and pending inputs were preserved for client-managed recovery"));
     }
@@ -374,7 +615,19 @@ fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
     let next = pending.get("next").filter(|v| matches!(v, Json::Object(_)));
     let mut owned = Vec::new();
     for record in [previous, next].into_iter().flatten() {
-        owned.push(std::fs::canonicalize(owned_snapshot(root, record)?).map_err(io)?);
+        if text(record, "host")? != adapter.name() {
+            return Err(invalid("pending ownership belongs to another host"));
+        }
+        let path = std::fs::canonicalize(owned_snapshot(root, record)?).map_err(io)?;
+        if current
+            .as_ref()
+            .and_then(|p| std::fs::canonicalize(p).ok())
+            .as_ref()
+            == Some(&path)
+        {
+            verify_host_cache(adapter, record)?;
+        }
+        owned.push(path);
     }
     if let Some(path) = &current {
         if !owned.contains(&std::fs::canonicalize(path).map_err(io)?) {
@@ -404,7 +657,7 @@ fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
             ));
         }
     }
-    let lines = vec!["Recover only the pending Axiom-owned Codex plugin registration to its previous state; retain all bundle snapshots.".to_string()];
+    let lines = vec!["Recover only the pending Axiom-owned Agent plugin registration to its previous state; retain all bundle snapshots.".to_string()];
     if args.contains(&"--dry-run") {
         let mut r = Report::ok("planned", "host recovery plan");
         r.lines(lines);
@@ -422,7 +675,7 @@ fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
     let state = State::new(root.to_path_buf());
     let _lock = crate::update::apply::Lock::acquire(&state, "host-skills-recovery")?;
     if sha256::file_hex(&pending_path).map_err(io)? != pending_digest
-        || marketplace()? != current
+        || marketplace(adapter)? != current
         || receipt_path
             .exists()
             .then(|| sha256::file_hex(&receipt_path))
@@ -438,24 +691,31 @@ fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
     }
     let apply = || -> Result<(), Refusal> {
         if current.is_some() {
-            remove_plugin_if_present()?;
-            host(&["plugin", "marketplace", "remove", "axiom-skills"])?;
+            remove_plugin_if_present(adapter)?;
+            host(
+                adapter,
+                &["plugin", "marketplace", "remove", "axiom-skills"],
+            )?;
         }
         if let Some(record) = previous {
             let path = owned_snapshot(root, record)?;
-            host(&[
-                "plugin",
-                "marketplace",
-                "add",
-                &path.display().to_string(),
-                "--json",
-            ])?;
-            host(&["plugin", "add", "axiom@axiom-skills", "--json"])?;
-            if !plugin(text(record, "version")?)? {
+            host(
+                adapter,
+                &[
+                    "plugin",
+                    "marketplace",
+                    "add",
+                    &path.display().to_string(),
+                    "--json",
+                ],
+            )?;
+            host(adapter, &["plugin", "add", "axiom@axiom-skills", "--json"])?;
+            if !plugin(adapter, text(record, "version")?)? {
                 return Err(invalid(
                     "previous plugin registration could not be verified",
                 ));
             }
+            verify_host_cache(adapter, record)?;
             write(&receipt_path, record)?;
         } else if receipt_path.exists() {
             std::fs::remove_file(&receipt_path).map_err(io)?;
@@ -472,8 +732,8 @@ fn recover(root: &Path, args: &[&str]) -> Result<Report, Refusal> {
             ),
         )
     })?;
-    let mut report = Report::ok("ok", "previous Codex registration restored");
-    report.lines(["Codex host recovery: OK; retained snapshots were preserved."]);
+    let mut report = Report::ok("ok", "previous Agent registration restored");
+    report.lines(["Agent host recovery: OK; retained snapshots were preserved."]);
     Ok(report)
 }
 
@@ -538,34 +798,37 @@ fn owned_snapshot(root: &Path, receipt: &Json) -> Result<PathBuf, Refusal> {
 }
 
 pub fn preview(host_name: &str) -> Result<Json, Refusal> {
-    if host_name != "codex" {
-        return Err(invalid("supported managed host: codex"));
-    }
+    let adapter = Adapter::parse(host_name)?;
     let root = crate::update::state::default_root()
         .ok_or_else(|| invalid("installation root unavailable"))?;
-    let path = safe_path(&root, "host-integrations/codex.json")?;
+    let path = safe_path(&root, &adapter.receipt())?;
     if path.with_extension("pending.json").exists() {
         return Err(Refusal::not_ready(
             "host_recovery_pending",
-            "A host transaction needs recovery; run axm skills recover codex",
+            "A host transaction needs recovery; run axm skills recover HOST",
         ));
     }
-    let current = marketplace()?;
+    let current = marketplace(adapter)?;
     if let Some(actual) = &current {
         if !path.exists() {
             return Err(Refusal::new(Class::Conflict, "host_marketplace_foreign", "axiom-skills is already registered outside Axiom management; its configuration was preserved"));
         }
-        let owned = owned_snapshot(&root, &read(&path)?)?;
+        let receipt = read(&path)?;
+        if text(&receipt, "host")? != adapter.name() {
+            return Err(invalid("managed receipt belongs to another host"));
+        }
+        let owned = owned_snapshot(&root, &receipt)?;
+        verify_host_cache(adapter, &receipt)?;
         if std::fs::canonicalize(actual).map_err(io)? != std::fs::canonicalize(owned).map_err(io)? {
             return Err(Refusal::new(
                 Class::Conflict,
                 "host_registration_modified",
-                "Codex marketplace source changed; nothing was overwritten",
+                "Agent marketplace source changed; nothing was overwritten",
             ));
         }
     }
     let enabled = if current.is_some() {
-        plugin_enabled()?
+        plugin_enabled(adapter)?
     } else {
         None
     };
@@ -594,17 +857,28 @@ pub fn preview(host_name: &str) -> Result<Json, Refusal> {
 }
 
 pub fn apply_approved(plan: &Json) -> Report {
+    let Some(name) = plan.get("host").and_then(Json::as_text) else {
+        return Report::refused("approved host is missing");
+    };
+    let adapter = match Adapter::parse(name) {
+        Ok(a) => a,
+        Err(e) => return Report::refused(e.message),
+    };
     let managed = crate::update::state::default_root()
-        .is_some_and(|root| root.join("host-integrations/codex.json").is_file());
+        .is_some_and(|root| root.join(adapter.receipt()).is_file());
     let args = [
         OsString::from(if managed { "update" } else { "install" }),
-        OsString::from("codex"),
+        OsString::from(name),
         OsString::from("--yes"),
         OsString::from("--json"),
     ];
     match operation(&args, Some(plan)) {
         Ok(report) => report,
-        Err(error) => Report::new(error.class.exit_code(), error.class.status(), error.message),
+        Err(error) => Report::new(
+            error.class.exit_code(),
+            error.class.status(),
+            error.message.replace("HOST", name),
+        ),
     }
 }
 
@@ -624,9 +898,9 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
     }) {
         return Err(invalid("unknown host skills option; use axm skills --help"));
     }
-    if action != "list" && (positional.len() != 2 || positional[1] != "codex") {
+    if action != "list" && positional.len() != 2 {
         return Err(invalid(
-            "supported managed host: codex; use axm skills install codex",
+            "expected a managed host: codex or claude; use axm skills --help",
         ));
     }
     if !matches!(
@@ -637,38 +911,58 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
             "expected install, update, doctor, uninstall or list",
         ));
     }
+    let adapter = if action == "list" {
+        Adapter::Codex
+    } else {
+        Adapter::parse(positional[1])?
+    };
     let root = crate::update::state::default_root()
         .ok_or_else(|| invalid("installation root unavailable"))?;
     if action == "recover" {
-        return recover(&root, &strings);
+        return recover(adapter, &root, &strings);
     }
     if action == "list" {
         if positional.len() != 1 {
             return Err(invalid("axm skills list takes no host argument"));
         }
-        let receipt_path = safe_path(&root, "host-integrations/codex.json")?;
-        let managed = receipt_path.is_file();
-        let registered = match marketplace() {
-            Ok(value) => Some(value.is_some()),
-            Err(error) if error.reason == "host_missing" => None,
-            Err(error) => return Err(error),
-        };
         let mut report = Report::ok("ok", "host skills registration inventory");
-        report.detail("managed", Json::bool(managed));
-        report.detail(
-            "registered",
-            registered.map(Json::bool).unwrap_or(Json::Null),
-        );
-        report.detail("host_available", Json::bool(registered.is_some()));
-        report.lines([format!(
-            "Codex: managed record={managed}; registration={}",
-            registered
-                .map(|v| v.to_string())
-                .unwrap_or_else(|| "host unavailable".into())
-        )]);
+        let mut hosts = Vec::new();
+        for adapter in Adapter::ALL {
+            let managed = safe_path(&root, &adapter.receipt())?.is_file();
+            let registered = match marketplace(adapter) {
+                Ok(value) => Some(value.is_some()),
+                Err(error) if error.reason == "host_missing" => None,
+                Err(error) => return Err(error),
+            };
+            hosts.push(Json::from_pairs(vec![
+                ("host", Json::text(adapter.name())),
+                ("managed", Json::bool(managed)),
+                (
+                    "registered",
+                    registered.map(Json::bool).unwrap_or(Json::Null),
+                ),
+                ("host_available", Json::bool(registered.is_some())),
+            ]));
+            if adapter == Adapter::Codex {
+                report.detail("managed", Json::bool(managed));
+                report.detail(
+                    "registered",
+                    registered.map(Json::bool).unwrap_or(Json::Null),
+                );
+                report.detail("host_available", Json::bool(registered.is_some()));
+            }
+            report.line(format!(
+                "{}: managed record={managed}; registration={}",
+                adapter.label(),
+                registered
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| "host unavailable".into())
+            ));
+        }
+        report.detail("hosts", Json::array(hosts));
         return Ok(report);
     }
-    let epoch = preview("codex")?;
+    let epoch = preview(adapter.name())?;
     if let Some(expected) = approved {
         let mut original = expected.clone();
         if let Json::Object(ref mut values) = original {
@@ -683,23 +977,28 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
             ));
         }
     }
-    let receipt_path = safe_path(&root, "host-integrations/codex.json")?;
+    let receipt_path = safe_path(&root, &adapter.receipt())?;
     let receipt = if receipt_path.exists() {
-        Some(read(&receipt_path)?)
+        let record = read(&receipt_path)?;
+        if text(&record, "host")? != adapter.name() {
+            return Err(invalid("managed receipt belongs to another host"));
+        }
+        Some(record)
     } else {
         None
     };
-    let registered = marketplace()?;
+    let registered = marketplace(adapter)?;
     let old_path = receipt
         .as_ref()
         .map(|r| text(r, "marketplace_root").map(PathBuf::from))
         .transpose()?;
     match (&registered, &old_path) {
-        (Some(actual), Some(expected)) if std::fs::canonicalize(actual).map_err(io)? != std::fs::canonicalize(expected).map_err(io)? => return Err(Refusal::new(Class::Conflict, "host_registration_modified", "Codex marketplace was changed outside Axiom; nothing was overwritten")),
-        (Some(_), None) => return Err(Refusal::new(Class::Conflict, "host_marketplace_foreign", "axiom-skills already exists in Codex and is not Axiom-managed; preserve it or remove that registration explicitly before managed install")),
+        (Some(actual), Some(expected)) if std::fs::canonicalize(actual).map_err(io)? != std::fs::canonicalize(expected).map_err(io)? => return Err(Refusal::new(Class::Conflict, "host_registration_modified", "Agent marketplace was changed outside Axiom; nothing was overwritten")),
+        (Some(_), None) => return Err(Refusal::new(Class::Conflict, "host_marketplace_foreign", "axiom-skills already exists in Agent and is not Axiom-managed; preserve it or remove that registration explicitly before managed install")),
         _ => {}
     }
     let bundle = installed_bundle(&root)?;
+    verify_host_bundle(adapter, &bundle)?;
     if let Some(expected) = approved {
         if text(expected, "version")? != bundle.version
             || text(expected, "revision")? != text(&bundle.manifest, "revision")?
@@ -715,20 +1014,20 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
         if epoch.get("plugin_enabled").and_then(Json::as_bool) == Some(false) {
             let mut report = Report::ok(
                 "disabled",
-                "Codex plugin is intentionally disabled; its configuration was preserved",
+                "Agent plugin is intentionally disabled; its configuration was preserved",
             );
             report.detail("host_discovery", Json::text("disabled"));
             report.detail("mcp_query", Json::text("not_checked"));
             report.lines([
-                "Codex plugin: disabled (unchanged)",
+                "Agent plugin: disabled (unchanged)",
                 "MCP query readiness: not checked",
             ]);
             return Ok(report);
         }
-        if receipt.is_none() || registered.is_none() || !plugin(&bundle.version)? {
-            return Err(Refusal::not_ready("host_not_ready", "Codex plugin is absent, disabled or differs from the installed bundle; run axm skills install/update codex"));
+        if receipt.is_none() || registered.is_none() || !plugin(adapter, &bundle.version)? {
+            return Err(Refusal::not_ready("host_not_ready", "Agent plugin is absent, disabled or differs from the installed bundle; run axm skills install/update HOST"));
         }
-        let mut report = Report::ok("ok", "Codex plugin registration verified");
+        let mut report = Report::ok("ok", "Agent plugin registration verified");
         report.detail("registration", Json::text("verified"));
         report.detail(
             "host_discovery",
@@ -736,7 +1035,7 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
         );
         report.detail("mcp_query", Json::text("not_checked"));
         report.lines([
-            "Codex plugin registration: OK",
+            "Agent plugin registration: OK",
             "Agent skill discovery: open a new session to verify",
             "MCP query readiness: not checked",
         ]);
@@ -746,24 +1045,24 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
         && epoch.get("plugin_enabled").and_then(Json::as_bool) == Some(false)
     {
         if action == "install" {
-            return Err(Refusal::not_ready("host_plugin_disabled", "Codex plugin is disabled in the host; enable it in your client before reinstalling. No host setting was changed"));
+            return Err(Refusal::not_ready("host_plugin_disabled", "Agent plugin is disabled in the host; enable it in your client before reinstalling. No host setting was changed"));
         }
         let mut report = Report::ok(
             "skipped_disabled",
-            "Disabled Codex plugin was preserved; host content was not refreshed",
+            "Disabled Agent plugin was preserved; host content was not refreshed",
         );
         report.detail("host_discovery", Json::text("disabled"));
         report.detail("mcp_query", Json::text("not_checked"));
-        report.lines(["Codex plugin: disabled; unchanged (no implicit re-enable)"]);
+        report.lines(["Agent plugin: disabled; unchanged (no implicit re-enable)"]);
         return Ok(report);
     }
     if matches!(action, "update" | "uninstall") && receipt.is_none() {
         return Err(Refusal::not_ready(
             "host_not_managed",
-            "No managed Codex registration; run axm skills install codex",
+            "No managed Agent registration; run axm skills install HOST",
         ));
     }
-    let plan = vec![format!("Codex skills {action}: verified bundle {} ({})", bundle.version, bundle.digest),
+    let plan = vec![format!("Agent skills {action}: verified bundle {} ({})", bundle.version, bundle.digest),
         "Changes only the Axiom-owned plugin registration; retained snapshots and unrelated host settings are preserved.".into()];
     if strings.contains(&"--dry-run") {
         let mut report = Report::ok("planned", "host skills plan; nothing changed");
@@ -796,7 +1095,7 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
             .then(|| sha256::file_hex(&receipt_path))
             .transpose()
             .map_err(io)?
-        || json::canonical_text(&preview("codex")?) != json::canonical_text(&epoch)
+        || json::canonical_text(&preview(adapter.name())?) != json::canonical_text(&epoch)
         || installed_bundle(&root)?.digest != bundle.digest
     {
         return Err(Refusal::new(
@@ -835,7 +1134,7 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
                     .as_ref()
                     .map(|path| {
                         Json::from_pairs(vec![
-                            ("host", Json::text("codex")),
+                            ("host", Json::text(adapter.name())),
                             ("version", Json::text(&bundle.version)),
                             ("manifest_sha256", Json::text(&bundle.digest)),
                             ("manifest", bundle.manifest.clone()),
@@ -855,29 +1154,41 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
     )?;
     let apply = || -> Result<(), Refusal> {
         if registered.is_some() {
-            remove_plugin_if_present()?;
-            host(&["plugin", "marketplace", "remove", "axiom-skills"])?;
+            remove_plugin_if_present(adapter)?;
+            host(
+                adapter,
+                &["plugin", "marketplace", "remove", "axiom-skills"],
+            )?;
         }
         if let Some(path) = &target {
-            host(&[
-                "plugin",
-                "marketplace",
-                "add",
-                &path.display().to_string(),
-                "--json",
-            ])?;
-            host(&["plugin", "add", "axiom@axiom-skills", "--json"])?;
-            if !plugin(&bundle.version)? {
+            host(
+                adapter,
+                &[
+                    "plugin",
+                    "marketplace",
+                    "add",
+                    &path.display().to_string(),
+                    "--json",
+                ],
+            )?;
+            host(adapter, &["plugin", "add", "axiom@axiom-skills", "--json"])?;
+            if !plugin(adapter, &bundle.version)? {
                 return Err(Refusal::not_ready(
                     "host_verification_failed",
-                    "Codex did not report the selected plugin enabled; recovery record retained",
+                    "Agent did not report the selected plugin enabled; recovery record retained",
                 ));
             }
+        }
+        if target.is_some() {
+            verify_host_cache(
+                adapter,
+                &Json::from_pairs(vec![("manifest", bundle.manifest.clone())]),
+            )?;
         }
         Ok(())
     };
     if let Err(error) = apply() {
-        return Err(Refusal::not_ready("host_apply_partial", format!("Host setup may be partial: {}. Previous content is retained; run axm skills recover codex before retrying.", error.message)));
+        return Err(Refusal::not_ready("host_apply_partial", format!("Host setup may be partial: {}. Previous content is retained; run axm skills recover HOST before retrying.", error.message)));
     }
     if installed_bundle(&root).map(|b| b.digest).ok().as_deref() != Some(bundle.digest.as_str()) {
         return Err(Refusal::not_ready("host_apply_partial", "The runtime skills changed during host setup; registration may be partial, previous content and recovery metadata were retained"));
@@ -908,7 +1219,7 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
             write(
                 &receipt_path,
                 &Json::from_pairs(vec![
-                    ("host", Json::text("codex")),
+                    ("host", Json::text(adapter.name())),
                     ("version", Json::text(&bundle.version)),
                     ("manifest_sha256", Json::text(&bundle.digest)),
                     ("manifest", bundle.manifest),
@@ -922,14 +1233,14 @@ fn operation(args: &[OsString], approved: Option<&Json>) -> Result<Report, Refus
         Ok(())
     };
     finalize().map_err(|e| Refusal::not_ready("host_apply_partial", format!("Host registration was applied but its metadata commit is incomplete: {}. Recovery inputs are retained.", e.message)))?;
-    let mut report = Report::ok("ok", format!("Codex skills {action} completed"));
+    let mut report = Report::ok("ok", format!("Agent skills {action} completed"));
     report.detail(
         "host_discovery",
         Json::text("new_session_required_not_verified"),
     );
     report.detail("mcp_query", Json::text("not_checked"));
     report.lines([
-        format!("Codex skills {action}: OK"),
+        format!("Agent skills {action}: OK"),
         "Open a new agent session. MCP credentials and graph access are checked separately.".into(),
     ]);
     Ok(report)
@@ -940,7 +1251,16 @@ pub fn run(args: &[OsString]) -> i32 {
         println!("{HELP}");
         return 0;
     }
-    let report = match operation(args, None) {
+    let report = match operation(args, None).map_err(|mut error| {
+        if let Some(name) = args
+            .iter()
+            .filter_map(|a| a.to_str())
+            .find(|a| matches!(*a, "codex" | "claude"))
+        {
+            error.message = error.message.replace("HOST", name);
+        }
+        error
+    }) {
         Ok(report) => report,
         Err(error) => {
             let (code, status) = if error.reason == "host_apply_partial" {

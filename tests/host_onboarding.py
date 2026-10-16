@@ -20,13 +20,13 @@ def dump(path, value):
     path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
 
 
-def run(cli: Path):
+def run(cli: Path, host_name="codex"):
     checks = []
     with tempfile.TemporaryDirectory(prefix="axiom host adapter ") as temporary:
         temp = Path(temporary)
         root, bin_dir = temp / "installation ; with spaces", temp / "host bin"
         bin_dir.mkdir()
-        host = bin_dir / ("codex.exe" if os.name == "nt" else "codex")
+        host = bin_dir / (host_name + (".exe" if os.name == "nt" else ""))
         subprocess.run(["rustc", "--edition=2021", str(ROOT / "tests/host_client_stub.rs"),
                         "-o", str(host)], check=True, capture_output=True)
         state_file = host.with_suffix(".state.json")
@@ -41,7 +41,9 @@ def run(cli: Path):
              installed_at="2026-10-16T00:00:00Z"))
         source = root / "installs/ecosystem/skills" / version
         files = {".agents/plugins/marketplace.json": dict(name="axiom-skills", plugins=[dict(name="axiom", source=dict(source="local", path="./plugins/axiom"))]),
-                 "plugins/axiom/.codex-plugin/plugin.json": dict(name="axiom", version=version, skills="./skills/")}
+                 "plugins/axiom/.codex-plugin/plugin.json": dict(name="axiom", version=version, skills="./skills/"),
+                 ".claude-plugin/marketplace.json": dict(name="axiom-skills", plugins=[dict(name="axiom", source="./plugins/axiom")]),
+                 "plugins/axiom/.claude-plugin/plugin.json": dict(name="axiom", version=version)}
         for name, value in files.items():
             dump(source / name, value)
         skill = source / "plugins/axiom/skills/axsk/SKILL.md"
@@ -87,27 +89,27 @@ def run(cli: Path):
                     sha256=hashlib.sha256(artifact.read_bytes()).hexdigest(), size_bytes=artifact.stat().st_size)]
         dump(release / "channel.json", declared)
         plans = []
-        for extra in [[], ["--host", "codex"]]:
+        for extra in [[], ["--host", host_name]]:
             preview = subprocess.run([str(cli), "--json", "install", "--dry-run", "--from", str(release), *extra],
                                      env=env, capture_output=True, text=True, timeout=30)
             assert preview.returncode == 0, preview.stdout + preview.stderr
             plans.append(json.loads(preview.stdout)["details"])
         assert plans[0]["plan_digest"] != plans[1]["plan_digest"]
-        assert plans[1]["plan"]["host_setup"]["host"] == "codex"
+        assert plans[1]["plan"]["host_setup"]["host"] == host_name
         assert plans[1]["plan"]["host_setup"]["version"] == version
         assert not state_file.exists() and not (root / "host-integrations").exists()
         checks.append(dict(case="combined host selection is approval-bound; dry run is read-only", exit_code=0))
 
-        call(["install", "codex", "--dry-run"])
+        call(["install", host_name, "--dry-run"])
         assert not state_file.exists() and not (root / "host-integrations").exists()
-        call(["install", "codex"], 4)
+        call(["install", host_name], 4)
         assert not state_file.exists()
         (root / "update.lock").write_text("another transaction")
-        call(["install", "codex", "--yes"], 10)
+        call(["install", host_name, "--yes"], 10)
         (root / "update.lock").unlink()
-        call(["install", "codex", "--yes"])
+        call(["install", host_name, "--yes"])
         before = state_file.read_bytes()
-        doctor = call(["doctor", "codex"])
+        doctor = call(["doctor", host_name])
         assert doctor["details"]["host_discovery"] == "new_session_required_not_verified"
         assert doctor["details"]["mcp_query"] == "not_checked"
         call(["list"])
@@ -116,44 +118,81 @@ def run(cli: Path):
         disabled["installed"][0]["enabled"] = False
         dump(state_file, disabled)
         disabled_bytes = state_file.read_bytes()
-        skipped = call(["update", "codex", "--yes"])
+        skipped = call(["update", host_name, "--yes"])
         assert skipped["status"] == "skipped_disabled"
-        assert call(["doctor", "codex"])["details"]["host_discovery"] == "disabled"
-        call(["install", "codex", "--yes"], 4)
+        assert call(["doctor", host_name])["details"]["host_discovery"] == "disabled"
+        call(["install", host_name, "--yes"], 4)
         assert state_file.read_bytes() == disabled_bytes
         state_file.write_bytes(before)
-        receipt = root / "host-integrations/codex.json"
+        receipt = root / f"host-integrations/{host_name}.json"
         old = json.loads(receipt.read_text())
+        if host_name == "claude":
+            cache_skill = host.with_suffix(".cache") / "skills/axsk/SKILL.md"
+            cache_bytes = cache_skill.read_bytes()
+            cache_skill.write_text("user modified client cache")
+            for action in ["doctor", "update", "uninstall"]:
+                call([action, host_name, "--yes"], 6)
+            assert cache_skill.read_text() == "user modified client cache"
+            cache_skill.write_bytes(cache_bytes)
+            competing = json.loads(state_file.read_bytes())
+            competing["installed"][0]["scope"] = "project"
+            dump(state_file, competing)
+            call(["update", host_name, "--yes"], 6)
+            state_file.write_bytes(before)
+
         owned_skill = Path(old["marketplace_root"]) / "plugins/axiom/skills/axsk/SKILL.md"
         trusted = owned_skill.read_bytes()
         owned_skill.write_text("human changes")
-        call(["update", "codex", "--yes"], 6)
+        call(["update", host_name, "--yes"], 6)
         assert owned_skill.read_text() == "human changes" and state_file.read_bytes() == before
         owned_skill.write_bytes(trusted)
         skill.write_bytes(skill.read_bytes() + b"\nNew release content.\n")
         assert publish() != digest
-        call(["update", "codex", "--yes"])
+        call(["update", host_name, "--yes"])
         assert json.loads(receipt.read_text())["marketplace_root"] != old["marketplace_root"]
         assert Path(old["marketplace_root"]).exists()
-        call(["uninstall", "codex", "--yes"])
+        call(["uninstall", host_name, "--yes"])
         assert not receipt.exists()
         host.with_suffix(".fail-add").write_text("fail once")
-        call(["install", "codex", "--yes"], 20)
+        call(["install", host_name, "--yes"], 20)
         assert receipt.with_suffix(".pending.json").exists()
-        call(["recover", "codex", "--yes"])
+        call(["recover", host_name, "--yes"])
         assert not receipt.exists() and not receipt.with_suffix(".pending.json").exists()
-        call(["install", "codex", "--yes"])
-        call(["uninstall", "codex", "--yes"])
+        call(["install", host_name, "--yes"])
+        call(["uninstall", host_name, "--yes"])
         foreign = temp / "human marketplace"; foreign.mkdir()
         dump(state_file, dict(marketplaces=[dict(name="axiom-skills", root=str(foreign))], installed=[]))
         before = state_file.read_bytes()
-        call(["install", "codex", "--yes"], 6)
+        call(["install", host_name, "--yes"], 6)
         assert state_file.read_bytes() == before
         call(["list"])
         assert state_file.read_bytes() == before
         call(["install", "unknown", "--yes"], 2)
         assert state_file.read_bytes() == before
-        return dict(passed=True, platform=os.name, host_execution="native contract fixture, not a real Codex installation", checks=checks)
+        # Both native protocols participate in one approved runtime plan.
+        dump(state_file, dict(marketplaces=[], installed=[]))
+        other = "claude" if host_name == "codex" else "codex"
+        other_client = bin_dir / (other + (".exe" if os.name == "nt" else ""))
+        shutil.copyfile(host, other_client)
+        if os.name != "nt": other_client.chmod(0o755)
+        call(["install", host_name, "--yes"])
+        call(["install", other, "--yes"])
+        both = subprocess.run([str(cli), "--json", "install", "--dry-run", "--from", str(release)],
+                              env=env, capture_output=True, text=True, timeout=30)
+        assert both.returncode == 0, both.stdout + both.stderr
+        combined = json.loads(both.stdout)["details"]
+        assert [p["host"] for p in combined["plan"]["host_setups"]] == ["codex", "claude"]
+        assert combined["plan"]["host_setup"] == combined["plan"]["host_setups"][0]
+        single = subprocess.run([str(cli), "--json", "install", "--dry-run", "--from", str(release), "--host", other],
+                                env=env, capture_output=True, text=True, timeout=30)
+        assert single.returncode == 0, single.stdout + single.stderr
+        one = json.loads(single.stdout)["details"]
+        assert "host_setups" not in one["plan"] and combined["plan_digest"] != one["plan_digest"]
+        call(["uninstall", host_name, "--yes"])
+        assert (root / f"host-integrations/{other}.json").is_file()
+        call(["doctor", other])
+        call(["uninstall", other, "--yes"])
+        return dict(passed=True, platform=os.name, host_execution="native protocol fixture, not an actual AI-client session", host=host_name, checks=checks)
 
 
 if __name__ == "__main__":
@@ -161,6 +200,6 @@ if __name__ == "__main__":
     parser.add_argument("--cli", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    result = run(args.cli.resolve())
+    result = dict(passed=True, hosts=[run(args.cli.resolve(), host) for host in ["codex", "claude"]])
     dump(args.out, result)
     print("PASS native host adapter lifecycle and preservation boundaries")

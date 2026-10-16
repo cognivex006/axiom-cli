@@ -295,9 +295,9 @@ Forced termination during a host command can leave the existing installation coo
 
 Managed updates preserve disabled Codex plugins without refreshing or enabling them. Explicit install refuses a disabled plugin until the client owner enables it. Recovery also refuses an observed disabled-state conflict, keeping its inputs for client-managed recovery.
 
-## Progress display (pending next release)
+## Progress display (0.1.11 and later)
 
-Development builds prepared for 0.1.11 show download bars, received/total MB,
+Version 0.1.11 shows download bars, received/total MB,
 measured average transfer speed and an estimated remaining time when the approved
 archive size is known. A download reaching 100% means transfer completion; SHA-256
 verification and installation still follow. Unknown totals and opaque workers show
@@ -318,3 +318,46 @@ use the available native transfer meter on a terminal. Update script handoff
 shows an elapsed activity indicator even when the installed older updater cannot
 report byte telemetry. Previously published initiating binaries remain unchanged;
 new CLI download percentages begin when a build containing this feature is used.
+
+## Claude Code and multiple agent hosts
+
+Version 0.1.11 supports a native Claude Code executable on PATH:
+
+```powershell
+axm skills install claude
+axm skills doctor claude
+axm skills list
+```
+
+Use `axm skills update claude`, `uninstall claude`, or `recover claude` for its
+managed lifecycle. `axm install --host claude` includes Claude in the approved
+runtime plan. Codex and Claude keep separate registrations and recovery records;
+runtime updates refresh both registered hosts. Every selected host is shown in
+the plan and bound into its approval digest. A later host failure reports a
+partial result while preserving the successful runtime installation.
+
+Claude uses user scope and the verified installed local skills bundle, without
+fetching a mutable Git branch. Modified plugin cache content, competing scopes,
+foreign marketplaces and disabled-state conflicts are preserved for inspection.
+Open a new Claude Code session and invoke `/axiom:axsk`. Registration does not
+prove skill discovery or an authenticated graph query. Claude Desktop is separate.
+
+## Inspect and stop MCP instances
+
+```powershell
+axm mcp list
+axm mcp status
+axm mcp stop --instance workspace
+```
+
+Inventory is scoped to the same `AXIOM_HOME` used by the server. It reports names,
+running state, PID and port, including retained stopped instances. Without a name,
+`stop` selects the sole running instance. Multiple or uncertain owners require an
+explicit `--instance`; no process is stopped in that case. Explicitly selecting an
+absent instance reports that fact and directs you to the inventory. Shutdown
+targets the observed owner; it never kills an arbitrary process using a port.
+
+`axm mcp` without arguments runs stdio and waits for its agent on stdin. For a
+manual foreground HTTP gateway use `axmp serve`; its terminal stays open while
+clients connect. Check `/healthz`, `/readyz` and `axmp doctor` separately. See the
+[gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md).

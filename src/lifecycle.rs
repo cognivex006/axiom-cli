@@ -164,13 +164,12 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
     }
     let path_change = (request.mode == Mode::Interactive).then_some(request.modify_path);
     let mut set = resolve_release_set(request.from.as_deref(), path_change)?;
-    let selected_host = request.agent_host.or_else(|| {
-        state::default_root()
-            .filter(|root| root.join("host-integrations/codex.json").is_file())
-            .map(|_| "codex".to_string())
-    });
-    let host_plan = selected_host
-        .as_deref()
+    let selected_hosts = request
+        .agent_host
+        .map(|host| vec![host])
+        .unwrap_or_else(crate::host_skills::managed_hosts);
+    let host_plans = selected_hosts
+        .iter()
         .map(|host| {
             let mut plan = crate::host_skills::preview(host)?;
             let skills = set
@@ -201,11 +200,16 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
             .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
             Ok::<_, Refusal>(plan)
         })
-        .transpose()?;
-    if let Some(plan) = &host_plan {
+        .collect::<Result<Vec<_>, Refusal>>()?;
+    if let Some(plan) = host_plans.first() {
         set.plan
             .set("host_setup", plan.clone())
             .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
+        if host_plans.len() > 1 {
+            set.plan
+                .set("host_setups", Json::array(host_plans.clone()))
+                .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
+        }
         set.plan_digest = plan_contract::digest(&set.plan).ok_or_else(|| {
             Refusal::validation("host_plan_invalid", "host plan cannot be digested")
         })?;
@@ -287,8 +291,21 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
         }
     }
     if report.code() == 0 && request.mode != Mode::DryRun {
-        if let Some(plan) = &host_plan {
-            report.host_stage(crate::host_skills::apply_approved(plan));
+        if !host_plans.is_empty() {
+            report.host_stages(
+                host_plans
+                    .iter()
+                    .map(|plan| {
+                        (
+                            plan.get("host")
+                                .and_then(Json::as_text)
+                                .unwrap_or("unknown")
+                                .to_string(),
+                            crate::host_skills::apply_approved(plan),
+                        )
+                    })
+                    .collect(),
+            );
         } else {
             report.detail("agent_setup", Json::text("not_selected"));
             report.line("Agent skills: not configured; run axm skills install codex to add them.");
@@ -1629,19 +1646,18 @@ fn resolve_local(local_root: Option<&Path>, url: &str) -> Option<PathBuf> {
 
 fn plan_lines(set: &ReleaseSet) -> Vec<String> {
     let mut lines = Vec::new();
-    if let Some(host) = set
+    let plans = set
         .plan
-        .get("host_setup")
-        .and_then(|v| v.get("host"))
-        .and_then(Json::as_text)
-    {
-        if set
-            .plan
-            .get("host_setup")
-            .and_then(|v| v.get("plugin_enabled"))
-            .and_then(Json::as_bool)
-            == Some(false)
-        {
+        .get("host_setups")
+        .and_then(Json::as_array)
+        .map(|v| v.to_vec())
+        .unwrap_or_else(|| set.plan.get("host_setup").cloned().into_iter().collect());
+    for plan in plans {
+        let host = plan
+            .get("host")
+            .and_then(Json::as_text)
+            .unwrap_or("unknown");
+        if plan.get("plugin_enabled").and_then(Json::as_bool) == Some(false) {
             lines.push(format!("Agent setup: {host} plugin is disabled; preserve its settings and content without refreshing or enabling it."));
         } else {
             lines.push(format!("Agent setup: register verified Axiom skills in {host}; start a new agent session after installation. MCP query readiness is separate."));

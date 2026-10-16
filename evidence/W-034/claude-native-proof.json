@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "native_client": "2.1.212 (Claude Code)",
+  "client_sha256": "fe639693fd7e9a881c799867711abb7666dec2a5fefbaba41af6a09e71bcbefa",
+  "cli_sha256": "d6d328ca4e7aceb126b70915a817d494499c62806c496c98fc8178e2aab1d0eb",
+  "cases": [
+    {
+      "action": "install",
+      "exit_code": 0
+    },
+    {
+      "action": "install",
+      "exit_code": 0
+    },
+    {
+      "action": "doctor",
+      "exit_code": 0
+    },
+    {
+      "action": "update",
+      "exit_code": 6
+    },
+    {
+      "action": "update",
+      "exit_code": 0
+    },
+    {
+      "action": "doctor",
+      "exit_code": 0
+    },
+    {
+      "action": "uninstall",
+      "exit_code": 0
+    }
+  ],
+  "private_profile": true,
+  "runtime_bundle": "synthetic digest-bound local fixture",
+  "bundle_manifest_sha256": "b39cf3a888bbb01037f15e7ad5351fcbddb3429bc777aafff746a813605f32cd",
+  "doctor_preserves_host_registration_config": true,
+  "scope": "Actual native Claude Code registration/doctor/update/uninstall and modified-cache refusal; no real user profile, AI session, credentials or graph query"
+}

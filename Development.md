@@ -42,3 +42,7 @@ The 2026-10-16 owner request authorizes the approved agent onboarding implementa
 ## Authorized 0.1.10 release
 
 The user explicitly requested merge and release as 0.1.10 on 2026-10-16. This release prepares the previously verified onboarding/gateway source and release documentation. This supersedes the earlier feature-only restriction. Main integration, new release/v0.1.10 branch, immutable v0.1.10 tag and publication are authorized after independent shared-contract review and required owner/native checks. Older tags/assets and real installed user state remain preserved.
+
+## Authorized 0.1.11 patch release
+
+The user explicitly requested all reported fixes and merge/release as 0.1.11 on 2026-10-16. This supersedes prior feature-only restrictions. Preserve installed user state and immutable historical Releases/tags. Main integration, new release branches/tags and publication require independent changed-contract review, required owner/native checks, exact source/artifact binding and actual previous-release upgrade/rollback.

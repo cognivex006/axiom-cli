@@ -54,9 +54,19 @@ axm skills doctor codex
 The manager uses the verified installed bundle and registers its local plugin
 with Codex. Open a new agent session after registration. To include host setup
 in the runtime installation plan, use `axm install --host codex`. Previously
-managed registrations are included when installing/repairing a newer runtime.
-The first managed adapter supports Codex; other hosts retain their documented
-manual setup until a verified adapter is available.
+managed registrations for both supported hosts are included when installing/repairing
+a newer runtime; each host result is reported separately.
+Version 0.1.11 also manages Claude Code. With a native `claude` executable on PATH:
+
+```powershell
+axm skills install claude
+axm skills doctor claude
+```
+
+Use `claude` with update/uninstall/recover too, or select `axm install --host claude`.
+Claude registration uses user scope. Invoke `/axiom:axsk` in a new Claude Code
+session; Codex uses `$axsk` or `$axiom:axsk`. Existing foreign, disabled or modified
+host state is preserved. Other hosts retain their documented manual setup.
 
 A disabled managed plugin stays disabled during update; the manager never silently enables it.
 

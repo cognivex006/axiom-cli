@@ -21,6 +21,11 @@ def render(tag: str, root: Path = ROOT) -> str:
     changes = re.sub(r"^### ", "## ", selected[0], flags=re.M)
     guide = (root / "release/oneline-release-notes.md").read_text().split("\n## Changes\n", 1)[0]
     guide = guide.split("\n", 1)[1].strip()
+    # Keep historical 0.1.10 notes accurate when rendering with a newer template.
+    if tuple(map(int, version.split("."))) < (0, 1, 11):
+        guide = guide.replace("Managed adapters are Codex and Claude Code (`axm skills install claude`; `axm skills doctor claude`). Claude uses user scope and `/axiom:axsk`. Registration, discovery and a successful authenticated MCP query are separate checks.",
+                              "The initial managed adapter is Codex; registration, discovery and a successful authenticated MCP query are separate checks.")
+        guide = guide.replace("`axm mcp start|list|status|stop`", "`axm mcp start|status|stop`")
     # Preserve the actual command layout of immutable historical releases.
     if tuple(map(int, version.split("."))) < (0, 1, 10):
         guide = guide.replace("The public commands are `axm`, `axge` and `axmp`. Existing owned `axsk` terminal commands remain deprecated compatibility forwarders; `$axsk` is the agent skill.",

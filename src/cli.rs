@@ -204,7 +204,7 @@ pub fn verb_help(verb: Verb) -> String {
             "    Installs axm, axge, axmp and the skills bundle; retains terminal axsk compatibility during migration.\n    Components are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
             "    --yes, -y                  Approve the printed plan without a prompt (AXIOM_INSTALL_YES=1)\n",
             "    --no-modify-path           Do not add the install's bin to the user PATH\n",
-            "    --host codex              Include managed agent skills in the installation plan\n    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",
+            "    --host codex|claude       Include managed agent skills in the installation plan\n    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",
             "    --dry-run                  Validate and report the plan without changing the host\n",
             "    --apply                    Apply the transaction; requires --approve-digest\n",
             "    --approve-digest <sha256>  Approval bound to the canonical plan digest\n",

@@ -1,0 +1,429 @@
+{
+  "hosts": [
+    {
+      "checks": [
+        {
+          "case": "combined host selection is approval-bound; dry run is read-only",
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--dry-run"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex"
+          ],
+          "exit_code": 4
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 10
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "codex"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "list"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "update",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "codex"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 4
+        },
+        {
+          "arguments": [
+            "update",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "update",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 20
+        },
+        {
+          "arguments": [
+            "recover",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "list"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "unknown",
+            "--yes"
+          ],
+          "exit_code": 2
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "claude"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "host": "codex",
+      "host_execution": "native protocol fixture, not an actual AI-client session",
+      "passed": true,
+      "platform": "nt"
+    },
+    {
+      "checks": [
+        {
+          "case": "combined host selection is approval-bound; dry run is read-only",
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--dry-run"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude"
+          ],
+          "exit_code": 4
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 10
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "claude"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "list"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "update",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "claude"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 4
+        },
+        {
+          "arguments": [
+            "doctor",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "update",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "update",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "update",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "update",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 20
+        },
+        {
+          "arguments": [
+            "recover",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 6
+        },
+        {
+          "arguments": [
+            "list"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "unknown",
+            "--yes"
+          ],
+          "exit_code": 2
+        },
+        {
+          "arguments": [
+            "install",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "install",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "claude",
+            "--yes"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "doctor",
+            "codex"
+          ],
+          "exit_code": 0
+        },
+        {
+          "arguments": [
+            "uninstall",
+            "codex",
+            "--yes"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "host": "claude",
+      "host_execution": "native protocol fixture, not an actual AI-client session",
+      "passed": true,
+      "platform": "nt"
+    }
+  ],
+  "passed": true
+}

@@ -121,6 +121,27 @@ impl Report {
         }
     }
 
+    /// Aggregate independently applied host results; retain the first-stage projection.
+    pub fn host_stages(&mut self, stages: Vec<(String, Report)>) {
+        let mut results = Vec::new();
+        for (host, stage) in stages {
+            self.host_stage(stage);
+            let mut result = self
+                .details
+                .get("host_setup")
+                .cloned()
+                .unwrap_or(Json::Null);
+            let _ = result.set("host", Json::text(&host));
+            results.push(result);
+        }
+        if let Some(first) = results.first() {
+            self.detail("host_setup", first.clone());
+        }
+        if results.len() > 1 {
+            self.detail("host_setups", Json::array(results));
+        }
+    }
+
     /// Write the report and return the process exit code.
     pub fn emit(mut self, json: bool, verbose: bool) -> i32 {
         let code = self.code();
@@ -241,5 +262,39 @@ mod tests {
                 .and_then(Json::as_int),
             Some(4)
         );
+    }
+
+    #[test]
+    fn multiple_host_results_retain_first_projection_and_do_not_mask_failure() {
+        for failed_first in [false, true] {
+            let mut report = Report::ok("installed", "runtime installed");
+            report.detail("runtime_generation", Json::text("kept"));
+            let ok = || Report::ok("ok", "registered");
+            let fail = || Report::not_ready("client unavailable");
+            report.host_stages(vec![
+                ("codex".into(), if failed_first { fail() } else { ok() }),
+                ("claude".into(), if failed_first { ok() } else { fail() }),
+            ]);
+            assert_eq!(report.code(), exit::PARTIAL);
+            let stages = report
+                .details
+                .get("host_setups")
+                .unwrap()
+                .as_array()
+                .unwrap();
+            assert_eq!(stages.len(), 2);
+            assert_eq!(report.details.get("host_setup"), Some(&stages[0]));
+            assert_eq!(
+                stages[1].get("host").and_then(Json::as_text),
+                Some("claude")
+            );
+            assert_eq!(
+                report
+                    .details
+                    .get("runtime_generation")
+                    .and_then(Json::as_text),
+                Some("kept")
+            );
+        }
     }
 }

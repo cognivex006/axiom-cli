@@ -16,6 +16,10 @@
     {
       "revision": "10b5e190695c75058fb176f35425ad01d840a4e8",
       "reason": "Retain the exact human-reviewed and published 0.1.8/0.1.9 workflow input pin during the agent-onboarding transition. Legacy bundle acceptance does not assert it contains the new axsk workflow or gateway feature; source and hash checks remain required."
+    },
+    {
+      "revision": "dc0a28e50899fca6465b8a98ec7e1d19e6b37219",
+      "reason": "Preserve published 0.1.10 installation/repair/migration inputs after the additive 0.1.11 operational amendment. Existing layout, graph/protocol dimensions, artifact integrity and approval checks remain enforced."
     }
   ]
 }

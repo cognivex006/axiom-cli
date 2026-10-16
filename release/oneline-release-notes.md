@@ -38,9 +38,9 @@ The public commands are `axm`, `axge` and `axmp`. Existing owned `axsk` terminal
 
 ## Agent setup
 
-After installing or updating the runtime, run `axm skills install codex` and `axm skills doctor codex`. Open a new Codex session to confirm `$axsk` or its host-qualified name. Optional combined setup uses `axm install --host codex`. The initial managed adapter is Codex; registration, discovery and a successful authenticated MCP query are separate checks.
+After installing or updating the runtime, run `axm skills install codex` and `axm skills doctor codex`. Open a new Codex session to confirm `$axsk` or its host-qualified name. Optional combined setup uses `axm install --host codex`. Managed adapters are Codex and Claude Code (`axm skills install claude`; `axm skills doctor claude`). Claude uses user scope and `/axiom:axsk`. Registration, discovery and a successful authenticated MCP query are separate checks.
 
-Use `axmp serve` for a foreground local gateway or `axm mcp start|status|stop` for owned background supervision. Idle shutdown defaults to 180 minutes and is configurable. See the [gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md) for required Host/Origin allowlists and caller authorization.
+Use `axmp serve` for a foreground local gateway or `axm mcp start|list|status|stop` for owned background supervision. Idle shutdown defaults to 180 minutes and is configurable. See the [gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md) for required Host/Origin allowlists and caller authorization.
 
 ## Release integrity
 
