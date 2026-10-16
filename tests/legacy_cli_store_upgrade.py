@@ -118,7 +118,7 @@ def verify(lane, command, base_env):
             axm = store / "bin" / ("axm.exe" if windows else "axm")
             case("adopted installation doctor passes", run([axm, "doctor"]).returncode == 0)
             case("only canonical public commands placed",
-                 {p.stem for p in (store / "bin").iterdir() if p.is_file()} == {"axm", "axsk", "axge", "axmp"})
+                 {p.stem for p in (store / "bin").iterdir() if p.is_file()} == {"axm", "axge", "axmp"})
         finally:
             if windows:
                 import winreg

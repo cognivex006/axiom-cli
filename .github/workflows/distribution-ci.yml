@@ -45,6 +45,14 @@ jobs:
           cargo +1.85.0 clippy --locked --all-targets -- -D warnings
           cargo +1.85.0 test --locked
           cargo +1.85.0 build --locked --release
+      - name: Managed host adapter lifecycle and preservation
+        shell: bash
+        run: |
+          exe=""
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            exe=".exe"
+          fi
+          python tests/host_onboarding.py --cli "target/release/axiom-cli${exe}" --out "${RUNNER_TEMP}/host-adapter.json"
       - name: Native runtime regression checks
         if: runner.os != 'Windows'
         shell: bash

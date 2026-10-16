@@ -89,13 +89,13 @@ pub struct Request {
 }
 
 /// The coordinator lock, released when it goes out of scope.
-struct Lock {
+pub(crate) struct Lock {
     path: PathBuf,
 }
 
 impl Lock {
     /// Create the lock, or refuse because another transaction holds it.
-    fn acquire(state: &State, transaction: &str) -> Result<Lock, Refusal> {
+    pub(crate) fn acquire(state: &State, transaction: &str) -> Result<Lock, Refusal> {
         std::fs::create_dir_all(state.root()).map_err(|error| {
             Refusal::io(
                 "install_root_unwritable",

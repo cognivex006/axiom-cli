@@ -34,3 +34,7 @@ python3 -m unittest tests.test_public_docs tests.test_bootstrappers -v
 ```
 
 The public Changelog stays free of internal identifiers. Canonical task completion retains a separate internal changelog receipt and historical snapshots. Published version tags, assets and historical evidence remain immutable; documentation edits do not imply a new release.
+
+## Agent onboarding and local gateway development
+
+The 2026-10-16 owner request authorizes the approved agent onboarding implementation on scoped feature branches. Canonical terminal names are axm/axge/axmp; axsk is the agent skill. Host lifecycle is managed once by axm. Gateway changes retain authenticated multi-project scope and verified generations, isolated process ownership, bounded retention and configurable three-hour idle shutdown. Version remains unchanged and this feature work is unpublished; independent detailed shared-contract/security review remains required before integration/publication.

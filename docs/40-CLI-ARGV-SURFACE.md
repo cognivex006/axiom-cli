@@ -191,3 +191,17 @@ cargo test --offline
 
 The pinned toolchain records `rust-version = "1.85"` in `Cargo.toml`; `Cargo.lock` pins the resolved
 graph. Required checks run in native CI for Windows x64, Linux x64 and Intel Mac. This reference does not establish native arm64 execution.
+
+## Agent onboarding and local gateway (development)
+
+`axm skills install|update|doctor|uninstall|recover codex` and `axm skills list`
+manage verified host content. Mutations accept `--yes` and `--dry-run`; `--json`
+keeps one result object. `axm install --host codex` includes host identity and
+target skills version/revision in its approval digest and reports partial host
+failures after successful runtime placement. No natural language becomes argv.
+
+`axm mcp start|status|stop` delegates to the installed gateway owner. `axmp serve`
+is the foreground named HTTP form. Existing `axmp http` and bare stdio are retained.
+Host/Origin allowlists are explicit, with configurable instance/port, owner PID,
+three-hour idle default and bounded cache/in-flight requests. `$axsk` is agent
+skill invocation; old terminal `axsk` forwards only its earlier supported verbs.

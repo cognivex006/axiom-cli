@@ -130,7 +130,7 @@ def main():
     if installed:
         step("version", [cli, "version"], check=lambda text: (
             all(re.search(r"^Axiom\s+" + label + r"\s+" + command + r"\s+" + re.escape(tag[1:]) + r"\s*$", text, re.M)
-                for label, command in (("CLI", "axm"), ("Skills", "axsk"), ("Graph Engine", "axge"), ("MCP", "axmp")))
+                for label, command in (("CLI", "axm"), ("Skills", r"\$?axsk"), ("Graph Engine", "axge"), ("MCP", "axmp")))
             if modern_commands else f"installed: {tag[1:]}" in text))
         step("doctor exit 0", [cli, "doctor"])
         step("update", [cli, "update"], check=lambda text: "up to date" in text)

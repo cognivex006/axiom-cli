@@ -14,8 +14,40 @@ pub fn run(arguments: &[OsString]) -> Option<i32> {
         .to_str()?
         .to_ascii_lowercase();
     let args = &arguments[1..];
+    if !matches!(name.as_str(), "axsk" | "axmp") {
+        let prefix = args
+            .iter()
+            .take_while(|a| *a == "--json" || *a == "--verbose")
+            .count();
+        if let Some(group) = args.get(prefix).and_then(|a| a.to_str()) {
+            if group == "skills" {
+                let mut forwarded = args[prefix + 1..].to_vec();
+                forwarded.extend_from_slice(&args[..prefix]);
+                let legacy = forwarded.first().and_then(|a| a.to_str());
+                if matches!(legacy, Some("version" | "check"))
+                    || (legacy == Some("update")
+                        && forwarded
+                            .get(1)
+                            .is_some_and(|a| a == "plan" || a == "apply"))
+                {
+                    return Some(skills(&forwarded));
+                }
+                return Some(crate::host_skills::run(&forwarded));
+            }
+            if group == "mcp" {
+                let mut forwarded = args[prefix + 1..].to_vec();
+                forwarded.extend_from_slice(&args[..prefix]);
+                return Some(mcp(&forwarded));
+            }
+        }
+    }
     match name.as_str() {
-        "axsk" => Some(skills(args)),
+        "axsk" => {
+            if !args.iter().any(|a| a == "--help" || a == "-h") {
+                eprintln!("axsk terminal compatibility is deprecated; use axm skills. Invoke $axsk in your agent.");
+            }
+            Some(skills(args))
+        }
         "axmp" => Some(mcp(args)),
         _ if args.first().and_then(|s| s.to_str()).is_some_and(|s| {
             matches!(
@@ -104,7 +136,7 @@ fn skills(args: &[OsString]) -> i32 {
         );
     }
     if args.is_empty() || args.iter().any(|arg| arg == "--help" || arg == "-h") {
-        println!("axsk - Axiom Skills Manager\n\nUSAGE: axsk <command> [options]\n\nCOMMANDS:\n  version\n  check [--updates] [--bundle <dir>]\n  update plan [--to <version>] [--out <file>] [--bundle <dir>]\n  update apply --plan <file> [--approve-digest <sha256>]\n\nGLOBAL OPTIONS: --json, --help\nInstall or repair the complete ecosystem with axm install.");
+        println!("axsk - deprecated terminal compatibility for Axiom Skills Manager\nUse axm skills for agent installation and management.\nUse $axsk <intent> inside your agent.\nLegacy terminal verbs: version, check, update plan/apply.\n{}", crate::host_skills::HELP);
         return 0;
     }
     let mut forwarded = vec![OsString::from("skills")];
@@ -117,11 +149,12 @@ fn mcp(args: &[OsString]) -> i32 {
         .first()
         .is_some_and(|arg| arg == "--help" || arg == "-h")
     {
-        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [stdio|http|version|doctor|update|entrypoints] [options]\nDefault: stdio. HTTP requires explicit Host/Origin allowlists.\nRun axmp <command> --help for command options.");
+        println!("axmp - Axiom MCP Server / Gateway\n\nUSAGE: axmp [serve|stdio|http|version|doctor|update|entrypoints] [options]\nserve: named HTTP gateway; three-hour idle default, optional owner PID.\nDefault: stdio (compatibility). HTTP requires explicit Host/Origin allowlists.\nBackground lifecycle: axm mcp start|status|stop.\nRun axmp <command> --help for command options.");
         return 0;
     }
     let (module, forwarded) =
         match args.first().and_then(|arg| arg.to_str()) {
+            Some("serve" | "start" | "status" | "stop") => ("axiom_mcp.gateway", args),
             Some("stdio") => ("axiom_mcp.stdio", &args[1..]),
             Some("http") => ("axiom_mcp.http", &args[1..]),
             Some("entrypoints") => ("axiom_mcp.entrypoints", &args[1..]),

@@ -1,6 +1,6 @@
 # Installation and readiness
 
-`axm` manages the installed release. `axiom` manages graph projects and services; MCP connects graph queries to an AI host, and skills/plugins provide agent instructions.
+`axm` manages the installed release. `axge` manages graph projects; MCP connects graph queries to an AI host, and skills/plugins provide agent instructions.
 
 ## What the installation commands establish
 

@@ -4,7 +4,8 @@
 //!
 //! ```text
 //! <root>/
-//!   bin/axm, axsk, axge, axmp[.exe]   public commands
+//!   bin/axm, axge, axmp[.exe]        canonical terminal commands
+//!   bin/axsk[.exe]                  retained only for an existing owned compatibility slot
 //!   bin/graphd-engine/axiom[.exe]    private installation engine
 //!   installs/ecosystem/   placed by the engine (`install plan` / `install apply`)
 //!   generations/<id>/     the verified artifact bytes of the active generation
@@ -30,7 +31,7 @@ pub const BIN_DIR: &str = "bin";
 
 /// Entries a root may already contain without being foreign: everything this layout, the engine,
 /// the update channel, the MCP runtime provisioner or an earlier Axiom release writes.
-const OWNED_ENTRIES: [&str; 20] = [
+const OWNED_ENTRIES: [&str; 22] = [
     "bin",
     "installs",
     "generations",
@@ -51,6 +52,8 @@ const OWNED_ENTRIES: [&str; 20] = [
     "path-change.json",
     "logs",
     "adoption.json",
+    "host-integrations",
+    "gateways",
 ];
 
 /// File name of a program on this host.
@@ -123,11 +126,7 @@ pub fn with_short_command(sources: &mut Vec<BinSource>) {
 
 /// Canonical entrypoints are owned, digest-bound copies of verified native programs.
 pub fn with_public_commands(sources: &mut Vec<BinSource>) {
-    for (name, component) in [
-        ("axsk", "axiom-cli"),
-        ("axmp", "axiom-cli"),
-        ("axge", "axiom-graphd"),
-    ] {
+    for (name, component) in [("axmp", "axiom-cli"), ("axge", "axiom-graphd")] {
         if sources.iter().any(|source| source.name == name) {
             continue;
         }
@@ -145,6 +144,41 @@ pub fn with_public_commands(sources: &mut Vec<BinSource>) {
         }
     }
     sources.retain(|source| !matches!(source.name, "axiom-cli" | "axiom-graphd"));
+}
+
+/// Update an existing verified axsk slot for a transition; fresh installs never create it.
+pub fn retain_existing_skills_compat(
+    root: &Path,
+    sources: &mut Vec<BinSource>,
+) -> Result<(), Refusal> {
+    let path = bin_dir(root).join(program_file("axsk"));
+    let state = State::new(root);
+    if !path.exists() || !state.has_installed() {
+        return Ok(());
+    }
+    let installed = state.read_installed()?;
+    let generation = Generation::read(&state, &installed.current_generation)?;
+    let Some(owned) = generation
+        .entries
+        .iter()
+        .find(|e| e.component == "bin/axsk")
+    else {
+        return Ok(());
+    };
+    if path.is_symlink() || !path.is_file() || file_digest(&path)? != owned.artifact_sha256 {
+        return Err(Refusal::conflict(
+            "public_command_foreign",
+            "modified compatibility command was preserved",
+        ));
+    }
+    if let Some(source) = sources.iter().find(|s| s.name == "axm") {
+        sources.push(BinSource {
+            name: "axsk",
+            source: source.source.clone(),
+            sha256: source.sha256.clone(),
+        });
+    }
+    Ok(())
 }
 
 /// A pre-generation CLI store records ownership in its install manifest instead of installed.json.
@@ -701,7 +735,11 @@ mod tests {
         with_short_command(&mut sources);
         with_public_commands(&mut sources);
         with_public_commands(&mut sources);
-        assert_eq!(sources.len(), 4, "no legacy public entrypoints");
+        assert_eq!(
+            sources.len(),
+            3,
+            "fresh installs have only canonical terminal entrypoints"
+        );
         place_bin(&root, &sources).unwrap();
         for old in ["axiom-cli", "axiom", "axiom-graphd"] {
             assert!(!bin_dir(&root).join(program_file(old)).exists());
@@ -709,9 +747,9 @@ mod tests {
         assert_eq!(
             sources
                 .iter()
-                .filter(|source| matches!(source.name, "axm" | "axsk" | "axge" | "axmp"))
+                .filter(|source| matches!(source.name, "axm" | "axge" | "axmp"))
                 .count(),
-            4
+            3
         );
         let user_file = bin_dir(&root).join(program_file("axsk"));
         std::fs::write(&user_file, b"human data").unwrap();
@@ -1167,5 +1205,64 @@ mod tests {
         std::fs::write(&payload, b"tampered").unwrap();
         record(&root, &make()).unwrap();
         assert_eq!(std::fs::read(&payload).unwrap(), b"graphd");
+    }
+
+    #[test]
+    fn only_an_existing_unchanged_owned_skills_command_gets_transition_compatibility() {
+        let root = temp("skills-compat");
+        let old = root.join("old-cli.bin");
+        let new = root.join("new-cli.bin");
+        std::fs::write(&old, b"old verified CLI").unwrap();
+        std::fs::write(&new, b"new verified CLI").unwrap();
+        let digest = file_digest(&old).unwrap();
+        let placed = place_bin(
+            &root,
+            &[BinSource {
+                name: "axsk",
+                source: old.clone(),
+                sha256: digest.clone(),
+            }],
+        )
+        .unwrap();
+        let manifest = br#"{"channel":"stable"}"#;
+        record(
+            &root,
+            &Record {
+                channel: "stable",
+                host: "windows-x64",
+                manifest_bytes: manifest,
+                manifest_sha256: &sha256::digest_hex(manifest),
+                plan_digest: &"a".repeat(64),
+                components: vec![(
+                    "bin/axsk".into(),
+                    "0.1.9".into(),
+                    "a".repeat(40),
+                    digest,
+                    old,
+                    false,
+                )],
+                bin: placed,
+            },
+        )
+        .unwrap();
+        let make = || {
+            vec![BinSource {
+                name: "axm",
+                source: new.clone(),
+                sha256: file_digest(&new).unwrap(),
+            }]
+        };
+        let mut sources = make();
+        retain_existing_skills_compat(&root, &mut sources).unwrap();
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[1].name, "axsk");
+        assert_eq!(sources[1].sha256, file_digest(&new).unwrap());
+        std::fs::write(bin_dir(&root).join(program_file("axsk")), b"human changes").unwrap();
+        assert!(retain_existing_skills_compat(&root, &mut make()).is_err());
+        assert_eq!(
+            std::fs::read(bin_dir(&root).join(program_file("axsk"))).unwrap(),
+            b"human changes"
+        );
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

@@ -1,32 +1,8 @@
 # Axiom CLI
 
-| Component | CLI Command | คำอ่าน | Responsibility |
-|---|---|---|---|
-| Axiom CLI | `axm` | แอ็กซ์-เอ็ม | Main CLI / Orchestrator |
-| Axiom Skills | `axsk` | แอ็กซ์-สกิล | Skills Manager |
-| Axiom Graph Engine | `axge` | แอ็กซ์-จี | Graph Engine |
-| Axiom MCP | `axmp` | แอ็กซ์-เอ็ม-พี | MCP Server / Gateway |
-
-`axm` installs, checks, updates and removes the Axiom ecosystem on your machine:
-
-- `axm` itself (two names for the same program).
-- The graph engine, `axge`.
-- The MCP server and the skills bundle.
-
-**Start here:** [Install and update](#install-and-update) · [Commands](#commands) · [Use Axiom after installation](#use-axiom-after-installation) · [Troubleshooting](docs/INSTALL.md#troubleshooting)
-
-## Explore the ecosystem
-
-Axiom builds a graph of your code and makes it available to your existing AI tools. Choose the repository that owns the part you want to use:
-
-| Component | What it provides | Where to go |
-|---|---|---|
-| **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
-| **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | `axge`: source analysis, file watching, indexing and graph publication | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
-| **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
-| **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
-
-The CLI distributes the components together. The engine produces graph data, MCP exposes that data to an AI host, and skills describe how an agent should use it. Component guides own their setup instructions and compatibility details.
+Install and update Axiom, connect your agent, then build and query your code graph.
+`axm` manages the runtime and host setup; `axge` runs graph operations; `axmp`
+serves the local API/MCP gateway. Agent workflows use `$axsk`.
 
 ## Install and update
 
@@ -64,6 +40,58 @@ The update script finds your installation and runs its `axm update`, which shows
 
 **Full guide:** [docs/INSTALL.md](docs/INSTALL.md) covers requirements, options, where files go, update, uninstall, upgrading from 0.1.0/0.1.2 and troubleshooting.
 
+## Connect your agent
+
+Development preview: the managed host commands and unified `$axsk` skill below
+are unpublished. The immutable 0.1.9 release retains its existing commands and
+[manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
+
+```powershell
+axm skills install codex
+axm skills doctor codex
+```
+
+The manager uses the verified installed bundle and registers its local plugin
+with Codex. Open a new agent session after registration. To include host setup
+in the runtime installation plan, use `axm install --host codex`. Previously
+managed registrations are included when installing/repairing a newer runtime.
+The first managed adapter supports Codex; other hosts retain their documented
+manual setup until a verified adapter is available.
+
+A disabled managed plugin stays disabled during update; the manager never silently enables it.
+
+Update only the host plugin with `axm skills update codex`; inspect managed
+registration with `axm skills list`; remove it with `axm skills uninstall codex`.
+Plans ask for confirmation; automation may use `--yes`. A host failure after
+runtime installation reports a partial result and preserves the runtime result.
+For a failed host command use `axm skills recover codex`; retained snapshots
+support recovery without fetching a moving Git branch.
+
+## Verify and try a workflow
+
+```powershell
+axm version
+axm doctor
+axm skills doctor codex
+```
+
+Runtime health, host registration, actual skill discovery and an authenticated
+MCP query are separate results. A successful registration does not claim the
+agent has loaded a new session or can query your projects yet.
+
+In the agent, select the discovered skill (host namespaces may qualify it):
+
+```text
+$axsk build
+$axsk watch
+$axsk ask Find callers across the registered projects A, B and C.
+```
+
+Use the [skills guide](https://github.com/orchex006/axiom-skills/blob/main/docs/GETTING-STARTED.md)
+for project registration and MCP credentials, and the
+[local gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md)
+for service lifetime and multi-project retention.
+
 ## Commands
 
 | Command | What it does |
@@ -76,25 +104,24 @@ The update script finds your installation and runs its `axm update`, which shows
 | `axm update` | Update to the newest release (asks once; keeps a rollback) |
 | `axm uninstall` | Remove the programs and PATH entry; keeps your data |
 
-`install` and `update` operate on the complete pinned release set. They do not accept a component name (`cli`, `axiom-graphd`, `mcp` or `skills`). For AI-host skill discovery, use the [skills/plugin installation guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+`install` and `update` operate on the complete pinned release set. They do not accept a component name (`cli`, `axiom-graphd`, `mcp` or `skills`). Agent setup is managed separately with `axm skills`; see the setup section above.
 
-Public commands are `axm` (orchestrator), `axsk` (skills manager), `axge` (graph engine) and `axmp` (MCP server/gateway). Internal installation helpers stay outside PATH.
+Canonical terminal commands are `axm`, `axge` and `axmp`. Fresh installs create only the three canonical commands. An existing owned terminal `axsk` is updated as a deprecated forwarder during migration. In your agent, `$axsk` invokes workflow instructions. Internal installation helpers stay outside PATH.
 
 Run `axm --help` for every option and exit code. For an older installation, run the update script to migrate to the current command layout.
 
-## Use Axiom after installation
+## Explore the ecosystem
 
-Installing the programs and passing `axm doctor` checks the installation. Project registration, graph generation and AI-host configuration are separate setup steps.
+Axiom builds a graph of your code and makes it available to your existing AI tools. Choose the repository that owns the part you want to use:
 
-| I want to… | Start with |
-|---|---|
-| Register a solution, inspect its state, or query graph context and impact | [Graph engine command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) and [operations guide](https://github.com/orchex006/axiom-graphd/blob/main/docs/22-OPERATIONS-AND-TROUBLESHOOTING.md) |
-| Connect an AI host to the graph through MCP | [MCP startup and credential configuration](https://github.com/orchex006/axiom-mcp#run), then [stdio transport](https://github.com/orchex006/axiom-mcp/blob/main/docs/stdio-transport.md) or [HTTP transport](https://github.com/orchex006/axiom-mcp/blob/main/docs/http-transport.md) |
-| Add Axiom skills to Codex, Claude Code, Gemini CLI or Antigravity | [Skills/plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md), then [host compatibility and setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
-| Understand the graph-assisted agent workflow | [Agent workflow guide](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/agent-workflow.md) |
-| Diagnose installation or update problems | [CLI troubleshooting](docs/INSTALL.md#troubleshooting); include the command, output and `axm version` when reporting a problem |
+| Component | What it provides | Where to go |
+|---|---|---|
+| **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
+| **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | `axge`: source analysis, file watching, indexing and graph publication | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
+| **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
+| **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
 
-`axm` manages the installed ecosystem. Use `axge` for graph commands, `axsk` for skills, `axmp` for MCP, and `axm bootstrap` or `axm host` for project setup. Installing the skills plugin does not start an MCP server or install the graph runtime. Follow the linked host guide for the capabilities verified for your host and version.
+The CLI distributes the components together. The engine produces graph data, MCP exposes that data to an AI host, and skills describe how an agent should use it. Component guides own their setup instructions and compatibility details.
 
 ## For maintainers
 

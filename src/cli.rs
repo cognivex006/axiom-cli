@@ -152,6 +152,10 @@ USAGE:
     {PROGRAM} [GLOBAL OPTIONS] <verb> [verb options]
 
 {USAGE_VERBS}
+COMMAND GROUPS:
+    skills       Install, update, diagnose or recover the agent plugin (axm skills --help)
+    mcp          Start, inspect or stop a named local gateway
+
 GLOBAL OPTIONS:
     -h, --help    Print this help and exit 0
     --json        Machine-readable mode: exactly one JSON object on stdout
@@ -180,7 +184,10 @@ NOTES:
     without a prompt. Without a terminal and without --yes nothing changes and the exit
     code is 4. --dry-run reports the plan; --apply needs --approve-digest <sha256> bound
     to the canonical plan digest; supplying --plan or --from is not approval.
-    Public commands: axm (CLI), axsk (Skills), axge (Graph Engine), axmp (MCP).
+    Public terminal commands: axm (manager), axge (Graph Engine), axmp (local API/MCP).
+    Agent workflow skill: $axsk <intent>. Terminal axsk is deprecated compatibility.
+    Agent setup: axm skills install codex; inspect axm skills --help.
+    Local gateway: axm mcp start|status|stop; foreground: axmp serve.
     Service, host and bootstrap operations are delegated to the engine.
 "
     )
@@ -194,10 +201,10 @@ NOTES:
 pub fn verb_help(verb: Verb) -> String {
     let options = match verb {
         Verb::Install => concat!(
-            "    Installs the complete set: axm, axsk, axge, axmp and the skills bundle.\n    Components are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
+            "    Installs axm, axge, axmp and the skills bundle; retains terminal axsk compatibility during migration.\n    Components are not positional install targets.\n    A bare `install` prints the plan (version, components, root, PATH, size) and asks once.\n",
             "    --yes, -y                  Approve the printed plan without a prompt (AXIOM_INSTALL_YES=1)\n",
             "    --no-modify-path           Do not add the install's bin to the user PATH\n",
-            "    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",
+            "    --host codex              Include managed agent skills in the installation plan\n    --adopt <path>             Adopt a legacy 0.1.x root in place instead of side by side\n",
             "    --dry-run                  Validate and report the plan without changing the host\n",
             "    --apply                    Apply the transaction; requires --approve-digest\n",
             "    --approve-digest <sha256>  Approval bound to the canonical plan digest\n",
@@ -267,6 +274,7 @@ enum OptKind {
     NoModifyPath,
     Channel,
     Adopt,
+    AgentHost,
 }
 
 impl OptKind {
@@ -286,6 +294,7 @@ impl OptKind {
             OptKind::NoModifyPath => "--no-modify-path",
             OptKind::Channel => "--channel",
             OptKind::Adopt => "--adopt",
+            OptKind::AgentHost => "--host",
         }
     }
 }
@@ -548,6 +557,7 @@ fn parse_invocation(verb: Verb, rest: &[String]) -> Result<Invocation, String> {
                     yes: has(&flags, OptKind::Yes),
                     modify_path: !has(&flags, OptKind::NoModifyPath),
                     adopt: value(&values, OptKind::Adopt),
+                    agent_host: value(&values, OptKind::AgentHost),
                 },
                 format!("install mode={} from={from}", mode.name()),
             ))
@@ -830,6 +840,7 @@ fn option_spec(verb: Verb, token: &str) -> Option<(OptKind, bool)> {
         "--no-modify-path" => (OptKind::NoModifyPath, false),
         "--channel" => (OptKind::Channel, true),
         "--adopt" => (OptKind::Adopt, true),
+        "--host" => (OptKind::AgentHost, true),
         _ => return None,
     };
     let allowed = match kind {
@@ -846,6 +857,7 @@ fn option_spec(verb: Verb, token: &str) -> Option<(OptKind, bool)> {
         OptKind::NoModifyPath => matches!(verb, Verb::Install),
         OptKind::Channel => matches!(verb, Verb::Update),
         OptKind::Adopt => matches!(verb, Verb::Install),
+        OptKind::AgentHost => matches!(verb, Verb::Install),
     };
     if allowed {
         Some((kind, needs_value))

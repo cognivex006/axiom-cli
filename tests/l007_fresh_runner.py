@@ -107,8 +107,8 @@ def main() -> int:
     steps.append({"step": "PATH announced and added", "passed": on_path()})
     step("version", [cli, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)))
     step("doctor", [cli, "doctor"])
-    steps.append({"step": "only four canonical public commands are installed",
-                  "passed": {p.stem for p in (root / "bin").iterdir() if p.is_file()} == {"axm", "axsk", "axge", "axmp"}})
+    steps.append({"step": "only three canonical terminal commands are installed",
+                  "passed": {p.stem for p in (root / "bin").iterdir() if p.is_file()} == {"axm", "axge", "axmp"}})
     step("axm version", [axm, "version"], check=lambda t: (f"installed: {version}" in t or ("Axiom Graph Engine" in t and version in t)) and ("Axiom CLI" in t and version in t) and (f"Skills: {version}" in t or ("Axiom Skills" in t and version in t)))
     step("axm doctor", [axm, "doctor"])
     step("update (channel offers the installed release)", [cli, "update", "--yes", "--channel", f"{base}/{tag}/channel.json"],

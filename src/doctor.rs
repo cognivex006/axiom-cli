@@ -204,11 +204,40 @@ fn summary_lines(findings: &[Json], code: i32) -> Vec<String> {
             }
         } else if status == "unverified" {
             lines.push(format!("Not checked: {check}. {message}"));
+        } else if check == "legacy" {
+            if row
+                .get("layouts")
+                .and_then(Json::as_array)
+                .is_some_and(|items| !items.is_empty())
+            {
+                lines.push(
+                    "Info: older installation files were found and left unchanged.".to_string(),
+                );
+            }
+            if row
+                .get("path_shadowing")
+                .and_then(Json::as_array)
+                .is_some_and(|items| {
+                    items.iter().any(|item| {
+                        item.get("before_this_install").and_then(Json::as_bool) == Some(true)
+                    })
+                })
+            {
+                lines.push(
+                    "Warning: another axm takes precedence on PATH; see --verbose.".to_string(),
+                );
+            }
+            if row
+                .get("environment")
+                .and_then(Json::as_array)
+                .is_some_and(|items| !items.is_empty())
+            {
+                lines.push(
+                    "Warning: AXIOM_* environment overrides are set; see --verbose.".to_string(),
+                );
+            }
         } else if status == "warn" {
-            lines.push(
-                "Warning: an older install, PATH conflict or leftover AXIOM_* setting was found."
-                    .to_string(),
-            );
+            lines.push(format!("Warning: {check}: {message}"));
         } else if status == "ok" && matches!(check, "sqlite-driver" | "python-interpreter") {
             lines.push(format!(
                 "{}: OK",
@@ -257,10 +286,22 @@ fn legacy_finding(lines: &mut Vec<String>) -> Json {
     let layouts = crate::legacy::detect(&root);
     let shadows = crate::legacy::shadows(&crate::layout::bin_dir(&root));
     let env = crate::legacy::leftover_env();
-    for layout in &layouts {
+    legacy_report(&layouts, &shadows, &env, lines)
+}
+
+fn legacy_report(
+    layouts: &[crate::legacy::Layout],
+    shadows: &[crate::legacy::Shadow],
+    env: &[(&str, String)],
+    lines: &mut Vec<String>,
+) -> Json {
+    if !layouts.is_empty() {
+        lines.push("Info: older installation files were found and left unchanged.".to_string());
+    }
+    for layout in layouts {
         lines.push(format!("legacy layout: {}", layout.describe()));
     }
-    for shadow in &shadows {
+    for shadow in shadows {
         lines.push(format!(
             "axm on PATH: {} ({}){}",
             shadow.path.display(),
@@ -272,19 +313,21 @@ fn legacy_finding(lines: &mut Vec<String>) -> Json {
             }
         ));
     }
-    for (name, value) in &env {
+    for (name, value) in env {
         lines.push(format!(
             "leftover environment: {name}={value} (not needed by a current installation)"
         ));
     }
-    let clean = layouts.is_empty() && shadows.iter().all(|s| !s.before_root_bin) && env.is_empty();
+    let conflict = shadows.iter().any(|s| s.before_root_bin) || !env.is_empty();
     finding(
         "legacy",
-        if clean { "ok" } else { "warn" },
-        if clean {
-            "no legacy layout, PATH shadowing or leftover environment"
+        if conflict { "warn" } else { "ok" },
+        if conflict {
+            "PATH shadowing or environment overrides were found; see the lines above (nothing was changed)"
+        } else if !layouts.is_empty() {
+            "older installation files were found and left unchanged; no PATH shadowing or environment overrides"
         } else {
-            "legacy installations or leftovers were found; see the lines above (nothing was changed)"
+            "no legacy layout, PATH shadowing or leftover environment"
         },
         vec![
             (
@@ -894,6 +937,95 @@ fn engine_finding(lines: &mut Vec<String>, worst: &mut i32) -> Json {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn preserved_legacy_layout_is_information_not_a_warning() {
+        let layout = crate::legacy::Layout {
+            kind: "bootstrap-root",
+            path: std::path::PathBuf::from("older-install"),
+            version: Some("0.1.2".to_string()),
+            nested_mcp_runtime: false,
+        };
+        let mut verbose = Vec::new();
+        let row = legacy_report(&[layout], &[], &[], &mut verbose);
+        assert_eq!(row.get("status").and_then(Json::as_text), Some("ok"));
+        let summary = summary_lines(&[row], 0);
+        assert_eq!(summary[0], "Axiom installation: OK");
+        assert!(summary.iter().any(|s| s.starts_with("Info: ")));
+        assert!(!summary.iter().any(|s| s.starts_with("Warning:")));
+        assert!(verbose.iter().any(|s| s.contains("left unchanged")));
+        assert!(verbose.iter().any(|s| s.contains("bootstrap-root 0.1.2")));
+    }
+
+    #[test]
+    fn legacy_conflicts_are_warned_individually_even_with_preserved_files() {
+        for (before, has_env, has_layout) in [
+            (false, false, false),
+            (true, false, false),
+            (false, true, false),
+            (true, true, true),
+        ] {
+            let shadow = crate::legacy::Shadow {
+                path: std::path::PathBuf::from("another-bin/axm"),
+                version: "0.1.2".to_string(),
+                before_root_bin: before,
+            };
+            let env = if has_env {
+                vec![("AXIOM_ENGINE_BIN", "older-engine".to_string())]
+            } else {
+                vec![]
+            };
+            let layouts = if has_layout {
+                vec![crate::legacy::Layout {
+                    kind: "bootstrap-root",
+                    path: std::path::PathBuf::from("older-install"),
+                    version: Some("0.1.2".to_string()),
+                    nested_mcp_runtime: false,
+                }]
+            } else {
+                vec![]
+            };
+            let mut verbose = Vec::new();
+            let row = legacy_report(&layouts, &[shadow], &env, &mut verbose);
+            assert_eq!(
+                row.get("status").and_then(Json::as_text),
+                Some(if before || has_env { "warn" } else { "ok" })
+            );
+            let lines = summary_lines(&[row], 0);
+            assert_eq!(lines[0], "Axiom installation: OK");
+            assert_eq!(
+                lines.iter().any(|s| s.contains("precedence on PATH")),
+                before
+            );
+            assert_eq!(
+                lines.iter().any(|s| s.contains("overrides are set")),
+                has_env
+            );
+            assert_eq!(lines.iter().any(|s| s.starts_with("Info:")), has_layout);
+            assert_eq!(
+                lines.iter().filter(|s| s.starts_with("Warning:")).count(),
+                usize::from(before) + usize::from(has_env)
+            );
+            assert_eq!(
+                verbose.iter().any(|s| s.contains("shadows this install")),
+                before
+            );
+            assert_eq!(
+                verbose.iter().any(|s| s.contains("AXIOM_ENGINE_BIN=")),
+                has_env
+            );
+        }
+    }
+
+    #[test]
+    fn unrelated_warning_keeps_its_actual_check_and_message() {
+        let row = finding("other-check", "warn", "needs inspection", vec![]);
+        let lines = summary_lines(&[row], 0);
+        assert!(lines
+            .iter()
+            .any(|s| s == "Warning: other-check: needs inspection"));
+        assert!(!lines.iter().any(|s| s.contains("older install")));
+    }
 
     #[test]
     fn compact_success_names_actual_sqlite_check_without_internal_paths() {

@@ -4,11 +4,11 @@ For installation commands, start with [Installing Axiom](INSTALL.md). This guide
 
 ## Components and ownership
 
-The public commands are `axm` (installation manager), `axsk` (skills manager), `axge` (graph engine) and `axmp` (MCP gateway). The release also contains a portable skills bundle. The private installation engine lives in `<root>/bin/graphd-engine/`; raw component names in release archives are package identities, not additional installed commands.
+Canonical terminal commands are `axm` (runtime and host manager), `axge` (graph engine) and `axmp` (local API/MCP gateway). `$axsk` is the agent workflow skill. The old terminal `axsk` is retained as a deprecated forwarder during migration. The release also contains a portable skills bundle. The private installation engine lives in `<root>/bin/graphd-engine/`; raw component names in release archives are package identities, not additional installed commands.
 
 The distribution verifies inputs, presents the plan, provisions the MCP runtime and records the installed release. The graph engine owns ecosystem placement, activation, service lifecycle and removal. Calls use program and argv rather than an interpolated shell command.
 
-`axm install` installs the release's complete pinned component set. It does not accept a component name: `axm install cli` and `axm install axiom-graphd` are unsupported. Agent plugin discovery is a separate [skills installation step](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+`axm install` installs the release's complete pinned component set. It does not accept a component name: `axm install cli` and `axm install axiom-graphd` are unsupported. The development `axm skills install codex` adapter registers verified local content; host discovery remains a separate [skills verification step](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
 ## Release archives and bootstrappers
 
@@ -22,7 +22,7 @@ Generation is deterministic: the same tag and checksum input produce the same sc
 
 From an extracted release, `axm install --dry-run` discovers the adjacent `channel.json`, verifies the artifact lengths and hashes and reports the plan. The interactive command asks `Proceed? [Y/n]`; `--yes` approves that printed plan. Automation can use `--apply --approve-digest <sha256>`.
 
-Installation refuses a foreign nonempty root or missing required engine input, provisions the release's hash-bound MCP runtime, assembles the skills bundle and asks the engine to plan and apply placement. It places the four public commands in `<root>/bin` and the private engine under `<root>/bin/graphd-engine/`, retains generation payloads and writes `installed.json` atomically after activation. A crash before the final record may require retry or recovery; it is not proof of a successful install.
+Installation refuses a foreign nonempty root or missing required engine input, provisions the release's hash-bound MCP runtime, assembles the skills bundle and asks the engine to plan and apply placement. It places the three canonical commands in `<root>/bin` (and retains an existing owned axsk compatibility slot during migration) and the private engine under `<root>/bin/graphd-engine/`, retains generation payloads and writes `installed.json` atomically after activation. A crash before the final record may require retry or recovery; it is not proof of a successful install.
 
 | Platform | Default root |
 |---|---|

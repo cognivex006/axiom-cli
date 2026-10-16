@@ -67,6 +67,8 @@ pub struct InstallRequest {
     pub modify_path: bool,
     /// `--adopt <path>`: turn a legacy bootstrap root into the install root, in place.
     pub adopt: Option<String>,
+    /// Optional agent registration included in the reviewed installation plan.
+    pub agent_host: Option<String>,
 }
 
 /// A parsed `uninstall` request.
@@ -161,7 +163,54 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
         }
     }
     let path_change = (request.mode == Mode::Interactive).then_some(request.modify_path);
-    let set = resolve_release_set(request.from.as_deref(), path_change)?;
+    let mut set = resolve_release_set(request.from.as_deref(), path_change)?;
+    let selected_host = request.agent_host.or_else(|| {
+        state::default_root()
+            .filter(|root| root.join("host-integrations/codex.json").is_file())
+            .map(|_| "codex".to_string())
+    });
+    let host_plan = selected_host
+        .as_deref()
+        .map(|host| {
+            let mut plan = crate::host_skills::preview(host)?;
+            let skills = set
+                .manifest
+                .components
+                .iter()
+                .find(|c| c.component == "skills")
+                .ok_or_else(|| {
+                    Refusal::validation("host_bundle_missing", "release has no skills")
+                })?;
+            plan.set(
+                "version",
+                skills
+                    .version
+                    .as_deref()
+                    .map(Json::text)
+                    .unwrap_or(Json::Null),
+            )
+            .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
+            plan.set(
+                "revision",
+                skills
+                    .revision
+                    .as_deref()
+                    .map(Json::text)
+                    .unwrap_or(Json::Null),
+            )
+            .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
+            Ok::<_, Refusal>(plan)
+        })
+        .transpose()?;
+    if let Some(plan) = &host_plan {
+        set.plan
+            .set("host_setup", plan.clone())
+            .map_err(|e| Refusal::validation("host_plan_invalid", e))?;
+        set.plan_digest = plan_contract::digest(&set.plan).ok_or_else(|| {
+            Refusal::validation("host_plan_invalid", "host plan cannot be digested")
+        })?;
+        seal(&mut set.plan, &set.plan_digest)?;
+    }
 
     if request.mode == Mode::Apply {
         let approval = plan_contract::approval_reasons(
@@ -235,6 +284,14 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
         // A confirmed plan was already printed above the prompt.
         for line in plan_lines(&set) {
             report.line(line);
+        }
+    }
+    if report.code() == 0 && request.mode != Mode::DryRun {
+        if let Some(plan) = &host_plan {
+            report.host_stage(crate::host_skills::apply_approved(plan));
+        } else {
+            report.detail("agent_setup", Json::text("not_selected"));
+            report.line("Agent skills: not configured; run axm skills install codex to add them.");
         }
     }
     Ok(report)
@@ -554,6 +611,7 @@ fn record_layout(
     // ADR-0036: `axm` is the short name of `axiom-cli`, a verified copy of the same bytes.
     layout::with_short_command(&mut sources);
     layout::with_public_commands(&mut sources);
+    layout::retain_existing_skills_compat(root, &mut sources)?;
     let mut bin = layout::place_bin(root, &sources)?;
     let retired = layout::retire_legacy_commands(root)?;
     bin.extend(layout::place_bin(root, &retired)?);
@@ -1563,6 +1621,24 @@ fn resolve_local(local_root: Option<&Path>, url: &str) -> Option<PathBuf> {
 
 fn plan_lines(set: &ReleaseSet) -> Vec<String> {
     let mut lines = Vec::new();
+    if let Some(host) = set
+        .plan
+        .get("host_setup")
+        .and_then(|v| v.get("host"))
+        .and_then(Json::as_text)
+    {
+        if set
+            .plan
+            .get("host_setup")
+            .and_then(|v| v.get("plugin_enabled"))
+            .and_then(Json::as_bool)
+            == Some(false)
+        {
+            lines.push(format!("Agent setup: {host} plugin is disabled; preserve its settings and content without refreshing or enabling it."));
+        } else {
+            lines.push(format!("Agent setup: register verified Axiom skills in {host}; start a new agent session after installation. MCP query readiness is separate."));
+        }
+    }
     let host = set.plan.get("host").and_then(Json::as_text).unwrap_or("?");
     lines.push(format!(
         "target: {host} (evidence target {})",

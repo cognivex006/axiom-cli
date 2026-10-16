@@ -99,6 +99,28 @@ impl Report {
         self.code
     }
 
+    /// Preserve the runtime result and report a separately applied host stage.
+    pub fn host_stage(&mut self, stage: Report) {
+        self.detail(
+            "host_setup",
+            Json::from_pairs(vec![
+                ("code", Json::int(i64::from(stage.code))),
+                ("status", Json::text(stage.status)),
+                ("message", Json::text(&stage.message)),
+                ("details", stage.details),
+            ]),
+        );
+        self.lines.extend(stage.lines);
+        if self.code == 0 && stage.code != 0 {
+            self.code = exit::PARTIAL;
+            self.status = "partial";
+            self.message = format!(
+                "Runtime installation succeeded; agent setup needs attention: {}",
+                stage.message
+            );
+        }
+    }
+
     /// Write the report and return the process exit code.
     pub fn emit(mut self, json: bool, verbose: bool) -> i32 {
         let code = self.code();
@@ -195,5 +217,29 @@ mod tests {
         assert_eq!(Report::ok("ok", "m").code(), exit::SUCCESS);
         assert_eq!(Report::not_ready("m").code(), exit::NOT_READY);
         assert_eq!(Report::refused("m").code(), exit::VALIDATION);
+    }
+
+    #[test]
+    fn a_failed_host_stage_preserves_runtime_success_and_reports_partial() {
+        let mut report = Report::ok("installed", "runtime installed");
+        report.detail("runtime_generation", Json::text("verified-generation"));
+        report.host_stage(Report::not_ready("host could not register the plugin"));
+        assert_eq!(report.code(), exit::PARTIAL);
+        assert_eq!(report.status, "partial");
+        assert_eq!(
+            report
+                .details
+                .get("runtime_generation")
+                .and_then(Json::as_text),
+            Some("verified-generation")
+        );
+        assert_eq!(
+            report
+                .details
+                .get("host_setup")
+                .and_then(|v| v.get("code"))
+                .and_then(Json::as_int),
+            Some(4)
+        );
     }
 }

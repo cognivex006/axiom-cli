@@ -1,0 +1,91 @@
+[
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/format.txt",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/clippy.txt",
+    "sha256": "c92508a29848820f033cd2ea015c85dde0953c88b07cc967ce34b7c08f610549"
+  },
+  {
+    "id": "rust-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/rust-tests.txt",
+    "sha256": "992afd0d07447fb68ee82d6be7f7186512664701a03b73ed07c0159f1a970da8"
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/build.txt",
+    "sha256": "222a02ed477d249a21359df8cae975864a62d848f4739cadc5b00b6190a963c6"
+  },
+  {
+    "id": "host-lifecycle",
+    "command": [
+      "python",
+      "tests/host_onboarding.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\onboarding-host-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/host-lifecycle.txt",
+    "sha256": "0f53314e7a624e5d9622c2b9707deefec82c1e9f9b83a453af124008bd027b4c"
+  },
+  {
+    "id": "public-docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/public-docs.txt",
+    "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
+  },
+  {
+    "id": "editorial-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-020/editorial-tests.txt",
+    "sha256": "14751d88d6f35e1b299319073c022ce36fe7c1b649aab9cbc2b99b5aa478d874"
+  }
+]

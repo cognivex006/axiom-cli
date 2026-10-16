@@ -4,6 +4,14 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Bug Fixes
+
+- Keep preserved older installation files informational in doctor; identify actual PATH and environment warnings separately.
+
+### New Features
+
+- Add managed Codex skills install/update/doctor/list/uninstall/recovery through axm; bind optional agent setup to the installation plan and preserve partial results. Support local gateway supervision and explain deprecated terminal axsk.
+
 ## 0.1.9
 
 ### Bug Fixes

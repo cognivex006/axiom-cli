@@ -3,7 +3,7 @@
 One command installs Axiom for your user account:
 
 - `axm`: Main CLI / Orchestrator.
-- `axsk`: Skills Manager.
+- `$axsk`: agent workflow skill; terminal management uses `axm skills`.
 - `axge`: Graph Engine.
 - `axmp`: MCP Server / Gateway.
 
@@ -11,7 +11,7 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
-Only the four commands above are installed on PATH. The installation engine is private. The installed skills payload still needs [plugin registration in your AI host](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. The development host adapter supports `axm skills install codex`; released 0.1.9 retains its [versioned manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
 
 - [Before you start](#before-you-start)
 - [Install](#install)
@@ -268,3 +268,29 @@ The current command layout migrates recorded, unchanged legacy entrypoints into 
 Version 0.1.8 has a migration defect: an unchanged 0.1.0 or 0.1.2 CLI store can fail with `axiom-cli.exe is unowned, linked or modified` because ownership is recorded in the older `install-manifest.json`. A matching SHA-256 in that manifest identifies this case. Version 0.1.9 validates the recorded executable name, location, size and SHA-256, preserves `cli/` and the manifest, and keeps a verified backup before retiring the old command. Modified files, linked ownership inputs and conflicting backups still stop adoption. Use the 0.1.9 installer to receive this fix; the pinned 0.1.8 installer retains its original behavior.
 
 For an installation made by an older command layout, the update URL verifies and runs the current release CLI before starting the update transaction. This avoids the previous updater's obsolete executable health checks. Current installations use their own `axm update`; both paths retain the normal approval and rollback behavior.
+
+## Managed agent setup (development)
+
+With a build containing the managed adapter, use `axm install --host codex` for a
+combined reviewed runtime/host plan, or `axm skills install codex` for an existing
+runtime. Open a new agent session afterwards. `axm skills doctor codex` verifies
+registration and reports actual skill discovery and MCP query readiness separately.
+The first adapter supports Codex; other hosts are explicitly unsupported by this
+managed command and retain their direct setup guides.
+
+Use `axm skills update codex`, `axm skills list` and `axm skills uninstall codex`
+for ongoing host management. Previously managed Codex setup is included when a
+new runtime is installed or repaired. Runtime success followed by host failure
+is reported as a partial operation. Run `axm skills recover codex` to restore
+the previous registration after a failed host command, then retry.
+Modified snapshots and foreign marketplaces are preserved and cause a conflict.
+No command claims a graph query worked merely because plugin registration worked.
+
+The future local gateway is started with `axmp serve`; background lifecycle is
+`axm mcp start|status|stop`. See [gateway lifetime](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md)
+for instance isolation, three-hour idle shutdown, owner binding and multi-project
+graph caching. Current immutable releases remain unchanged by these source edits.
+
+Forced termination during a host command can leave the existing installation coordinator lock in place. Recovery refuses while that lock remains owned; it never removes a lock or kills an external host process implicitly. Retained snapshots and pending metadata remain available for operator recovery.
+
+Managed updates preserve disabled Codex plugins without refreshing or enabling them. Explicit install refuses a disabled plugin until the client owner enables it. Recovery also refuses an observed disabled-state conflict, keeping its inputs for client-managed recovery.

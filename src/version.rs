@@ -56,7 +56,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
         Report::ok("ok", "reported installed and available versions").subject("version");
     report.detail("cli", cli_block());
     if concise {
-        report.line("Component           Command  Version");
+        report.line("Component           Entry    Version");
         report.line(format!(
             "{:<19} {:<8} {}",
             "Axiom CLI",
@@ -91,7 +91,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
         None => {
             if concise {
                 for (label, command) in [
-                    ("Axiom Skills", "axsk"),
+                    ("Axiom Skills", "$axsk"),
                     ("Axiom Graph Engine", "axge"),
                     ("Axiom MCP", "axmp"),
                 ] {
@@ -119,7 +119,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                     ));
                 } else {
                     for (label, command) in [
-                        ("Axiom Skills", "axsk"),
+                        ("Axiom Skills", "$axsk"),
                         ("Axiom Graph Engine", "axge"),
                         ("Axiom MCP", "axmp"),
                     ] {
@@ -148,7 +148,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                         .unwrap_or("not installed");
                     report.line(format!(
                         "{:<19} {:<8} {}",
-                        "Axiom Skills", "axsk", skill_version
+                        "Axiom Skills", "$axsk", skill_version
                     ));
                 }
                 for line in installed_lines(&installed, &generation, concise) {
@@ -156,7 +156,7 @@ fn collect(all: bool, concise: bool) -> Result<Report, Refusal> {
                 }
                 if !concise {
                     report.line(format!(
-                        "Axiom Skills (axsk): {}",
+                        "Axiom Skills ($axsk): {}",
                         skills
                             .get("version")
                             .and_then(Json::as_text)

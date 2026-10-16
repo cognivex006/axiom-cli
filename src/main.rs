@@ -14,6 +14,7 @@ mod confirm;
 mod doctor;
 mod elevation;
 mod engine;
+mod host_skills;
 mod layout;
 mod legacy;
 mod lifecycle;
