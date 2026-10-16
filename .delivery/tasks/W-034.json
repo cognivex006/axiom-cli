@@ -1,0 +1,15 @@
+{
+  "task_id": "W-034",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-034-claude-gateway-011",
+  "source_revision": "4d9f50f91d453783637e5438cbf3fa4fe4627086",
+  "local_commit_sha": "4d9f50f91d453783637e5438cbf3fa4fe4627086",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "verified_source_remote_branch_sha": "4d9f50f91d453783637e5438cbf3fa4fe4627086",
+  "delivery_state": "pushed",
+  "observed_at": "2026-10-16T10:53:31.875557+00:00",
+  "release": "0.1.11 authorized; required native/tag/artifact gates remain",
+  "main_integration": "not_performed",
+  "verification": "Required final local checks passed; exact selected-head native CI is recorded by canonical handoff.",
+  "note": "Historical source-push observation. This receipt-only descendant changes no product bytes."
+}
