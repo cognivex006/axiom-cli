@@ -24,6 +24,6 @@ test_older_command_layout_preserves_it_on_bootstrap_refusal (tests.test_bootstra
 test_unknown_option_is_refused (tests.test_bootstrappers.UpdateShBehaviourTests.test_unknown_option_is_refused) ... skipped 'no sh on this host'
 
 ----------------------------------------------------------------------
-Ran 24 tests in 1.330s
+Ran 24 tests in 8.892s
 
 OK (skipped=9)

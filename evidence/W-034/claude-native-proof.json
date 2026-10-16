@@ -2,7 +2,7 @@
   "passed": true,
   "native_client": "2.1.212 (Claude Code)",
   "client_sha256": "fe639693fd7e9a881c799867711abb7666dec2a5fefbaba41af6a09e71bcbefa",
-  "cli_sha256": "d6d328ca4e7aceb126b70915a817d494499c62806c496c98fc8178e2aab1d0eb",
+  "cli_sha256": "20f63cff966f241742f20ae51a24f1ff235acb2361368672ccebb8fe5f32b334",
   "cases": [
     {
       "action": "install",

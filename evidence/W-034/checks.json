@@ -25,7 +25,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-034/clippy.txt",
-    "sha256": "59639588a6f1826f129cbcd121edc07279dab94786f5fa5bde6b3439b2e845cc"
+    "sha256": "2461b00c8697c4189b2de92ca6fb05b5d72273c78a0a47b1ce4e83ccca077b70"
   },
   {
     "id": "rust-tests",
@@ -36,7 +36,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-034/rust-tests.txt",
-    "sha256": "2844773c0b144ed516ea329972c3a2625c3339b110945bbff6590ae154414a63"
+    "sha256": "6f3913f8833a6f877452d64fe6b666e7009d489cbc7bc1f4466bc416835671d6"
   },
   {
     "id": "build",
@@ -48,7 +48,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-034/build.txt",
-    "sha256": "36fe39feee4d7ebc20b128e8498e27b9d415fa67dc88b2e58132eb0c57aa260a"
+    "sha256": "92434e198f27984c035c376ec77a7cf9e6ebdde782f8ccb1336ae3329b66ddb7"
   },
   {
     "id": "host-lifecycle",
@@ -86,7 +86,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-034/editorial-tests.txt",
-    "sha256": "1bdaebc15a4f645b712b6cb0d353eafea24afbf034771bdec298b1067e675299"
+    "sha256": "146eceb0490e6cc1f4f574e3b43686750c14fe6e0c08538ebb54333755e0d241"
   },
   {
     "id": "release-tests",
@@ -99,7 +99,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-034/release-tests.txt",
-    "sha256": "8548e33326d0945f941b379d1b46580a4d4b34e61ca2d28e1eb6b4531989641f"
+    "sha256": "72a27034f39e53bf22f62619b0515db642a1a3f49e8aba8d4c1dab0bf4a30fbc"
   },
   {
     "id": "live-progress",

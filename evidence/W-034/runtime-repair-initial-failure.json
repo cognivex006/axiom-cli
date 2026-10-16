@@ -1,0 +1,9 @@
+{
+  "passed": false,
+  "source_revision": "1919c0be5fe3ae8be1289ae250b409539e959437",
+  "phase": "Controlled candidate 0.1.10 direct-install repair with an old named gateway still running",
+  "observed": "The new CLI dispatched list to an old MCP Python environment; argparse refused list with exit 2.",
+  "root_cause": "apply_install skipped the approved provisioner whenever an MCP pointer existed, unless the internal composite-update flag was set.",
+  "correction": "Always delegate sealed runtime inputs to their provisioner; it owns the idempotent already-current check. Add actual MCP version probes to normal update and independent direct repair on all native CI lanes.",
+  "state": "CLI 0.1.11 tag/release has not been created; peer releases and user state remain intact"
+}

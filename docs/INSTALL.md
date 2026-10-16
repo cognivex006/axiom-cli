@@ -361,3 +361,7 @@ targets the observed owner; it never kills an arbitrary process using a port.
 manual foreground HTTP gateway use `axmp serve`; its terminal stays open while
 clients connect. Check `/healthz`, `/readyz` and `axmp doctor` separately. See the
 [gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md).
+
+Direct install/repair over an existing installation also verifies and selects the
+approved MCP runtime generation. Having an older Python environment already
+installed does not cause the new release to reuse that older MCP package.

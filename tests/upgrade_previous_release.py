@@ -124,6 +124,9 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
             if version.count(VERSION) != 4:
                 raise ValueError("the four installed components must report the new version: " + version)
             run("doctor after upgrade", [axm, "doctor"])
+            mcp = json.loads(run("actual MCP runtime after upgrade", [axm, "mcp", "version", "--json"]).stdout)
+            if mcp["version"] != VERSION:
+                raise ValueError("upgraded command still launches an older MCP runtime")
             if not (root / "bin/graphd-engine" / ("axiom" + suffix)).is_file():
                 raise ValueError("named engine runtime missing")
             if not (root / "generations" / generation).is_dir():
@@ -138,6 +141,26 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
                     raise ValueError("previous command bytes or absence not restored: " + name)
             if sentinel.read_text() != "user project data":
                 raise ValueError("user data changed")
+            if previous_version == "0.1.10":
+                repair = work / "verified-current-repair"
+                composer.unpack(current, repair)
+                repair_root = work / "independent-repair-install"
+                saved = {key: env.get(key) for key in ("AXIOM_CLI_INSTALL_ROOT", "AXIOM_HOME")}
+                env.update(AXIOM_CLI_INSTALL_ROOT=str(repair_root), AXIOM_HOME=str(repair_root))
+                try:
+                    run("independent previous installation for repair",
+                        [previous / ("axiom-cli" + suffix), "install", "--from", previous, "--yes", "--no-modify-path"])
+                    run("direct install repair refreshes existing runtime",
+                        [repair / ("axiom-cli" + suffix), "install", "--from", repair, "--yes", "--no-modify-path"])
+                    mcp = json.loads(run("actual MCP runtime after direct repair", [repair_root / "bin" / ("axm" + suffix), "mcp", "version", "--json"]).stdout)
+                    if mcp["version"] != VERSION:
+                        raise ValueError("direct repair reused the previous MCP runtime")
+                finally:
+                    for key, value in saved.items():
+                        if value is None: env.pop(key, None)
+                        else: env[key] = value
+                if sentinel.read_text() != "user project data":
+                    raise ValueError("direct repair changed user data")
         finally:
             server.shutdown()
             if suffix:

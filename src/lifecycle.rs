@@ -422,22 +422,21 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
         set.plan.get("mcp_runtime"),
         set.local_root.as_deref().and_then(crate::runtime::locate),
     ) {
-        let composite = std::env::var_os("AXIOM_CLI_COMPOSITE_UPDATE").as_deref()
-            == Some(std::ffi::OsStr::new("1"));
-        if composite || !crate::runtime::provisioned(&root) {
-            let version = set
-                .plan
-                .get("components")
-                .and_then(Json::as_array)
-                .unwrap_or(&[])
-                .iter()
-                .find(|item| item.get("component").and_then(Json::as_text) == Some("axiom-mcp"))
-                .and_then(|item| item.get("version"))
-                .and_then(Json::as_text)
-                .unwrap_or("")
-                .to_string();
-            crate::runtime::provision(&inputs, bound, &root, &version)?;
-        }
+        // An existing pointer can belong to an older release. Always let the
+        // approved provisioner select/verify its generation, including direct
+        // install/repair. Its already-current path is idempotent.
+        let version = set
+            .plan
+            .get("components")
+            .and_then(Json::as_array)
+            .unwrap_or(&[])
+            .iter()
+            .find(|item| item.get("component").and_then(Json::as_text) == Some("axiom-mcp"))
+            .and_then(|item| item.get("version"))
+            .and_then(Json::as_text)
+            .unwrap_or("")
+            .to_string();
+        crate::runtime::provision(&inputs, bound, &root, &version)?;
     }
     let mcp_runtime_bin = if matches!(
         set.plan.get("host").and_then(Json::as_text),

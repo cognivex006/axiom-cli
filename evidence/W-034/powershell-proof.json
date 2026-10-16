@@ -35,7 +35,7 @@
       "case": "unknown",
       "native_powershell": true,
       "exact_download_bytes": true,
-      "observed_frames": 8
+      "observed_frames": 7
     }
   ],
   "scope": "Native PowerShell transfer and console handoff, private temporary files and loopback server; no installation"

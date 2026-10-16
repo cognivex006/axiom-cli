@@ -6,6 +6,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## 0.1.11
 
+### Bug Fixes
+
+- Refresh the approved MCP runtime during direct install/repair over an existing installation, so new gateway commands run the selected component instead of an older Python environment.
+
 ### New Features
 
 - Show live download byte percentages, transfer speed and estimated remaining time, with elapsed activity and stage details during installation, runtime preparation and updates. Keep machine JSON quiet and provide bootstrap activity while older installed updaters run.

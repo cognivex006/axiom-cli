@@ -9,6 +9,6 @@ test_existing_output_is_preserved (tests.test_release_012.ReleaseTests.test_exis
 test_three_checked_archives_collect_with_source_and_checksums (tests.test_release_012.ReleaseTests.test_three_checked_archives_collect_with_source_and_checksums) ... ok
 
 ----------------------------------------------------------------------
-Ran 7 tests in 0.397s
+Ran 7 tests in 0.471s
 
 OK (skipped=1)

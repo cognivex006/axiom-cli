@@ -70,12 +70,6 @@ pub fn plan_block(inputs: &Inputs) -> Result<Json, Refusal> {
     ]))
 }
 
-/// Whether the install root already has a provisioned runtime generation.
-pub fn provisioned(root: &Path) -> bool {
-    root.join("mcp-runtime").join("current.json").is_file()
-        || crate::legacy::nested_runtime_pointer(root).is_some()
-}
-
 /// Run the provisioner into `<root>/mcp-runtime`, after re-checking the bound digests.
 pub fn provision(
     inputs: &Inputs,
