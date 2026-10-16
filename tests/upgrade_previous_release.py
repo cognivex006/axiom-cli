@@ -139,6 +139,10 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
                 restored = sha(path) if path.is_file() else None
                 if restored != original_commands[name]:
                     raise ValueError("previous command bytes or absence not restored: " + name)
+            run("retry current update after rollback with retained runtime", command)
+            run("doctor after retained-runtime retry", [axm, "doctor"])
+            run("rollback retried update", [axm, "update", "rollback", "--transaction", "previous"])
+            run("previous version after second rollback", [old_command, "version", "--json"])
             if sentinel.read_text() != "user project data":
                 raise ValueError("user data changed")
             if previous_version == "0.1.10":

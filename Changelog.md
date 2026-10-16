@@ -8,6 +8,7 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
+- Recover a verified retained Windows MCP runtime after rollback or uninstall, so reinstalling the same release can restore the commands without deleting the runtime directory.
 - Refresh the approved MCP runtime during direct install/repair over an existing installation, so new gateway commands run the selected component instead of an older Python environment.
 
 ### New Features

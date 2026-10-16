@@ -37,6 +37,7 @@ jobs:
         run: |
           python release/check_public_docs.py
           python -m unittest tests.test_public_docs tests.test_release_012 -v
+          python -m unittest tests.test_windows_runtime_recovery -v
       - name: Required owner Rust checks
         shell: bash
         run: |
@@ -141,6 +142,10 @@ jobs:
         run: |
           python tests/upgrade_previous_release.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/previous-upgrade-${{ matrix.platform }}.json"
           python tests/upgrade_previous_release.py --previous 0.1.6 --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/legacy-upgrade-${{ matrix.platform }}.json"
+      - name: Windows uninstall and retained-runtime recovery
+        if: matrix.platform == 'windows-x64'
+        shell: bash
+        run: python tests/windows_runtime_reinstall.py --archive "$RUNNER_TEMP/candidate/axiom-$(cat VERSION)-windows-x64.zip" --out "$RUNNER_TEMP/oneliner/retained-runtime-repair.json"
       - name: Native Mac Intel bootstrap options and digest/network refusals
         if: matrix.platform == 'macos-x64'
         shell: bash

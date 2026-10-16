@@ -180,6 +180,51 @@ def report(root: Path, current: dict, status: str) -> dict:
             "runtime_bin": str((version / "venv" / "Scripts").resolve()), "certified": False}
 
 
+def retained_record(root: Path, key: str, args: argparse.Namespace,
+                    inputs: dict, identity: dict) -> dict:
+    """Verify a complete retained generation against the approved offline inputs.
+
+    Older releases have no activation record inside the generation. Reconstruct
+    it only after checking their full inventory and retained package inputs.
+    A rollback/uninstall may remove the pointer without removing these bytes.
+    """
+    version = owned_version(root, key)
+    packages = version / "packages"
+    with tarfile.open(inputs["inputs"]) as archive:
+        for member in archive.getmembers():
+            if (not member.isfile() or member.name.startswith("/") or "\\" in member.name
+                    or any(part in ("", ".", "..") for part in member.name.split("/"))):
+                raise ValueError("retained runtime input has an unsafe member")
+            expected = archive.extractfile(member)
+            if expected is None or sha(packages / member.name) != hashlib.sha256(expected.read()).hexdigest():
+                raise ValueError("retained runtime inputs differ from the approved bundle")
+    manifest = read_json(packages / "input-manifest.json")
+    if (manifest is None or manifest.get("source_revision") != args.source_revision
+            or manifest.get("platform") != "windows-x64" or manifest.get("python") != "3.13"):
+        raise ValueError("retained runtime input identity mismatch")
+    wheel = manifest.get("owner_wheel", {})
+    if wheel.get("name") != f"axiom_mcp-{args.version}-py3-none-any.whl":
+        raise ValueError("retained runtime wheel version mismatch")
+    checked(packages / wheel["name"], wheel["sha256"])
+    bin_dir = version / "venv" / "Scripts"
+    python = bin_dir / "python.exe"
+    with zipfile.ZipFile(inputs["runtime"]) as archive:
+        if sha(python) != hashlib.sha256(archive.read("python.exe")).hexdigest():
+            raise ValueError("retained interpreter differs from the pinned runtime")
+    launcher = bin_dir / ("axmp.exe" if (bin_dir / "axmp.exe").exists() else "axiom-mcp.exe")
+    env = {"SystemRoot": os.environ.get("SystemRoot", r"C:\Windows"),
+           "PATH": str(bin_dir) + os.pathsep + os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32"),
+           "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1", "PYTHONPATH": ""}
+    observed = json.loads(command([str(launcher), "version", "--json"], env))
+    if observed.get("version") != args.version:
+        raise ValueError("retained MCP entrypoint reports the wrong version")
+    # Verify once more after the executable probe, before publishing either pointer.
+    owned_version(root, key)
+    return {"generation": key, "version": args.version, "source_revision": args.source_revision,
+            "python_sha256": sha(python), "executable_sha256": sha(launcher),
+            **identity, "owner_wheel_sha256": wheel["sha256"]}
+
+
 def provision(args: argparse.Namespace) -> dict:
     root = safe_root(args.root)
     if not re.fullmatch(r"[0-9a-f]{40}", args.source_revision):
@@ -197,8 +242,15 @@ def provision(args: argparse.Namespace) -> dict:
     versions = root / "versions"
     versions.mkdir(parents=True, exist_ok=True)
     version = versions / key
-    if version.exists():
-        raise ValueError("target runtime generation already exists; refusing to overwrite it")
+    if version.exists() or version.is_symlink():
+        new = retained_record(root, key, args, inputs, identity)
+        verified = report(root, new, "reactivated")
+        if args.interrupt_before_activate:
+            raise InterruptedError("injected interruption before runtime activation")
+        if old:
+            atomic_json(root / "previous.json", old)
+        atomic_json(root / "current.json", new)
+        return verified
     version.mkdir()
     atomic_json(version / "owner.json", {"owner": "axiom-cli", "generation": key, "creating": True})
     try:

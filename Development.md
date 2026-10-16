@@ -46,3 +46,12 @@ The user explicitly requested merge and release as 0.1.10 on 2026-10-16. This re
 ## Authorized 0.1.11 patch release
 
 The user explicitly requested all reported fixes and merge/release as 0.1.11 on 2026-10-16. This supersedes prior feature-only restrictions. Preserve installed user state and immutable historical Releases/tags. Main integration, new release branches/tags and publication require independent changed-contract review, required owner/native checks, exact source/artifact binding and actual previous-release upgrade/rollback.
+
+## Authorized 0.1.11 installation repair
+
+The subsequent 2026-10-16 user request explicitly authorizes repairing the broken
+installer and replacing the existing 0.1.11 distribution assets at the same version.
+The canonical repair decision records this narrow exception: preserve old asset hashes and original tag,
+bind replacements to a new immutable source commit, retain review/native/checksum
+gates and disclose the repair identity. No other release or installed human state
+may be overwritten under this exception.

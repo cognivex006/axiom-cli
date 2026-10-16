@@ -11,6 +11,11 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
+Reinstalling can reuse a complete, verified Windows MCP runtime retained after
+uninstall or rollback. The installer verifies its files and approved inputs before
+activating it. Modified or incomplete runtime directories are preserved and refused.
+If uninstall removed `axm`, run the installation command below to restore it.
+
 Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. Version 0.1.10 supports `axm skills install codex`; immutable 0.1.9 retains its [versioned manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
 
 - [Before you start](#before-you-start)
