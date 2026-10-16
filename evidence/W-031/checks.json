@@ -78,7 +78,7 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-031/powershell-progress.txt",
-    "sha256": "af3c85d9e66660a619396e42092f73c33e41fcbef99def141fe7b118f0cc6c15"
+    "sha256": "0f83e3f883b25078ce426e3af8441c8c0b3e9b62e65fca1ad11658fe5589ab65"
   },
   {
     "id": "host-lifecycle",
@@ -117,6 +117,6 @@
     ],
     "exit_code": 0,
     "artifact": "evidence/W-031/editorial.txt",
-    "sha256": "8d79f1931bece3016414791a03a3c4384339395d95291016b18066687710a235"
+    "sha256": "ae49bb52c88e998995b278716e8df58f5bee3fd260793322619e3e0214f64fda"
   }
 ]

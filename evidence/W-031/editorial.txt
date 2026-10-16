@@ -33,6 +33,6 @@ test_existing_output_is_preserved (tests.test_release_012.ReleaseTests.test_exis
 test_three_checked_archives_collect_with_source_and_checksums (tests.test_release_012.ReleaseTests.test_three_checked_archives_collect_with_source_and_checksums) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 1.632s
+Ran 31 tests in 1.226s
 
 OK (skipped=10)

@@ -137,7 +137,16 @@ if ($root -and (Test-Path -LiteralPath (Join-Path $root 'bin\axm.exe') -PathType
     $cliArgs = @('update')
     if ($Yes) { $cliArgs += '--yes' }
     # Keep the installed updater's console/input and single approval unchanged.
-    $worker = Start-Process -FilePath $cli -ArgumentList $cliArgs -NoNewWindow -PassThru
+    # Retain a direct process handle: Windows PowerShell Start-Process can lose
+    # ExitCode for an already-exited child. These arguments are fixed owned words.
+    $startInfo = New-Object Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $cli
+    $startInfo.Arguments = $cliArgs -join ' '
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $false
+    $worker = New-Object Diagnostics.Process
+    $worker.StartInfo = $startInfo
+    if (-not $worker.Start()) { Stop-AxiomUpdate 'could not start the installed updater' }
     $clock = [Diagnostics.Stopwatch]::StartNew()
     try {
         while (-not $worker.HasExited) {

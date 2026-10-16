@@ -1,0 +1,7 @@
+{
+  "failed_ci": 38878249542,
+  "root_cause": "Windows PowerShell Start-Process returned a null ExitCode for a short-lived successful updater, causing a false bootstrap failure.",
+  "correction": "Use a directly owned Diagnostics.Process with UseShellExecute=false and inherited console handles.",
+  "verification": "Native PowerShell private executable fixture covers immediate and delayed exits 0/7 and inherited Y input; repeat exact-head native CI before canonical closure.",
+  "no_unverified_success_claim": true
+}

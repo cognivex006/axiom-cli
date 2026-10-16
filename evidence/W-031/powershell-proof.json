@@ -2,6 +2,30 @@
   "passed": true,
   "cases": [
     {
+      "case": "console-handoff",
+      "child_exit_code": 0,
+      "inherited_approval_input": false,
+      "exact_exit_code_preserved": true
+    },
+    {
+      "case": "console-handoff",
+      "child_exit_code": 7,
+      "inherited_approval_input": false,
+      "exact_exit_code_preserved": true
+    },
+    {
+      "case": "console-handoff",
+      "child_exit_code": 0,
+      "inherited_approval_input": true,
+      "exact_exit_code_preserved": true
+    },
+    {
+      "case": "console-handoff",
+      "child_exit_code": 7,
+      "inherited_approval_input": true,
+      "exact_exit_code_preserved": true
+    },
+    {
       "case": "known",
       "native_powershell": true,
       "exact_download_bytes": true,
@@ -14,5 +38,5 @@
       "observed_frames": 7
     }
   ],
-  "scope": "Native PowerShell transfer helper only, private temporary files and loopback server; no installation"
+  "scope": "Native PowerShell transfer and console handoff, private temporary files and loopback server; no installation"
 }

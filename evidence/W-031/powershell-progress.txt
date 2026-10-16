@@ -1,1 +1,1 @@
-PASS native PowerShell known/unknown byte progress and ETA
+PASS native PowerShell byte progress, ETA, inherited approval input and exact child exit codes

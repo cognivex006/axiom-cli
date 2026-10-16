@@ -32,6 +32,35 @@ def verify():
     try:
         with tempfile.TemporaryDirectory(prefix="axiom bootstrap progress ") as temporary:
             root = Path(temporary).resolve()
+            ps = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+            # Exercise the actual console handoff with inherited stdin and exact exit codes.
+            stub = root / "updater.exe"
+            compiler = root / "compile.ps1"
+            compiler.write_text("""$ErrorActionPreference='Stop'
+Add-Type -OutputType ConsoleApplication -OutputAssembly '""" + str(stub).replace("'", "''") + """' -TypeDefinition @'
+using System;
+public class Updater {
+  public static int Main(string[] args) {
+    if (args.Length > 1) {
+      Console.WriteLine("Proceed?");
+      Console.WriteLine("approval:" + Console.ReadLine());
+      System.Threading.Thread.Sleep(600);
+    }
+    return int.Parse(args[0]);
+  }
+}
+'@
+""", encoding="utf-8")
+            subprocess.run([str(ps), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(compiler)], check=True, capture_output=True, timeout=30)
+            template = (ROOT / "installers/oneline/update.ps1.in").read_text(encoding="utf-8")
+            monitor = template.split("    # Keep the installed updater's console/input and single approval unchanged.\n", 1)[1].split("    $global:LASTEXITCODE = $code", 1)[0]
+            for code, interactive in [(0, False), (7, False), (0, True), (7, True)]:
+                script = root / "handoff.ps1"
+                script.write_text("$ErrorActionPreference='Stop'\n$cli='" + str(stub).replace("'", "''") + "'\n$cliArgs=@('" + str(code) + "'" + (",'prompt'" if interactive else "") + ")\n" + monitor + "\nif ($null -eq $code) { throw 'lost child exit code' }\nWrite-Output ('result:' + $code)\n", encoding="utf-8")
+                p = subprocess.run([str(ps), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)], input="Y\n", env=dict(os.environ, AXIOM_PROGRESS="plain"), capture_output=True, text=True, timeout=15)
+                assert p.returncode == 0 and f"result:{code}" in p.stdout, (p.stdout, p.stderr)
+                if interactive: assert "approval:Y" in p.stdout, (p.stdout, p.stderr)
+                cases.append(dict(case="console-handoff", child_exit_code=code, inherited_approval_input=interactive, exact_exit_code_preserved=True))
             for mode in ["known", "unknown"]:
                 script = root / (mode + ".ps1"); output = root / (mode + ".bin")
                 prelude = '''$ErrorActionPreference='Stop'
@@ -56,11 +85,11 @@ $script:frames.Add([pscustomobject]@{percent=$PercentComplete;status=$Status;com
                 cases.append(dict(case=mode, native_powershell=True, exact_download_bytes=True, observed_frames=len(active)))
     finally:
         server.shutdown(); server.server_close(); thread.join(timeout=5)
-    return dict(passed=True, cases=cases, scope="Native PowerShell transfer helper only, private temporary files and loopback server; no installation")
+    return dict(passed=True, cases=cases, scope="Native PowerShell transfer and console handoff, private temporary files and loopback server; no installation")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     args.out.write_text(json.dumps(verify(), indent=2) + "\n", encoding="utf-8", newline="\n")
-    print("PASS native PowerShell known/unknown byte progress and ETA")
+    print("PASS native PowerShell byte progress, ETA, inherited approval input and exact child exit codes")
