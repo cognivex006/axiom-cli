@@ -11,7 +11,7 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
-Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. The development host adapter supports `axm skills install codex`; released 0.1.9 retains its [versioned manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
+Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. Version 0.1.10 supports `axm skills install codex`; immutable 0.1.9 retains its [versioned manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
 
 - [Before you start](#before-you-start)
 - [Install](#install)
@@ -269,9 +269,9 @@ Version 0.1.8 has a migration defect: an unchanged 0.1.0 or 0.1.2 CLI store can 
 
 For an installation made by an older command layout, the update URL verifies and runs the current release CLI before starting the update transaction. This avoids the previous updater's obsolete executable health checks. Current installations use their own `axm update`; both paths retain the normal approval and rollback behavior.
 
-## Managed agent setup (development)
+## Managed agent setup (0.1.10 and later)
 
-With a build containing the managed adapter, use `axm install --host codex` for a
+With Axiom 0.1.10 or later, use `axm install --host codex` for a
 combined reviewed runtime/host plan, or `axm skills install codex` for an existing
 runtime. Open a new agent session afterwards. `axm skills doctor codex` verifies
 registration and reports actual skill discovery and MCP query readiness separately.

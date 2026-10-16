@@ -1,0 +1,1 @@
+PASS native host adapter lifecycle and preservation boundaries

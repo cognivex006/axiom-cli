@@ -87,6 +87,15 @@ class PublicDocumentationTests(unittest.TestCase):
             self.assertTrue(any("one Unreleased" in item for item in errors))
             self.assertEqual(sum("missing generated" in item for item in errors), 5)
 
+    def test_notes_010_agent_setup_and_historical_commands(self):
+        current = notes.render("v0.1.10")
+        self.assertIn("The public commands are `axm`, `axge` and `axmp`.", current)
+        self.assertIn("axm skills install codex", current)
+        self.assertIn("180 minutes", current)
+        previous = notes.render("v0.1.9")
+        self.assertIn("The public commands are `axm`, `axsk`, `axge` and `axmp`.", previous)
+        self.assertNotIn("## Agent setup", previous)
+
     def test_notes_select_only_requested_release_and_pin_install_links(self):
         text = notes.render("v0.1.5")
         self.assertIn("## New Features", text)

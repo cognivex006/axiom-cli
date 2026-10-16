@@ -42,8 +42,8 @@ The update script finds your installation and runs its `axm update`, which shows
 
 ## Connect your agent
 
-Development preview: the managed host commands and unified `$axsk` skill below
-are unpublished. The immutable 0.1.9 release retains its existing commands and
+Version 0.1.10 adds managed host commands and the unified `$axsk` skill.
+For older installations, update the runtime first; immutable 0.1.9 retains its
 [manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
 
 ```powershell

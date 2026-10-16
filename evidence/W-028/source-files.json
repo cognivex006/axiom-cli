@@ -1,0 +1,14 @@
+{
+  "Cargo.lock": "7c1bae6af71fa7a19588c450c45572316404d4c9015d576babc8dcb2e2b84700",
+  "Cargo.toml": "71df52008c17ad8900a1845db97c6a5203b2eb9759f847c74e5d86e58957daca",
+  "Changelog.md": "6b269c45ac4de9ed059c9c15b3547fae9337778db1419951ba6121032977e537",
+  "Development.md": "0ac4456fd5d081c24d3e65f58cf16631f6af63718f865c1fba2ad95d69539387",
+  "README.md": "26a9260da7aacbe094c375cdccc50918932d1f95470b6f3140933f0933e3d3e7",
+  "VERSION": "fecf23c4b3c2c29381d4c14cacb998939eb53f5791b99ab7e4e0bc7972c44524",
+  "containers/Dockerfile": "33750b90beca9212d2ec22805bf697af4634ebd8e4b3441bfec6161565fa88d1",
+  "docs/INSTALL.md": "b6584e4a78c6346310c85fc2815a3106adc4452b67f8602df7fa84b1c4651f4b",
+  "release/oneline-release-notes.md": "b1582e8afe1bd94831eefddd453faadc884ac241ee93ea24f71fac325ae5ff4d",
+  "release/render_release_notes.py": "21aa3497a4e45469cdd186323490efa9c3a4aafce0a90f52bfef2e6fd6cadd52",
+  "tests/test_public_docs.py": "6609cfbd4ef90cc9c4e783db675d1b13b6a48a47211ab7295f7333c157b1ebfa",
+  "tests/upgrade_previous_release.py": "7085ef7e789eed1fe6ca90312f5e7309e07c490c841533178400db69e363c550"
+}

@@ -1,0 +1,104 @@
+[
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/format.txt",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/clippy.txt",
+    "sha256": "6f0510bbb96e7a934454be8242329c47cab78d8c0db840db1760f57320c104ac"
+  },
+  {
+    "id": "rust-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/rust-tests.txt",
+    "sha256": "d0fbad433f815a8abc5c53fafb0e42b66796a6d8f5be5916346ad46d4ddb0c8d"
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/build.txt",
+    "sha256": "676023f76da433ceb093581d359492ebde5fc0fe38977baaf3b5f90885112ecd"
+  },
+  {
+    "id": "host-lifecycle",
+    "command": [
+      "python",
+      "tests/host_onboarding.py",
+      "--cli",
+      "target/release/axiom-cli.exe",
+      "--out",
+      "<workspace>\\_coord\\release010-host-proof.json"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/host-lifecycle.txt",
+    "sha256": "0f53314e7a624e5d9622c2b9707deefec82c1e9f9b83a453af124008bd027b4c"
+  },
+  {
+    "id": "public-docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/public-docs.txt",
+    "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
+  },
+  {
+    "id": "editorial-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/editorial-tests.txt",
+    "sha256": "df99e71a427d5734ba66a27edd6e03489f75e3e0b9c5d502097c3adda424db32"
+  },
+  {
+    "id": "release-tests",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_release_012",
+      "-v"
+    ],
+    "exit_code": 0,
+    "artifact": "evidence/W-028/release-tests.txt",
+    "sha256": "9280b95036b12e6c08bbbe0a5159a00ae18ca73025a8e955f795253586aa0b12"
+  }
+]

@@ -35,7 +35,7 @@ FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2
 # timestamp deterministic instead of `whenever the build happened to run`. The
 # publication workflow passes the commit time; a local build may omit it.
 ARG SOURCE_DATE_EPOCH
-ARG AXIOM_VERSION=0.1.9
+ARG AXIOM_VERSION=0.1.10
 ARG AXIOM_REVISION=unknown
 # Deterministic default keeps a bare local build reproducible; the workflow passes
 # the real commit timestamp.

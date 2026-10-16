@@ -4,6 +4,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.10
+
 ### Bug Fixes
 
 - Keep preserved older installation files informational in doctor; identify actual PATH and environment warnings separately.
@@ -11,6 +13,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 ### New Features
 
 - Add managed Codex skills install/update/doctor/list/uninstall/recovery through axm; bind optional agent setup to the installation plan and preserve partial results. Support local gateway supervision and explain deprecated terminal axsk.
+
+### Known Limitations
+
+- Managed host setup initially supports Codex. Registration is distinct from next-session discovery and an authenticated graph query. Completed failed host commands have compensating recovery; forced termination may retain the installation coordinator lock. Disabled or modified host state is preserved for explicit recovery.
 
 ## 0.1.9
 

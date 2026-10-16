@@ -1,0 +1,314 @@
+
+running 130 tests
+test bundle::tests::a_declared_path_needs_a_named_root_and_a_filename ... ok
+test bundle::tests::a_named_skill_is_an_instruction_and_a_reviewed_document_is_a_reference ... ok
+test bundle::tests::an_executable_suffix_forces_the_script_kind ... ok
+test bundle::tests::the_engine_vocabulary_keeps_a_real_engine_exit_code ... ok
+test confirm::tests::the_default_answer_accepts_and_anything_else_declines ... ok
+test bundle::tests::only_a_pinned_lowercase_hex_revision_is_pinned ... ok
+test doctor::tests::compact_clean_host_does_not_claim_an_installed_ecosystem ... ok
+test doctor::tests::compact_failure_names_the_missing_prerequisite_and_the_next_step ... ok
+test bundle::tests::a_bundle_without_a_declared_version_is_refused_before_the_engine_sees_it ... ok
+test doctor::tests::compact_success_names_actual_sqlite_check_without_internal_paths ... ok
+test doctor::tests::every_integrity_class_maps_onto_a_status_token ... ok
+test doctor::tests::preserved_legacy_layout_is_information_not_a_warning ... ok
+test doctor::tests::sqlite_availability_is_independent_of_version_and_old_wal_verdict ... ok
+test doctor::tests::legacy_conflicts_are_warned_individually_even_with_preserved_files ... ok
+test doctor::tests::unrelated_warning_keeps_its_actual_check_and_message ... ok
+test engine::tests::a_directory_without_the_engine_reports_every_place_it_looked ... ok
+test host_skills::tests::payload_paths_refuse_escape_and_links_before_host_commands ... ok
+test layout::tests::an_empty_or_axiom_root_is_not_foreign_but_user_files_are ... ok
+test host_skills::tests::modified_duplicate_and_missing_payloads_are_refused ... ok
+test confirm::tests::json_without_yes_never_prompts ... ok
+test doctor::tests::a_finding_carries_its_check_name_and_status ... ok
+test doctor::tests::a_version_string_parses_into_major_and_minor ... ok
+test engine::tests::an_outcome_without_an_exit_code_is_not_a_success ... ok
+test elevation::tests::the_test_process_is_not_elevated_or_the_seam_is_explicit ... ok
+test layout::tests::canonical_aliases_are_idempotent_and_foreign_slots_are_preserved ... ok
+test layout::tests::only_an_existing_unchanged_owned_skills_command_gets_transition_compatibility ... ok
+test layout::tests::legacy_cli_store_manifest_owns_the_unchanged_executable ... ok
+test lifecycle::tests::a_sealed_plan_is_approved_by_its_own_digest ... ok
+test lifecycle::tests::a_sealed_plan_still_refuses_a_wrong_digest ... ok
+test lifecycle::tests::an_unsealed_plan_can_never_be_approved ... ok
+test layout::tests::private_engine_placement_refuses_traversal_and_linked_directories ... ok
+test lifecycle::tests::declared_unusable_engine_does_not_fall_back_to_path ... ok
+test lifecycle::tests::embedded_engine_plan_changes_outer_digest ... ok
+test legacy::tests::backing_up_the_store_executable_is_idempotent ... ok
+test legacy::tests::the_two_known_layouts_and_an_unknown_one_are_classified ... ok
+test lifecycle::tests::install_prefers_the_release_engine_over_host_discovery ... ok
+test layout::tests::placing_bin_is_idempotent_and_refuses_changed_bytes ... ok
+test layout::tests::short_command_is_a_verified_copy_of_axiom_cli ... ok
+test layout::tests::legacy_cli_store_refuses_invalid_ownership_without_changes ... ok
+test host_skills::tests::changed_backups_are_preserved_before_replacing_an_owned_record ... ok
+test pathenv::tests::removing_restores_the_value_add_produced ... ok
+test pathenv::tests::a_skipped_change_writes_nothing ... ok
+test lifecycle::tests::sealing_records_the_digest_without_changing_it ... ok
+test lifecycle::tests::provisioned_runtime_is_verified_before_its_bin_reaches_the_engine ... ok
+test lifecycle::tests::the_uninstall_plan_carries_no_volatile_timestamp ... ok
+test runtime::tests::a_release_without_runtime_inputs_needs_no_provisioning ... ok
+test runtime::tests::changed_inputs_after_approval_are_refused_before_running_anything ... ok
+test runtime::tests::tail_keeps_the_end_on_a_character_boundary ... ok
+test target::tests::an_undeclared_host_is_never_folded_into_a_known_target ... ok
+test target::tests::every_delivery_platform_has_a_tier ... ok
+test target::tests::only_the_channel_chosen_platforms_are_absent_from_host_detection ... ok
+test target::tests::the_host_id_agrees_with_the_compiled_platform ... ok
+test target::tests::the_tier_sets_partition_the_platform_table ... ok
+test lifecycle::tests::marker_cleanup_only_removes_approved_bytes ... ok
+test target::tests::the_wsl2_lane_records_linux_evidence ... ok
+test update::apply::tests::a_transaction_id_is_lowercase_stamped_and_prefixed ... ok
+test update::apply::tests::an_install_root_is_compared_after_normalising_separators_and_trailing_slashes ... ok
+test update::apply::tests::plan_rows_read_every_component_row_and_skip_the_rest ... ok
+test update::channel::tests::a_declared_component_with_a_published_artifact_parses ... ok
+test update::channel::tests::a_forbidden_pin_is_refused_as_a_revision ... ok
+test update::channel::tests::a_forbidden_pin_is_refused_as_an_artifact_url ... ok
+test update::channel::tests::a_pep440_version_is_not_normalised_into_semver ... ok
+test update::channel::tests::an_empty_component_set_cannot_resolve_anything ... ok
+test update::channel::tests::an_undeclared_component_cannot_smuggle_a_version ... ok
+test update::channel::tests::an_undeclared_component_is_recorded_with_its_source_and_carries_no_version ... ok
+test update::channel::tests::an_unresolved_placeholder_is_refused ... ok
+test update::channel::tests::an_unsigned_channel_is_refused ... ok
+test update::channel::tests::duplicate_components_are_refused ... ok
+test layout::tests::legacy_migration_preserves_recorded_bytes_and_refuses_modified_files ... ok
+test update::channel::tests::structural_defects_are_named ... ok
+test update::error::tests::classes_map_onto_the_canonical_exit_vocabulary ... ok
+test update::fetch::tests::an_https_artifact_without_a_cache_entry_is_unreachable_not_installed ... ok
+test update::fetch::tests::the_cache_key_is_the_last_segment_without_a_query ... ok
+test update::fetch::tests::the_install_root_text_uses_forward_slashes ... ok
+test target::tests::the_detected_host_rows_are_exactly_the_engine_bundle_hosts ... ok
+test target::tests::every_host_a_running_cli_can_report_is_a_declared_platform ... ok
+test target::tests::the_finish_first_set_matches_the_contract ... ok
+test update::generation::tests::a_backslash_payload_path_is_refused ... ok
+test update::channel::tests::a_forbidden_pin_is_refused_as_a_version ... ok
+test update::error::tests::only_a_transient_class_is_retryable ... ok
+test update::channel::tests::a_non_https_artifact_url_is_refused ... ok
+test update::fetch::tests::a_cache_key_may_not_smuggle_a_separator_or_a_drive_letter ... ok
+test update::channel::tests::a_missing_needs_restart_is_refused ... ok
+test update::generation::tests::a_generation_id_with_a_separator_cannot_be_read ... ok
+test update::generation::tests::the_installed_map_and_restart_set_follow_the_entries ... ok
+test update::generation::tests::a_generation_round_trips_with_its_probe ... ok
+test update::health::tests::a_relative_probe_program_is_resolved_inside_the_generation ... ok
+test update::error::tests::an_unreachable_channel_is_not_ready_and_a_malformed_one_is_validation ... ok
+test update::journal::tests::only_settled_states_end_a_transaction ... ok
+test update::health::tests::every_absolute_program_form_is_recognised_on_every_host ... ok
+test update::json::tests::a_float_literal_is_refused_by_name ... ok
+test update::json::tests::a_lone_surrogate_is_refused ... ok
+test update::json::tests::a_repeated_key_keeps_the_last_member ... ok
+test update::json::tests::canonical_form_matches_the_python_reference ... ok
+test update::json::tests::integers_are_normalised_without_a_leading_zero ... ok
+test update::json::tests::deep_nesting_is_refused_instead_of_overflowing_the_stack ... ok
+test update::json::tests::key_order_in_the_input_does_not_change_the_canonical_bytes ... ok
+test update::json::tests::structural_faults_are_refused ... ok
+test update::oneshot::tests::moving_references_are_refused ... ok
+test update::oneshot::tests::semver_orders_prereleases_before_releases ... ok
+test update::report::tests::a_failed_host_stage_preserves_runtime_success_and_reports_partial ... ok
+test update::report::tests::a_report_renders_as_one_json_object_with_the_frozen_envelope_keys ... ok
+test update::report::tests::exit_classes_map_to_the_canonical_vocabulary ... ok
+test update::rules::tests::digest_and_revision_are_lowercase_hex_only ... ok
+test update::rules::tests::plan_ids_freeze_the_schema_pattern ... ok
+test update::health::tests::an_absolute_probe_program_is_used_as_written ... ok
+test update::journal::tests::a_journal_round_trips ... ok
+test update::journal::tests::advancing_journal_stamps_the_new_state ... ok
+test update::rules::tests::placeholders_and_pins_are_detected ... ok
+test update::rules::tests::relative_paths_cannot_escape_a_root ... ok
+test update::json::tests::non_ascii_and_del_are_not_escaped ... ok
+test update::rules::tests::urls_must_be_https ... ok
+test update::sha256::tests::chunking_does_not_change_the_digest ... ok
+test update::sha256::tests::exactly_sixty_four_bytes_is_the_block_boundary ... ok
+test update::sha256::tests::matches_the_published_vectors ... ok
+test update::oneshot::tests::a_pinned_offer_is_accepted ... ok
+test update::oneshot::tests::a_manifest_changed_after_planning_is_refused_before_any_download ... ok
+test update::state::tests::a_generation_id_may_not_carry_a_separator ... ok
+test update::state::tests::a_record_round_trips_through_its_canonical_text ... ok
+test update::oneshot::tests::rollback_restores_all_canonical_commands_and_the_private_engine ... ok
+test update::state::tests::a_short_digest_is_refused_rather_than_trusted ... ok
+test update::state::tests::an_unknown_channel_name_is_refused ... ok
+test update::rules::tests::semver_accepts_the_owner_declared_versions_and_refuses_pep440 ... ok
+test update::oneshot::tests::rollback_to_older_private_folder_removes_only_the_verified_new_engine ... ok
+test update::time::tests::epoch_and_known_instants_round_trip ... ok
+test update::state::tests::the_override_env_var_wins_for_the_install_root ... ok
+test update::time::tests::expiry_comparison_is_an_instant_comparison ... ok
+test update::time::tests::malformed_timestamps_are_rejected_not_guessed ... ok
+test layout::tests::record_writes_installed_json_last_and_reuses_the_generation ... ok
+test pathenv::tests::the_registry_round_trip_is_byte_identical_under_a_test_key ... ok
+
+test result: ok. 130 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.94s
+
+
+running 14 tests
+test help_lists_exactly_the_documented_verbs ... ok
+test a_bare_mutating_verb_is_interactive_and_never_mutates_without_a_terminal ... ok
+test the_machine_readable_contract_does_not_depend_on_flag_order ... ok
+test help_option_blocks_are_indented_and_name_the_required_mode ... ok
+test help_freezes_the_canonical_exit_vocabulary ... ok
+test validation_in_json_mode_carries_the_canonical_envelope ... ok
+test approve_digest_boundary_is_enforced ... ok
+test help_exits_zero_and_is_available_per_verb ... ok
+test validation_defects_exit_two ... ok
+test usage_text_and_dispatcher_cannot_drift ... ok
+test json_mode_writes_exactly_one_object_on_every_path ... ok
+test every_documented_verb_is_reachable_from_argv ... ok
+test every_verb_reports_a_real_result_and_never_an_empty_success ... ok
+test json_flag_is_accepted_before_and_after_the_verb ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 59.52s
+
+
+running 62 tests
+test doctor_plain_names_not_ready_and_the_missing_engine ... ok
+test doctor_exits_four_when_the_engine_is_absent_and_states_the_searched_places ... ok
+test doctor_detects_a_tampered_installed_generation ... ok
+test doctor_reports_a_missing_engine_sqlite_probe_as_a_failure ... ok
+test failure_envelopes_are_one_object_with_matching_code_and_status ... ok
+test doctor_reports_a_healthy_installed_generation_as_ok ... ok
+test doctor_reports_structural_findings_and_never_fails_silently ... ok
+test install_apply_refuses_a_skills_payload_that_does_not_match_its_manifest ... ok
+test install_apply_refuses_when_the_release_set_carries_no_skills_bundle ... ok
+test install_apply_refuses_a_core_component_that_declares_no_version ... ok
+test install_apply_refuses_a_skills_payload_file_its_manifest_does_not_declare ... ok
+test install_apply_reports_authorization_error_when_the_engine_forbids ... ok
+test doctor_fails_when_the_engine_exits_zero_without_a_json_object ... ok
+test install_apply_with_a_malformed_digest_is_validation ... ok
+test install_apply_keeps_a_conflicting_engine_at_its_own_exit_code ... ok
+test install_apply_reports_the_engines_plan_step_refusal ... ok
+test install_apply_reports_not_ready_when_the_engine_is_not_ready ... ok
+test install_apply_with_a_wrong_digest_is_a_conflict_and_changes_nothing ... ok
+test doctor_fails_when_the_engine_binary_exits_non_zero ... ok
+test install_apply_without_approval_is_validation_and_changes_nothing ... ok
+test install_apply_with_the_correct_digest_reaches_the_engine_boundary ... ok
+test install_from_without_a_value_is_validation_and_one_json_object ... ok
+test install_apply_reports_the_engines_partial_exit_code ... ok
+test install_apply_with_the_correct_digest_reaches_the_boundary_from_the_recorded_manifest ... ok
+test install_apply_with_a_report_digest_is_not_refused_for_a_stale_plan_digest ... ok
+test install_apply_reports_the_engines_timeout_exit_code ... ok
+test install_refuses_a_release_set_that_has_no_manifest ... ok
+test install_refuses_an_artifact_whose_bytes_do_not_match ... ok
+test install_refuses_an_artifact_that_is_not_available_locally ... ok
+test install_dry_run_verifies_the_artifacts_and_changes_nothing ... ok
+test install_without_any_release_set_is_not_ready ... ok
+test install_reports_nothing_to_install_when_this_host_has_no_artifact ... ok
+test install_without_a_mode_or_terminal_prints_the_plan_and_changes_nothing ... ok
+test uninstall_apply_flag_combinations_are_validation ... ok
+test uninstall_apply_with_an_installed_release_refuses_honestly_and_preserves_data ... ok
+test uninstall_apply_without_approval_is_validation ... ok
+test install_json_is_one_object_on_every_path ... ok
+test uninstall_apply_with_nothing_installed_is_not_found ... ok
+test uninstall_dry_run_changes_nothing ... ok
+test uninstall_apply_with_a_wrong_digest_is_a_conflict ... ok
+test uninstall_purge_data_without_apply_is_validation ... ok
+test the_interactive_plan_digest_differs_from_the_automation_plan ... ok
+test uninstall_without_a_mode_or_terminal_prints_the_plan_and_changes_nothing ... ok
+test update_check_still_answers_a_real_result ... ok
+test version_all_reports_the_cli_host_and_engine_blocks ... ok
+test uninstall_without_an_engine_reports_not_found_and_removes_nothing ... ok
+test install_plan_is_sealed_and_carries_no_volatile_timestamp ... ok
+test version_plain_distinguishes_aliases_and_recorded_versions_from_updates ... ok
+test version_reports_the_candidate_manifest_when_nothing_is_installed ... ok
+test version_reads_the_recorded_manifest_when_a_release_is_installed ... ok
+test version_all_sets_the_all_detail_with_an_installed_generation ... ok
+test uninstall_plan_digest_is_reproducible_and_sealed ... ok
+test version_reports_the_installed_generation_and_its_components ... ok
+test version_succeeds_with_nothing_installed ... ok
+test install_adopts_a_manifest_owned_legacy_cli_store ... ok
+test version_json_is_one_object_for_every_shape ... ok
+test install_apply_converts_the_source_skills_manifest_into_an_engine_bundle ... ok
+test install_apply_installs_through_the_engine_from_a_local_release_set ... ok
+test install_apply_reports_a_missing_engine_status_as_unreported_not_installed ... ok
+test verbose_json_keeps_stdout_to_one_json_object ... ok
+test install_yes_with_no_modify_path_leaves_the_path_alone ... ok
+test install_yes_applies_the_printed_plan_and_announces_the_path_change ... ok
+
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.51s
+
+
+running 9 tests
+test workflow_builds_with_buildx_and_publishes_immutable_tags_only ... ok
+test workflow_records_the_digest_and_keeps_publication_opt_in ... ok
+test dockerfile_version_default_matches_the_version_file ... ok
+test entrypoint_forwards_the_argv_vector_unchanged ... ok
+test every_base_image_is_pinned_by_digest ... ok
+test oci_label_set_is_complete ... ok
+test owner_documentation_covers_the_channel_and_the_air_gapped_variant ... ok
+test runtime_user_is_non_root_and_the_revision_is_not_invented ... ok
+test the_container_is_declared_a_non_native_channel ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 12 tests
+test fixture_sha::tests::exactly_sixty_four_bytes_is_the_block_boundary ... ok
+test fixture_sha::tests::matches_the_published_vectors ... ok
+test json::tests::a_float_literal_is_refused_by_name ... ok
+test fixture_sha::tests::chunking_does_not_change_the_digest ... ok
+test json::tests::a_lone_surrogate_is_refused ... ok
+test json::tests::key_order_in_the_input_does_not_change_the_canonical_bytes ... ok
+test json::tests::structural_faults_are_refused ... ok
+test json::tests::non_ascii_and_del_are_not_escaped ... ok
+test json::tests::canonical_form_matches_the_python_reference ... ok
+test json::tests::integers_are_normalised_without_a_leading_zero ... ok
+test json::tests::a_repeated_key_keeps_the_last_member ... ok
+test json::tests::deep_nesting_is_refused_instead_of_overflowing_the_stack ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 6 tests
+test the_installer_emits_exactly_the_canonical_envelope_keys_in_order ... ok
+test the_linux_schema_requires_exactly_the_canonical_envelope_keys ... ok
+test the_macos_arm64_documentation_does_not_claim_an_available_release ... ok
+test the_macos_recipe_is_arch_parameterised_and_never_cross_builds ... ok
+test the_installer_targets_glibc_and_registers_a_user_service_or_degrades_explicitly ... ok
+test every_linux_and_macos_script_is_posix_sh_without_forbidden_dependencies ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test absent_mcp_runtime_is_not_success_and_json_stays_one_object ... ok
+test native_alias_help_names_the_real_component_without_legacy_command_labels ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+
+
+running 24 tests
+test a_forbidden_pin_is_never_resolved ... ok
+test an_expired_trust_window_refuses_installation ... ok
+test an_unsigned_channel_is_never_resolved ... ok
+test apply_refuses_an_unreachable_artifact_while_offline ... ok
+test apply_refuses_a_tampered_artifact_digest ... ok
+test check_with_no_installed_release_and_no_named_manifest_is_not_ready ... ok
+test check_reads_the_recorded_manifest_and_changes_nothing ... ok
+test apply_refuses_while_the_coordinator_lock_is_held ... ok
+test apply_re_verifies_the_trust_window_of_the_recorded_manifest ... ok
+test apply_refuses_a_plan_whose_recorded_digest_is_not_in_the_recorded_manifest ... ok
+test apply_refuses_an_approval_digest_that_does_not_match_the_plan ... ok
+test the_test_local_sha256_matches_the_published_vectors ... ok
+test apply_is_idempotent_on_a_re_run ... ok
+test the_committed_channel_manifest_parses_and_declares_the_component_set ... ok
+test apply_swaps_atomically_and_keeps_the_previous_generation ... ok
+test plan_resolves_only_the_version_the_recorded_manifest_declares ... ok
+test rollback_refuses_when_no_previous_generation_is_retained ... ok
+test the_recorded_digest_must_match_the_installed_bytes ... ok
+test apply_rolls_back_when_the_health_check_fails ... ok
+test k003_refuses_distribution_only_verbs_with_an_active_engine ... ok
+test rollback_refuses_a_stale_approval_digest ... ok
+test the_transaction_never_touches_state_outside_the_install_root ... ok
+test apply_recovers_an_interrupted_transaction_before_it_starts ... ok
+test rollback_restores_the_retained_generation ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.98s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.57s
+     Running unittests src\main.rs (target\debug\deps\axiom_cli-72289bea71c15e20.exe)
+     Running tests\argv_surface.rs (target\debug\deps\argv_surface-543aab9918c93d1f.exe)
+     Running tests\cli_verbs.rs (target\debug\deps\cli_verbs-8973f20ec174a10a.exe)
+     Running tests\container_distribution.rs (target\debug\deps\container_distribution-f2fb76db0d00c335.exe)
+     Running tests\host_client_stub.rs (target\debug\deps\host_client_stub-f1def082081c1b5f.exe)
+     Running tests\linux_distribution.rs (target\debug\deps\linux_distribution-b98aed2617b69fac.exe)
+     Running tests\native_engine_stub.rs (target\debug\deps\native_engine_stub-0a245739ec13712a.exe)
+     Running tests\public_commands.rs (target\debug\deps\public_commands-39b47954836652bb.exe)
+     Running tests\update_channel.rs (target\debug\deps\update_channel-5906bda6bcddd0ac.exe)
