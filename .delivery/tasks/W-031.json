@@ -1,0 +1,15 @@
+{
+  "task_id": "W-031",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-031-console-progress",
+  "source_revision": "7e63b6180259d382f98e59da05dd64e945db6a67",
+  "local_commit_sha": "7e63b6180259d382f98e59da05dd64e945db6a67",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "verified_source_remote_branch_sha": "7e63b6180259d382f98e59da05dd64e945db6a67",
+  "delivery_state": "pushed",
+  "observed_at": "2026-10-16T09:07:00.574961+00:00",
+  "release": "explicitly_deferred_to_future_0.1.11",
+  "main_integration": "not_performed",
+  "verification": "Required local checks passed. Canonical completion records exact selected-head independent native CI.",
+  "note": "Historical source-push observation. This receipt-only descendant changes no product bytes."
+}
