@@ -1,0 +1,15 @@
+{
+  "task_id": "W-020",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-020-agent-onboarding",
+  "source_revision": "114834e0038d89e470ea84519a5e03784735e814",
+  "local_commit_sha": "114834e0038d89e470ea84519a5e03784735e814",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "verified_source_remote_branch_sha": "114834e0038d89e470ea84519a5e03784735e814",
+  "delivery_state": "pushed",
+  "observed_at": "2026-10-16T06:03:07.810169+00:00",
+  "release": "not_requested",
+  "main_integration": "not_performed",
+  "verification": "Required local checks passed against the recorded product source; independent native source CI is recorded by canonical handoff.",
+  "note": "Historical source-push observation. This receipt-only follow-up changes no product bytes; canonical completion records the final branch head and its exact CI result."
+}
