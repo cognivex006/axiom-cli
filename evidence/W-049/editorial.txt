@@ -39,6 +39,6 @@ test_resealed_wrong_input_or_interpreter_refused (tests.test_windows_runtime_rec
 test_retained_without_current_reactivated_then_idempotent (tests.test_windows_runtime_recovery.RetainedRuntime.test_retained_without_current_reactivated_then_idempotent) ... ok
 
 ----------------------------------------------------------------------
-Ran 37 tests in 2.675s
+Ran 37 tests in 1.749s
 
 OK (skipped=10)

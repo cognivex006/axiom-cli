@@ -11,6 +11,7 @@ import zipfile
 
 
 def verify(archive, output):
+    expected_version = (Path(__file__).resolve().parents[1] / "VERSION").read_text(encoding="utf-8").strip()
     cases = []
     with tempfile.TemporaryDirectory(prefix="axiom-runtime-reinstall-") as temporary:
         work = Path(temporary).resolve()
@@ -80,7 +81,7 @@ def verify(archive, output):
             run("version after repair", [axm, "version"])
             run("doctor after repair", [axm, "doctor"])
             result = json.loads(run("actual MCP version", [axm, "mcp", "version", "--json"]).stdout)
-            assert result["version"] == "0.1.11"
+            assert result["version"] == expected_version
             assert sentinel.read_text() == "preserve user data"
             passed = True
         finally:

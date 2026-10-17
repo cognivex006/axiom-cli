@@ -1,0 +1,72 @@
+{
+  "source_revision": "e1363477e68cf7707350f740c2f1841c86d7cdda",
+  "ci_run": "https://github.com/orchex006/axiom-cli/actions/runs/39029289336",
+  "job_id": 117394788701,
+  "result": "failed stale test assertion",
+  "raw_report_sha256": "d9e9df94e248b471a2d92c5e0b72f33831d3e7823d526cffbf1bce44a4b0a915",
+  "runtime_cases": [
+    {
+      "case": "fresh install",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "fresh doctor",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "uninstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "reinstall after uninstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "doctor after reinstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "recover retained runtime without current pointer",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "same-release install repeated",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "diagnose mismatched release metadata",
+      "exit_code": 2,
+      "expected_exit_code": 2
+    },
+    {
+      "case": "repair inconsistent skills and recorded release",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "version after repair",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "doctor after repair",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "actual MCP version",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    }
+  ],
+  "actual_mcp_version": "0.1.12",
+  "old_test_expected": "0.1.11",
+  "fix": "Compare with checked-in VERSION instead of the previous release literal. No product runtime behavior or acceptance waived. Isolated local native replay passed all 12 cases; new exact-head CI remains required."
+}

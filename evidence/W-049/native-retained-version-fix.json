@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "execution": "native Windows x64 isolated profile",
+  "elevated_test_override": true,
+  "production_elevated_refusal_observed": true,
+  "candidate_source_revision": "e1363477e68cf7707350f740c2f1841c86d7cdda",
+  "archive_sha256": "e8193bae4ff1756de3d56ce8cdd4b1aa6af5438bdea3fedf27f93e5823de7231",
+  "scope": "Version-aware test harness against actual prior source candidate; final changed-head source CI remains mandatory. No user install/root/PATH/profile changed.",
+  "cases": [
+    {
+      "case": "fresh install",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "fresh doctor",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "uninstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "reinstall after uninstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "doctor after reinstall",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "recover retained runtime without current pointer",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "same-release install repeated",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "diagnose mismatched release metadata",
+      "exit_code": 2,
+      "expected_exit_code": 2
+    },
+    {
+      "case": "repair inconsistent skills and recorded release",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "version after repair",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "doctor after repair",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "case": "actual MCP version",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    }
+  ]
+}

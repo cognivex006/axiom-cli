@@ -10,7 +10,7 @@
       "--check"
     ],
     "exit_code": 0,
-    "seconds": 0.724,
+    "seconds": 0.365,
     "artifact": "evidence/W-049/format.txt",
     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
@@ -27,9 +27,9 @@
       "warnings"
     ],
     "exit_code": 0,
-    "seconds": 0.291,
+    "seconds": 0.161,
     "artifact": "evidence/W-049/clippy.txt",
-    "sha256": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889"
+    "sha256": "99f71393b9903dca098310bb446022a4bdee195ea9996f351a787195555210a6"
   },
   {
     "id": "tests",
@@ -40,9 +40,9 @@
       "--locked"
     ],
     "exit_code": 0,
-    "seconds": 26.957,
+    "seconds": 13.608,
     "artifact": "evidence/W-049/tests.txt",
-    "sha256": "274321699af35b530a973c8901d85c21140f4461f7fb3683d63fa2b645f0854f"
+    "sha256": "5882b39e39499b8f7071f62976d4f3b138c5b09bae3ea966fbae0644d80115be"
   },
   {
     "id": "build",
@@ -54,9 +54,9 @@
       "--release"
     ],
     "exit_code": 0,
-    "seconds": 39.117,
+    "seconds": 0.063,
     "artifact": "evidence/W-049/build.txt",
-    "sha256": "d48cdf77018ed7fd3d34ac42e5e3e72e1ed67486eb2826c0fa248c6d9bac0408"
+    "sha256": "6bfa9e18ffdef821c711a542cfebd7db0982665615563e5a191285e489609c6f"
   },
   {
     "id": "public-docs",
@@ -65,7 +65,7 @@
       "release/check_public_docs.py"
     ],
     "exit_code": 0,
-    "seconds": 1.262,
+    "seconds": 0.206,
     "artifact": "evidence/W-049/public-docs.txt",
     "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
   },
@@ -82,8 +82,8 @@
       "-v"
     ],
     "exit_code": 0,
-    "seconds": 3.078,
+    "seconds": 1.982,
     "artifact": "evidence/W-049/editorial.txt",
-    "sha256": "bd7f350b81b1e4e2fea16d8c3bd79dee175172eb15197e9bd98f5ad85424b56b"
+    "sha256": "db4e25459ce0162d7873b3fece1d835a5f255691c1fa5ea8180a26c9d98eeeb2"
   }
 ]
