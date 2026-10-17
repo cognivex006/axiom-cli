@@ -1,0 +1,19 @@
+{
+  "task_id": "W-049",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-049-cli-012",
+  "source_revision": "5ac6a25682d5bc76fab3d3cc40daf773be32c725",
+  "local_commit_sha": "5ac6a25682d5bc76fab3d3cc40daf773be32c725",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "verified_source_remote_branch_sha": "5ac6a25682d5bc76fab3d3cc40daf773be32c725",
+  "delivery_state": "integrated",
+  "main_integration": "Source integrated and verified before the immutable tag",
+  "observed_at": "2026-10-17T13:07:29.773285+00:00",
+  "release": "v0.1.12",
+  "publication": "published_verified",
+  "release_url": "https://github.com/orchex006/axiom-cli/releases/tag/v0.1.12",
+  "verified_published_assets": 15,
+  "native_source_ci": "https://github.com/orchex006/axiom-cli/actions/runs/39032984206",
+  "verification": "Required owner checks, source/tag/download hashes and native publication gates passed. Full actual previous 0.1.11 upgrade/rollback and public latest native Mac Intel proof are retained by the publication coordinator.",
+  "note": "Historical source integration/publication observation. This receipt-only descendant changes no product bytes; final metadata commit is reported by the canonical coordinator."
+}
