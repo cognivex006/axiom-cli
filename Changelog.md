@@ -4,6 +4,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.12
+
 ### Bug Fixes
 
 - Keep version and component metadata probes quiet even when a cold process takes longer to respond.

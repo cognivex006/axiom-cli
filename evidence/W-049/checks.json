@@ -1,0 +1,89 @@
+[
+  {
+    "id": "format",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 0.724,
+    "artifact": "evidence/W-049/format.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "id": "clippy",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "seconds": 0.291,
+    "artifact": "evidence/W-049/clippy.txt",
+    "sha256": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889"
+  },
+  {
+    "id": "tests",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "test",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "seconds": 26.957,
+    "artifact": "evidence/W-049/tests.txt",
+    "sha256": "274321699af35b530a973c8901d85c21140f4461f7fb3683d63fa2b645f0854f"
+  },
+  {
+    "id": "build",
+    "command": [
+      "cargo",
+      "+1.85.0",
+      "build",
+      "--locked",
+      "--release"
+    ],
+    "exit_code": 0,
+    "seconds": 39.117,
+    "artifact": "evidence/W-049/build.txt",
+    "sha256": "d48cdf77018ed7fd3d34ac42e5e3e72e1ed67486eb2826c0fa248c6d9bac0408"
+  },
+  {
+    "id": "public-docs",
+    "command": [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    "exit_code": 0,
+    "seconds": 1.262,
+    "artifact": "evidence/W-049/public-docs.txt",
+    "sha256": "c67049e5a77f9e0334d34aeb76d65d49d5ca6325fb88775a8affa263e0a22363"
+  },
+  {
+    "id": "editorial",
+    "command": [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "tests.test_release_012",
+      "tests.test_windows_runtime_recovery",
+      "-v"
+    ],
+    "exit_code": 0,
+    "seconds": 3.078,
+    "artifact": "evidence/W-049/editorial.txt",
+    "sha256": "bd7f350b81b1e4e2fea16d8c3bd79dee175172eb15197e9bd98f5ad85424b56b"
+  }
+]

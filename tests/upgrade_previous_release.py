@@ -17,7 +17,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / "VERSION").read_text().strip()
-PREVIOUS = "0.1.10"
+PREVIOUS = "0.1.11"
 
 
 def load(name, path):
@@ -184,6 +184,6 @@ if __name__ == "__main__":
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--platform", required=True, choices=["windows-x64", "linux-x64", "macos-x64"])
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7", "0.1.8", "0.1.9", "0.1.10"])
+    parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7", "0.1.8", "0.1.9", "0.1.10", "0.1.11"])
     args = parser.parse_args()
     verify(args.artifacts.resolve(), args.platform, args.out.resolve(), args.previous)

@@ -1,0 +1,9 @@
+{
+  "task_id": "W-049",
+  "scope": "0.1.12 version/packaging metadata, existing verified pending source and public release notes. No new shared contract, dependency or runtime behavior changes beyond W-041/W-042.",
+  "existing_contract_review": "Exact prior human approval verified; current release changes no shared contracts.",
+  "local_checks": "All recorded final owner commands passed; failed initial version checks retained separately when present.",
+  "native_ci": "Required exact-head native CI follows this source push.",
+  "limitations": "No Mac ARM/separate WSL2 or real AI-session claim. Local dependency auditor unavailable; native CI runs the pinned audit. Previous release 0.1.11 upgrade/rollback required in distribution CI.",
+  "log_format": "Repository/user path prefixes normalized; empty logs kept empty and trailing empty log lines removed."
+}
