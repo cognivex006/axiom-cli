@@ -217,7 +217,10 @@ class UpdateShBehaviourTests(unittest.TestCase):
             roots.append(str(root / "bin"))
         result = self.run_update("--yes", extra={"PATH": os.pathsep.join([*roots, os.environ.get("PATH", "")])})
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertIn(str(self.home / "current"), result.stdout)
+        # Git sh can render a Windows temp directory as /tmp/... rather than C:\... .
+        selected = result.stdout.replace("\\", "/")
+        self.assertIn(self.home.name + "/current; preparing the verified", selected)
+        self.assertNotIn(self.home.name + "/legacy", selected)
         self.assertNotIn("legacy-root", result.stdout)
 
     def test_older_command_layout_preserves_it_on_bootstrap_refusal(self):

@@ -82,7 +82,7 @@ jobs:
           # Hosted Windows runners are elevated; real installs refuse elevation (ADR-0033).
           AXIOM_CLI_TEST_ALLOW_ELEVATED: '1'
         run: |
-          import os, pathlib, subprocess, sys
+          import os, pathlib, shutil, subprocess, sys
           import json, time
           version = pathlib.Path("VERSION").read_text().strip()
           deadline = time.monotonic() + 1800
@@ -97,6 +97,7 @@ jobs:
           output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'distribution-assets'
           subprocess.run([sys.executable, 'release/compose_012.py', '--platform', '${{ matrix.platform }}', '--out', str(output), '--source-revision', os.environ['GITHUB_SHA']], check=True)
           subprocess.run([sys.executable, 'release/verify_distribution.py', '--release', str(output / 'assembled'), '--out', str(output / 'native-proof.json')], check=True)
+          shutil.copyfile(pathlib.Path(os.environ['RUNNER_TEMP']) / 'progress-parity.json', output / 'progress-parity.json')
       - uses: actions/upload-artifact@v4
         with:
           name: distribution-${{ matrix.platform }}-${{ github.sha }}
@@ -105,7 +106,7 @@ jobs:
             ${{ runner.temp }}/distribution-assets/*.tar.gz
             ${{ runner.temp }}/distribution-assets/*-distribution.json
             ${{ runner.temp }}/distribution-assets/native-proof.json
-            ${{ runner.temp }}/progress-parity.json
+            ${{ runner.temp }}/distribution-assets/progress-parity.json
           if-no-files-found: error
   oneliner:
     # ADR-0033 / L-007: the exact documented one-liner on a fresh hosted runner against the
