@@ -23,6 +23,11 @@ fn main() {
     let claude = exe.file_stem().unwrap().to_string_lossy() == "claude";
     let query = words.starts_with(&["plugin", "list"])
         || words.starts_with(&["plugin", "marketplace", "list"]);
+    if query {
+        if let Ok(delay) = std::env::var("AXIOM_HOST_FIXTURE_QUERY_DELAY_MS") {
+            std::thread::sleep(std::time::Duration::from_millis(delay.parse().unwrap()));
+        }
+    }
     if claude && !query {
         assert!(
             !words.contains(&"--json"),

@@ -5,10 +5,9 @@
 #   curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
 #
 # This script contains no update logic:
-#   * Current layout: run that installation's own `axm update`,
-#     which reads the recorded channel, prints the plan and asks once.
-#   * Older installed.json layouts: run `update` through the checksum-verified new CLI,
-#     so migration and health checks use the current command layout.
+#   * Existing installed.json layouts: verify this release's current CLI and run
+#     its transactional `update` against the detected installation. It reads the
+#     recorded channel, prints the plan and asks once, preserving rollback.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.sh -
 #     download the @@TAG@@ archive for this host, check its SHA-256, extract it to a temporary
 #     directory and run `axm install`, which shows the adoption plan and asks once.
@@ -83,34 +82,6 @@ run_cli() {
     return "$status"
 }
 
-if [ -n "$root" ] && [ -x "$root/bin/axm" ] && [ -f "$root/bin/graphd-engine/axiom" ]; then
-    echo "axiom update: found the installation at $root; running its axm update"
-    status=0
-    progress_pid=''
-    stop_progress() {
-        if [ -n "$progress_pid" ]; then
-            kill "$progress_pid" 2>/dev/null || :
-            wait "$progress_pid" 2>/dev/null || :
-            progress_pid=''
-        fi
-    }
-    if [ "${AXIOM_PROGRESS:-auto}" != off ]; then
-        (
-            elapsed=0
-            while sleep 2; do
-                elapsed=$((elapsed + 2))
-                printf 'Axiom updater active; elapsed %ss\n  Review any console confirmation; the installed CLI owns the transaction.\n' "$elapsed" >&2
-            done
-        ) &
-        progress_pid=$!
-    fi
-    trap 'stop_progress; exit 130' HUP INT TERM
-    run_cli "$installed_cli" update || status=$?
-    stop_progress
-    trap - HUP INT TERM
-    exit "$status"
-fi
-
 legacy=''
 if [ -f "$data/axiom/install-manifest.json" ] || [ -x "$data/axiom/bin/$AXIOM_CLI" ]; then
     legacy="Axiom CLI store at $data/axiom"
@@ -122,7 +93,7 @@ if [ -z "$root" ] && [ -z "$legacy" ]; then
     fail "Axiom is not installed for this user, so there is nothing to update; nothing was changed. Install it with: curl -fsSL $AXIOM_BASE_URL/$AXIOM_TAG/install.sh | sh"
 fi
 if [ -n "$root" ]; then
-    echo "axiom update: found an older command layout at $root; upgrading through the verified $AXIOM_TAG CLI"
+    echo "axiom update: found the installation at $root; preparing the verified $AXIOM_TAG updater"
 else
     echo "axiom update: found $legacy (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AXIOM_TAG installer"
 fi

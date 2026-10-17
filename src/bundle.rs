@@ -225,11 +225,11 @@ fn run(engine: &Engine, request: &Request<'_>, updating: bool) -> Result<Report,
         .and_then(Json::as_text);
     let status = engine_status.unwrap_or("unreported");
     let code = apply.exit_code();
-    let message = format!(
-        "the engine (`{}` {}) placed the approved bundle: status `{status}`",
-        engine.program().display(),
-        engine.source()
-    );
+    let message = match status {
+        "already-installed" => "The approved components are already installed.".to_string(),
+        "installed" | "updated" | "applied" => "The approved components are ready.".to_string(),
+        _ => format!("Component installation completed (engine status: {status})."),
+    };
     let mut report = Report::new(code, "ok", message).subject(verb);
     report.detail("engine", engine_block(request, &assembly, steps));
     report.detail("engine_plan_id", Json::text(&engine_plan_id));

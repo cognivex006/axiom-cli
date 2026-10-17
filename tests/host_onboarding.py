@@ -95,6 +95,17 @@ def run(cli: Path, host_name="codex"):
             assert preview.returncode == 0, preview.stdout + preview.stderr
             plans.append(json.loads(preview.stdout)["details"])
         assert plans[0]["plan_digest"] != plans[1]["plan_digest"]
+        # Slow native metadata calls must not each create a user-facing progress stage.
+        human = subprocess.run(
+            [str(cli), "install", "--dry-run", "--from", str(release), "--host", host_name],
+            env={**env, "AXIOM_HOST_FIXTURE_QUERY_DELAY_MS": "350", "AXIOM_PROGRESS": "plain"},
+            capture_output=True, text=True, timeout=30,
+        )
+        assert human.returncode == 0, human.stdout + human.stderr
+        assert "Waiting for" not in human.stderr and "[Done]" not in human.stderr, human.stderr
+        assert "published=" not in human.stdout and "release set:" not in human.stdout, human.stdout
+        assert "component size:" in human.stdout and "plan digest:" in human.stdout, human.stdout
+        checks.append(dict(case="slow-metadata-quiet-concise-plan", exit_code=0))
         assert plans[1]["plan"]["host_setup"]["host"] == host_name
         assert plans[1]["plan"]["host_setup"]["version"] == version
         assert not state_file.exists() and not (root / "host-integrations").exists()

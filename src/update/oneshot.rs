@@ -530,19 +530,14 @@ pub fn apply(
         state::read_bytes(&st.recorded_manifest_path(), "recorded_manifest_unreadable")?;
     let mcp_before = std::fs::read(mcp_pointer(root)).ok();
     let child = |args: &[&str]| -> Result<(i32, String), Refusal> {
-        let output = crate::progress::capture(
+        let output = crate::progress::install_worker(
             Command::new(&new_cli)
                 .args(args)
                 .env(state::INSTALL_ROOT_ENV, root)
                 .env("AXIOM_CLI_COMPOSITE_UPDATE", "1")
                 .env_remove("AXIOM_ENGINE_BIN")
                 .env_remove(crate::confirm::YES_ENV),
-            if args.contains(&"--dry-run") {
-                "Planning new release"
-            } else {
-                "Installing new release"
-            },
-            "The verified worker is preparing components and runtime from the approved plan",
+            args.contains(&"--apply"),
         )
         .map_err(|error| {
             Refusal::io("new_cli_unrunnable", &new_cli.display().to_string(), &error)

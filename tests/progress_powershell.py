@@ -51,9 +51,9 @@ public class Updater {
 }
 '@
 """, encoding="utf-8")
-            subprocess.run([str(ps), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(compiler)], check=True, capture_output=True, timeout=30)
+            subprocess.run([str(ps), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(compiler)], check=True, capture_output=True, timeout=90)
             template = (ROOT / "installers/oneline/update.ps1.in").read_text(encoding="utf-8")
-            monitor = template.split("    # Keep the installed updater's console/input and single approval unchanged.\n", 1)[1].split("    $global:LASTEXITCODE = $code", 1)[0]
+            monitor = template.split("    # Run the verified worker with inherited console/input and preserve its exact exit code.\n", 1)[1].split("\n}", 1)[0]
             for code, interactive in [(0, False), (7, False), (0, True), (7, True)]:
                 script = root / "handoff.ps1"
                 script.write_text("$ErrorActionPreference='Stop'\n$cli='" + str(stub).replace("'", "''") + "'\n$cliArgs=@('" + str(code) + "'" + (",'prompt'" if interactive else "") + ")\n" + monitor + "\nif ($null -eq $code) { throw 'lost child exit code' }\nWrite-Output ('result:' + $code)\n", encoding="utf-8")

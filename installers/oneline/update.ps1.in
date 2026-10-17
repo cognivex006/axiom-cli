@@ -4,10 +4,9 @@
 #   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
 #
 # This script contains no update logic:
-#   * Current layout: run that installation's own `axm update`,
-#     which reads the recorded channel, prints the plan and asks once.
-#   * Older installed.json layouts: run update through the checksum-verified new CLI,
-#     so migration and health checks use the current command layout.
+#   * Existing installed.json layouts: verify this release's current CLI and run
+#     its transactional `update` against the detected installation. It reads the
+#     recorded channel, prints the plan and asks once, preserving rollback.
 #   * Axiom 0.1.0/0.1.2 layout (no installed.json): the same verified hand-off as install.ps1 -
 #     download the @@TAG@@ archive, check its SHA-256, extract it to a temporary directory and run
 #     `axm install`, which shows the adoption plan and asks once.
@@ -129,51 +128,13 @@ function Get-AxiomLegacyLayouts {
 }
 
 $root = Get-AxiomInstalledRoot
-if ($root -and (Test-Path -LiteralPath (Join-Path $root 'bin\axm.exe') -PathType Leaf) -and
-    (Test-Path -LiteralPath (Join-Path $root 'bin\graphd-engine\axiom.exe') -PathType Leaf)) {
-    $cli = Join-Path $root 'bin\axm.exe'
-    if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) { $cli = Join-Path (Join-Path $root 'bin') $AxiomCli }
-    Write-Host "axiom update: found the installation at $root; running its axm update"
-    $cliArgs = @('update')
-    if ($Yes) { $cliArgs += '--yes' }
-    # Keep the installed updater's console/input and single approval unchanged.
-    # Retain a direct process handle: Windows PowerShell Start-Process can lose
-    # ExitCode for an already-exited child. These arguments are fixed owned words.
-    $startInfo = New-Object Diagnostics.ProcessStartInfo
-    $startInfo.FileName = $cli
-    $startInfo.Arguments = $cliArgs -join ' '
-    $startInfo.UseShellExecute = $false
-    $startInfo.CreateNoWindow = $false
-    $worker = New-Object Diagnostics.Process
-    $worker.StartInfo = $startInfo
-    if (-not $worker.Start()) { Stop-AxiomUpdate 'could not start the installed updater' }
-    $clock = [Diagnostics.Stopwatch]::StartNew()
-    try {
-        while (-not $worker.HasExited) {
-            if ($env:AXIOM_PROGRESS -ne 'off') {
-                Write-Progress -Id 732 -Activity 'Axiom update is running' -Status ('Elapsed {0:N0}s; review any confirmation in the console' -f $clock.Elapsed.TotalSeconds) -CurrentOperation 'The installed CLI owns the transaction; detailed phases appear below when available' -PercentComplete -1
-            }
-            Start-Sleep -Milliseconds 250
-            $worker.Refresh()
-        }
-        $worker.WaitForExit()
-        $code = $worker.ExitCode
-    }
-    finally {
-        if ($env:AXIOM_PROGRESS -ne 'off') { Write-Progress -Id 732 -Activity 'Axiom update is running' -Completed }
-    }
-    $global:LASTEXITCODE = $code
-    if ($code -ne 0) { Stop-AxiomUpdate "axm update exited $code" }
-    return
-}
-
 $legacy = Get-AxiomLegacyLayouts
 if (-not $root -and $legacy.Count -eq 0) {
     Stop-AxiomUpdate ("Axiom is not installed for this user, so there is nothing to update; nothing was changed. " +
         "Install it with: powershell -ExecutionPolicy Bypass -c `"irm $AxiomBaseUrl/$AxiomTag/install.ps1 | iex`"")
 }
 if ($root) {
-    Write-Host "axiom update: found an older command layout at $root; upgrading through the verified $AxiomTag CLI"
+    Write-Host "axiom update: found the installation at $root; preparing the verified $AxiomTag updater"
 } else {
     Write-Host ("axiom update: found " + ($legacy -join ' and ') + " (Axiom 0.1.0/0.1.2, no one-command update); upgrading through the $AxiomTag installer")
 }
@@ -214,6 +175,7 @@ try {
         Stop-AxiomUpdate "the archive does not contain $AxiomCli; nothing was changed"
     }
     if ($root) { $env:AXIOM_CLI_INSTALL_ROOT = $root }
+    # Run the verified worker with inherited console/input and preserve its exact exit code.
     & $cli @cliArgs
     $code = $LASTEXITCODE
 }

@@ -11,12 +11,12 @@ You do not need Administrator or root rights, and you do not copy any checksums 
 
 `axm install` installs the complete pinned release set. It does not accept component names such as `cli` or `axiom-graphd`. `axm update` updates the installed release set; it also does not accept a component name.
 
-Interactive progress updates its elapsed counter or measured download estimate on
-one terminal line, with stage details shown once. Redirected output uses throttled
-plain lines. Set `AXIOM_PROGRESS=plain` to force that log format, or
-`AXIOM_PROGRESS=off` to hide progress. `--json` also hides human progress.
-Version and component metadata probes do not show operation progress, even when
-the component process responds slowly.
+Install and update show the same live stages: download, verification, extraction,
+runtime preparation, component installation and selected agent skills. Each terminal
+stage updates one line; redirected output reports stage changes and completion,
+with transfer samples only when received bytes change. Metadata probes stay quiet.
+Set `AXIOM_PROGRESS=plain` for plain lines or `AXIOM_PROGRESS=off` to hide progress.
+`--json` keeps the machine result and hides human progress, including nested workers.
 
 Reinstalling can reuse a complete, verified Windows MCP runtime retained after
 uninstall or rollback. The installer verifies its files and approved inputs before
@@ -85,12 +85,12 @@ curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/updat
 
    ```text
    channel: stable
-     axiom-graphd 0.1.3 - artifact declared
-     axiom-mcp 0.1.3 - artifact declared
+     axiom-graphd 0.1.3 - component
+     axiom-mcp 0.1.3 - component
      skills 0.1.3 - ...
      mcp runtime - provisioned from the release
    install root: C:\Users\you\AppData\Local\Axiom (bin: C:\Users\you\AppData\Local\Axiom\bin)
-   size: 4.4 MB of verified artifacts
+   component size: 4.4 MB (runtime and skills are additional)
    PATH: add C:\Users\you\AppData\Local\Axiom\bin to the user PATH (undo: axm uninstall; skip: --no-modify-path)
    Proceed? [Y/n]
    ```
@@ -180,7 +180,7 @@ The update script decides what to do from what is on your machine. It changes no
 
 | Found | What the update script does |
 |---|---|
-| Axiom 0.1.3 or newer | Runs that installation's own `axm update`. |
+| Axiom 0.1.3 or newer | Verifies the current release CLI and runs its transactional `update` against the detected installation. |
 | Axiom 0.1.0 or 0.1.2 | Downloads the release, checks its SHA-256 and runs the installer, which upgrades the old installation ([details](#upgrading-from-010-or-012)). |
 | Nothing | Stops and prints the install command. It never installs from scratch. |
 | Old `AXIOM_CLI_INSTALL_ROOT`, `AXIOM_ENGINE_BIN` or `AXIOM_HOME` variables | Stops, names them and shows how to remove them. |
@@ -279,7 +279,7 @@ The current command layout migrates recorded, unchanged legacy entrypoints into 
 
 Version 0.1.8 has a migration defect: an unchanged 0.1.0 or 0.1.2 CLI store can fail with `axiom-cli.exe is unowned, linked or modified` because ownership is recorded in the older `install-manifest.json`. A matching SHA-256 in that manifest identifies this case. Version 0.1.9 validates the recorded executable name, location, size and SHA-256, preserves `cli/` and the manifest, and keeps a verified backup before retiring the old command. Modified files, linked ownership inputs and conflicting backups still stop adoption. Use the 0.1.9 installer to receive this fix; the pinned 0.1.8 installer retains its original behavior.
 
-For an installation made by an older command layout, the update URL verifies and runs the current release CLI before starting the update transaction. This avoids the previous updater's obsolete executable health checks. Current installations use their own `axm update`; both paths retain the normal approval and rollback behavior.
+For an installation made by an older command layout, the update URL verifies and runs the current release CLI before starting the update transaction. This avoids the previous updater's obsolete executable health checks. All installed layouts use that verified worker and retain the normal approval, recorded channel and rollback behavior.
 
 ## Managed agent setup (0.1.10 and later)
 
@@ -315,21 +315,19 @@ archive size is known. A download reaching 100% means transfer completion; SHA-2
 verification and installation still follow. Unknown totals and opaque workers show
 activity, elapsed time and the current operation instead of an invented percentage.
 
-Details below each progress snapshot explain archive verification, extraction,
-component staging, Python runtime preparation, delegated installation and health
-checks. Child protocol output and credentials are not streamed into these details.
-TTY snapshots update about once a second; redirected diagnostics are throttled
-to plain lines about every five seconds, without ANSI cursor controls.
-`AXIOM_PROGRESS=off` suppresses human activity; `AXIOM_PROGRESS=plain` selects
-the throttled plain display. `--json` keeps one final stdout JSON result and
-suppresses human progress throughout the worker chain. Exit codes, checksum
-refusal, approval and rollback stay unchanged.
+Install and update use one progress owner per stage. Metadata checks do not create
+separate waiting messages. Agent results name each selected host; the instruction to
+open a new session appears once. Successful registration does not establish MCP
+credentials, next-session discovery or graph-query readiness.
 
-The Windows bootstrappers show their own download progress, and POSIX scripts
-use the available native transfer meter on a terminal. Update script handoff
-shows an elapsed activity indicator even when the installed older updater cannot
-report byte telemetry. Previously published initiating binaries remain unchanged;
-new CLI download percentages begin when a build containing this feature is used.
+The update URL verifies a current updater before handing over an existing installation.
+That worker streams the same install stages while retaining one approval and rollback.
+There is no second wrapper heartbeat. JSON and off modes suppress the complete
+human progress chain. A failed stage terminates its live line before the error.
+
+The plan's component size is a subtotal, not the compressed download size or final
+disk usage. Detailed source paths, hashes, publication metadata and engine results
+remain available through `--json`.
 
 ## Claude Code and multiple agent hosts
 

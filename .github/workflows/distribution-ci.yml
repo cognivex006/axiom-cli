@@ -60,6 +60,11 @@ jobs:
           exe=""
           if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
           python tests/progress_interaction.py --cli "target/release/axiom-cli${exe}" --out "${RUNNER_TEMP}/progress-proof.json"
+      - name: Install and update progress parity and verified bootstrap worker
+        shell: python
+        run: |
+          import os, subprocess, sys
+          subprocess.run([sys.executable, 'tests/progress_parity.py', '--out', os.path.join(os.environ['RUNNER_TEMP'], 'progress-parity.json')], check=True)
       - name: Native Windows bootstrap byte progress
         if: runner.os == 'Windows'
         shell: python
@@ -100,6 +105,7 @@ jobs:
             ${{ runner.temp }}/distribution-assets/*.tar.gz
             ${{ runner.temp }}/distribution-assets/*-distribution.json
             ${{ runner.temp }}/distribution-assets/native-proof.json
+            ${{ runner.temp }}/progress-parity.json
           if-no-files-found: error
   oneliner:
     # ADR-0033 / L-007: the exact documented one-liner on a fresh hosted runner against the
