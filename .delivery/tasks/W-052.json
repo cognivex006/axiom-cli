@@ -1,0 +1,14 @@
+{
+  "task_id": "W-052",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-052-progress-parity",
+  "source_revision": "701fe1b27b12b63f12b993fb998cf507be7edf76",
+  "local_commit_sha": "701fe1b27b12b63f12b993fb998cf507be7edf76",
+  "push_remote": "https://github.com/orchex006/axiom-cli.git",
+  "verified_source_remote_branch_sha": "701fe1b27b12b63f12b993fb998cf507be7edf76",
+  "delivery_state": "pushed",
+  "native_source_ci": "https://github.com/orchex006/axiom-cli/actions/runs/39039944606",
+  "verification": "Exact-source native Windows/Linux/Mac Intel checks and actual 0.1.11/0.1.6 upgrade/rollback passed; local Windows progress/client/bootstrap proofs retained by canonical W-052.",
+  "integration": "Not performed under current workspace feature-only scope; independent update-code review remains required before integration/publication.",
+  "publication": "Not performed; old tags/assets and real installed state preserved. Version unchanged; fixes are Unreleased."
+}
