@@ -104,7 +104,17 @@ def owner(repo, directory):
     return source
 
 
-def compose(lane, output, cli_revision):
+def compose(lane, output, cli_revision, owner_ci_inputs=None):
+    if owner_ci_inputs is not None:
+        import re
+        if not re.fullmatch(r"[0-9a-f]{40}", cli_revision):
+            raise ValueError("candidate CLI source must be an immutable commit")
+        if not isinstance(owner_ci_inputs, dict) or set(owner_ci_inputs) != {"schema_version", "owners"} or type(owner_ci_inputs["schema_version"]) is not int or owner_ci_inputs["schema_version"] != 1 or not isinstance(owner_ci_inputs["owners"], dict) or set(owner_ci_inputs["owners"]) != {"axiom-graphd", "axiom-mcp", "axiom-skills"}:
+            raise ValueError("exact candidate owner input vector required")
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        dirty = subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=ROOT)
+        if head != cli_revision or dirty.strip():
+            raise ValueError("candidate requires the exact clean CLI source checkout")
     cli_revision = subprocess.check_output(
         ["git", "rev-parse", cli_revision], cwd=ROOT, text=True
     ).strip()
@@ -118,7 +128,11 @@ def compose(lane, output, cli_revision):
         peers = {
             name: work / name for name in ["axiom-graphd", "axiom-mcp", "axiom-skills"]
         }
-        pins = {name: owner(name, path) for name, path in peers.items()}
+        if owner_ci_inputs is None:
+            pins = {name: owner(name, path) for name, path in peers.items()}
+        else:
+            candidate = module(ROOT / "release/candidate_owners.py")
+            pins = {name: candidate.fetch(name, path, owner_ci_inputs["owners"][name]) for name, path in peers.items()}
         core_manifest = peers["axiom-graphd"] / (lane + "-manifest.json")
         core = json.loads(core_manifest.read_bytes())
         if (
@@ -401,6 +415,9 @@ def compose(lane, output, cli_revision):
                 if p.is_file()
             ],
         }
+        if owner_ci_inputs is not None:
+            manifest["candidate_owner_ci"] = owner_ci_inputs
+            manifest["publication"] = "not_published"
         (release / "DISTRIBUTION-FILES.json").write_text(json.dumps(manifest, indent=2))
         archive = output / (
             "axiom-"
@@ -436,5 +453,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--source-revision", required=True)
+    parser.add_argument("--owner-ci-inputs", type=Path, help="explicit immutable successful owner CI vector; candidate only")
     args = parser.parse_args()
-    compose(args.platform, args.out.resolve(), args.source_revision)
+    inputs = json.loads(args.owner_ci_inputs.read_bytes()) if args.owner_ci_inputs else None
+    compose(args.platform, args.out.resolve(), args.source_revision, inputs)

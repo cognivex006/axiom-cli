@@ -4,6 +4,20 @@
 mod progress;
 fn main() {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
+    #[cfg(windows)]
+    if args.iter().any(|a| a == "--inherited-ignore") {
+        #[link(name = "kernel32")]
+        extern "system" {
+            fn SetConsoleCtrlHandler(
+                handler: Option<unsafe extern "system" fn(u32) -> i32>,
+                add: i32,
+            ) -> i32;
+        }
+        // Model a CI parent that disables Ctrl+C before launching this CLI.
+        unsafe {
+            SetConsoleCtrlHandler(None, 1);
+        }
+    }
     if args.iter().any(|a| a == "--descendant") {
         let root = std::path::PathBuf::from(std::env::var_os("AXIOM_UX_MARKER_DIR").unwrap());
         std::fs::write(root.join("descendant.pid"), std::process::id().to_string()).unwrap();

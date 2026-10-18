@@ -17,10 +17,11 @@ def verify(probe, out):
         work = Path(directory)
         base = {k: v for k, v in os.environ.items() if not k.startswith("AXIOM_") and k not in ["CI", "NO_COLOR"]}
         base.update(TERM="xterm-256color", TEMP=str(work), TMP=str(work), TMPDIR=str(work))
-        for mode in ["apply-cancel", "apply-cancel-json", "apply-timeout"] + (["apply-term"] if os.name != "nt" else []):
+        for mode in ["apply-cancel", "apply-cancel-json", "apply-timeout"] + (["apply-term"] if os.name != "nt" else ["apply-cancel-inherited-ignore"]):
             marker = work / mode; marker.mkdir()
             argv = [str(probe), "install", "--owned-timeout" if mode == "apply-timeout" else "--owned"]
             if mode == "apply-cancel-json": argv.append("--json")
+            if mode == "apply-cancel-inherited-ignore": argv.append("--inherited-ignore")
             c = Capture(argv, env=dict(base, AXIOM_UX_MARKER_DIR=str(marker)), cwd=work)
             handles = []
             try:
@@ -57,6 +58,7 @@ def verify(probe, out):
                             time.sleep(.05)
                 cases.append(dict(case=mode, exit_code=code, worker_and_grandchild_exited=True, retained_native_identity=True))
             finally:
+                c.save(out.parent / (out.stem + "-frames"), mode)
                 if os.name == "nt":
                     for handle in handles:
                         if handle: native.CloseHandle(handle)
@@ -86,6 +88,7 @@ def verify(probe, out):
                 code = c.wait(20)
                 c.save(out.parent / (out.stem + "-frames"), mode)
             finally:
+                c.save(out.parent / (out.stem + "-frames"), mode)
                 if c.alive(): c.close()
             assert code == (130 if mode == "cancel" else 7 if mode == "failed" else 0), (mode, code, bytes(c.raw))
             assert not c.screen.cursor.hidden, (mode, bytes(c.raw))

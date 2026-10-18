@@ -89,3 +89,29 @@ and [ResumeThread](https://learn.microsoft.com/en-us/windows/win32/api/processth
 POSIX ownership uses waitable children before process-group cleanup; see
 [waitid](https://man7.org/linux/man-pages/man2/waitpid.2.html).
 Routed MCP/engine transports own their existing console and signal lifecycle.
+Windows cancellation also clears an inherited Ctrl+C-ignore attribute after
+registering the owned handler; [Microsoft documents its inheritance](https://learn.microsoft.com/en-us/windows/console/setconsolectrlhandler).
+The native probe exercises that launch state explicitly and retains failure frames.
+
+Before publishing owners, candidate composition may use `--owner-ci-inputs` with
+an explicit schema-version-1 JSON vector containing exactly the three canonical
+owner names and their `run_id` and forty-character `source_revision`. It accepts
+only successful completed push runs of each owner's canonical CI workflow,
+collects their source-bound native proofs and verifies the complete checksum
+inventory. The exact clean CLI commit is required. This mode neither resolves a
+moving branch nor publishes any owner; the default published-Release path keeps
+its tag/checksum checks. Dispatch Native distribution CI with the same JSON in
+`owner_ci_inputs` to exercise the candidate and actual previous-release rollback.
+An explicit tracked `.delivery/candidate-owner-ci.json` supplies the same vector
+for a feature push. Hosted candidate collection requires the preconfigured
+`AXIOM_OWNER_CI_READ_TOKEN` repository secret with Actions read access only to the
+three owner repositories. The repository-scoped default GITHUB_TOKEN cannot read
+their artifact downloads; missing access fails closed. Setting or creating a
+credential requires separate owner authorization; never copy local credentials
+into workflow inputs, logs or source. Local read-only collection and hosted
+collection are distinct evidence.
+Candidate composition is a verification input, never a visual/release gate waiver.
+Feature pushes without an owner vector run the source/native visual checks and
+record `source_only: true`; composition and previous-release jobs are explicitly
+skipped and remain unverified. Supplying the vector enables those gates. Native
+feature CI success alone is never distribution/release acceptance.

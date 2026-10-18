@@ -4,6 +4,8 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.13
+
 ### Bug Fixes
 
 - Repaint install and update activity in two stable terminal rows, including bootstrap downloads, with truthful percentages and a rotating spinner.

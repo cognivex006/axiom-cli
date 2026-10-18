@@ -29,6 +29,9 @@ impl Cancellation {
     pub fn install() -> Self {
         unsafe {
             SetConsoleCtrlHandler(Some(cancel), 1);
+            // CI launchers may pass down the inheritable Ctrl+C-ignore flag.
+            // Register first, then restore normal signal delivery for this CLI.
+            SetConsoleCtrlHandler(None, 0);
         }
         Self
     }

@@ -4,11 +4,20 @@ on:
     branches: [main, 'feature/**']
   pull_request:
   workflow_call:
+  workflow_dispatch:
+    inputs:
+      owner_ci_inputs:
+        description: Explicit JSON vector of successful immutable owner CI runs (candidate only)
+        required: false
+        default: ''
+        type: string
 permissions:
   contents: read
 jobs:
   native:
     name: native (${{ matrix.platform }})
+    outputs:
+      composed: ${{ steps.composition-mode.outputs.compose }}
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +94,21 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: python tests/progress_shell.py --out "${RUNNER_TEMP}/shell-visual.json"
+      - name: Record source and candidate verification scope
+        id: composition-mode
+        shell: python
+        env:
+          OWNER_CI_INPUTS: ${{ inputs.owner_ci_inputs || '' }}
+        run: |
+          import json, os, pathlib
+          feature_push = os.environ['GITHUB_EVENT_NAME'] == 'push' and os.environ['GITHUB_REF'].startswith('refs/heads/feature/')
+          compose = not feature_push or bool(os.environ.get('OWNER_CI_INPUTS')) or pathlib.Path('.delivery/candidate-owner-ci.json').is_file()
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write('compose=' + str(compose).lower() + '\n')
+          scope = {'source_revision': os.environ['GITHUB_SHA'], 'version': pathlib.Path('VERSION').read_text().strip(), 'source_only': not compose, 'composition_requested': compose}
+          (pathlib.Path(os.environ['RUNNER_TEMP']) / 'source-scope.json').write_text(json.dumps(scope), encoding='utf-8')
+          if not compose:
+            print('Source/native verification only. Candidate composition and actual previous-release upgrade/rollback remain unverified until an explicit owner CI vector is supplied.')
       - name: Retain native visual traces even when a later release gate fails
         uses: actions/upload-artifact@v4
         if: always()
@@ -97,23 +121,34 @@ jobs:
             ${{ runner.temp }}/bootstrap-progress-frames/**
             ${{ runner.temp }}/progress-proof.json
             ${{ runner.temp }}/progress-proof-frames/**
+            ${{ runner.temp }}/progress-parity.json
+            ${{ runner.temp }}/source-scope.json
           if-no-files-found: warn
       - name: Native runtime regression checks
         if: runner.os != 'Windows'
         shell: bash
         run: python -m unittest discover -s tests/macos -p test_runtime_rollback_preflight.py
-      - name: Compose current published owner bytes and verify native payload
+      - name: Compose verified owner inputs and verify native payload
+        if: steps.composition-mode.outputs.compose == 'true'
         shell: python
         env:
           GH_TOKEN: ${{ github.token }}
           # Hosted Windows runners are elevated; real installs refuse elevation (ADR-0033).
           AXIOM_CLI_TEST_ALLOW_ELEVATED: '1'
+          AXIOM_OWNER_CI_INPUTS: ${{ inputs.owner_ci_inputs || '' }}
+          AXIOM_OWNER_CI_READ_TOKEN: ${{ secrets.AXIOM_OWNER_CI_READ_TOKEN }}
         run: |
           import os, pathlib, shutil, subprocess, sys
           import json, time
           version = pathlib.Path("VERSION").read_text().strip()
+          candidate = os.environ.get('AXIOM_OWNER_CI_INPUTS', '')
+          recorded = pathlib.Path('.delivery/candidate-owner-ci.json')
+          if not candidate and recorded.is_file():
+            candidate = recorded.read_text(encoding='utf-8')
+          if candidate and not os.environ.get('AXIOM_OWNER_CI_READ_TOKEN'):
+            raise SystemExit('Candidate verification needs AXIOM_OWNER_CI_READ_TOKEN with read-only Actions access to the three owner repositories; no owner was published.')
           deadline = time.monotonic() + 1800
-          for repo in ('axiom-graphd', 'axiom-mcp', 'axiom-skills'):
+          for repo in (() if candidate else ('axiom-graphd', 'axiom-mcp', 'axiom-skills')):
             while True:
               result = subprocess.run(['gh', 'release', 'view', 'v' + version, '--repo', 'orchex006/' + repo, '--json', 'isDraft'], capture_output=True, text=True)
               if result.returncode == 0 and json.loads(result.stdout)['isDraft'] is False:
@@ -122,10 +157,19 @@ jobs:
               print('Waiting for published v' + version + ' owner: ' + repo, flush=True)
               time.sleep(10)
           output = pathlib.Path(os.environ['RUNNER_TEMP']) / 'distribution-assets'
-          subprocess.run([sys.executable, 'release/compose_012.py', '--platform', '${{ matrix.platform }}', '--out', str(output), '--source-revision', os.environ['GITHUB_SHA']], check=True)
+          command = [sys.executable, 'release/compose_012.py', '--platform', '${{ matrix.platform }}', '--out', str(output), '--source-revision', os.environ['GITHUB_SHA']]
+          if candidate:
+            vector = pathlib.Path(os.environ['RUNNER_TEMP']) / 'candidate-owner-inputs.json'
+            vector.write_text(json.dumps(json.loads(candidate)), encoding='utf-8')
+            command.extend(['--owner-ci-inputs', str(vector)])
+          env = dict(os.environ)
+          if candidate:
+            env['GH_TOKEN'] = os.environ['AXIOM_OWNER_CI_READ_TOKEN']
+          subprocess.run(command, check=True, env=env)
           subprocess.run([sys.executable, 'release/verify_distribution.py', '--release', str(output / 'assembled'), '--out', str(output / 'native-proof.json')], check=True)
           shutil.copyfile(pathlib.Path(os.environ['RUNNER_TEMP']) / 'progress-parity.json', output / 'progress-parity.json')
       - uses: actions/upload-artifact@v4
+        if: steps.composition-mode.outputs.compose == 'true'
         with:
           name: distribution-${{ matrix.platform }}-${{ github.sha }}
           path: |
@@ -142,6 +186,7 @@ jobs:
     # ADR-0034 / M-001 owns the macOS Intel candidate lane separately from L.
     name: one-line install (${{ matrix.platform }})
     needs: native
+    if: needs.native.outputs.composed == 'true'
     strategy:
       fail-fast: false
       matrix:
