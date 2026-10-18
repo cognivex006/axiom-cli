@@ -4,14 +4,26 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.14
+
+### New Features
+
+- Start the local MCP gateway with `axm mcp start` and select an available loopback port automatically.
+
 ### Bug Fixes
 
-- Keep download measurement quiet while the archive is being created and read coherent stage details without extra display-process forks.
+- Keep install and update activity in two stable terminal rows, with measured download progress, a rotating spinner and clean stage changes.
+- Handle terminal resizing, redirected logs and interactive PowerShell failures without leaving stale rows or interrupting the caller.
+- Preserve confirmation input, verified updater execution, exact failure codes and rollback.
+- Report MCP graph readiness separately from installation health in `axm doctor`.
+- Simplify installation plans and host results while retaining complete JSON diagnostics.
+- Verify MCP runtime versions through structured output so Linux and macOS installation remains compatible with concise command text.
+- Keep download measurement quiet while its archive is being created, and read coherent stage details without extra display-process forks.
 - Preserve platform-specific progress records when collecting native release assets.
 
-### Chores
+### Known Limitations
 
-- Align native bootstrap verification with progress on stderr and installation results on stdout.
+- This release provides native Windows x64, Linux x64 and macOS Intel installers. No Docker image is published for 0.1.14.
 
 ## 0.1.13
 

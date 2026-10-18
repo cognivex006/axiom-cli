@@ -16,6 +16,47 @@ from terminal_ux.capture import Capture, activity_frames
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def wait_fixture_start(marker, alive, timeout=60):
+    deadline = time.monotonic() + timeout
+    while not marker.is_file():
+        assert alive() and time.monotonic() < deadline, "PowerShell host did not enter the fixture"
+        time.sleep(.025)
+
+
+def run_redirected_fixture(argv, env, marker, evidence, name):
+    # File timestamps share this host's clock; no marker contaminates stdout or
+    # stderr. Keep the original 30-second execution budget after script entry.
+    launched = time.time_ns()
+    stdout = stderr = b""
+    record = dict(launched_ns=launched, timing_checks_passed=False, host_budget_seconds=60, execution_budget_seconds=30)
+    try:
+        result = subprocess.run(argv, env=env, capture_output=True, timeout=90)
+        stdout, stderr = result.stdout, result.stderr
+        finished = time.time_ns()
+        record.update(finished_ns=finished, exit_code=result.returncode)
+        assert marker.is_file(), ("fixture entry missing", stdout, stderr)
+        entered = marker.stat().st_mtime_ns
+        record["entered_ns"] = entered
+        assert 0 <= entered - launched <= 60_000_000_000, "PowerShell host startup exceeded its budget"
+        assert 0 <= finished - entered <= 30_000_000_000, "fixture execution exceeded its unchanged budget"
+        record["timing_checks_passed"] = True
+        return result
+    except subprocess.TimeoutExpired as error:
+        stdout, stderr = error.stdout or b"", error.stderr or b""
+        record["error"] = str(error)
+        raise
+    except BaseException as error:
+        record["error"] = type(error).__name__ + ": " + str(error)
+        raise
+    finally:
+        record.setdefault("finished_ns", time.time_ns())
+        if marker.is_file(): record.setdefault("entered_ns", marker.stat().st_mtime_ns)
+        evidence.mkdir(parents=True, exist_ok=True)
+        (evidence / (name + ".stdout")).write_bytes(stdout)
+        (evidence / (name + ".stderr")).write_bytes(stderr)
+        (evidence / (name + "-diagnostics.json")).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+
 def verify(out):
     assert os.name == "nt", "native Windows required"
     spec = importlib.util.spec_from_file_location("gen", ROOT / "packaging/oneline/generate_bootstrappers.py")
@@ -55,11 +96,13 @@ def verify(out):
                 helper = script_text.split("# BEGIN AXIOM TERMINAL RENDERER\n", 1)[1].split("# END AXIOM TERMINAL RENDERER", 1)[0]
                 for mode in ["known", "unknown", "error", "plain", "off", "ci", "dumb", "no-color", "resize", "redirected"]:
                     script = work / "probe.ps1"
+                    started = work / "probe.started"
+                    started.unlink(missing_ok=True)
                     destination = work / "archive.bin"
                     destination.unlink(missing_ok=True)
                     released.clear()
                     endpoint = mode if mode in ["known", "unknown", "error", "resize"] else "known"
-                    source = f"$ErrorActionPreference='Stop'\n$AxiomAction='{action}'\n" + helper
+                    source = "$ErrorActionPreference='Stop'\n[IO.File]::WriteAllText('" + str(started).replace("'", "''") + "','started')\n" + f"$AxiomAction='{action}'\n" + helper
                     source += f"""
 try {{
     $ui.Begin('Downloading','downloading v1.2.3 (axiom-1.2.3-windows-x64.zip)')
@@ -82,7 +125,7 @@ Write-Output 'fixture complete'
                         env["NO_COLOR"] = "1"
                     argv = [str(ps), "-NoProfile", "-File", str(script)]
                     if mode in ["plain", "off", "ci", "dumb", "redirected"]:
-                        result = subprocess.run(argv, env=env, capture_output=True, timeout=30)
+                        result = run_redirected_fixture(argv, env, started, evidence, action + "-" + mode)
                         assert result.returncode == 0, result.stderr
                         assert b"\x1b" not in result.stderr
                         assert len(result.stderr.splitlines()) == (0 if mode == "off" else 3)
@@ -90,6 +133,7 @@ Write-Output 'fixture complete'
                         continue
                     c = Capture(argv, env=env, cwd=work)
                     try:
+                        wait_fixture_start(started, c.alive)
                         if mode == "resize":
                             c.until(tuple(f"{n}%".encode() for n in range(1, 51)))
                             for width in [45, 35, 90]:
@@ -137,15 +181,17 @@ Write-Output 'fixture complete'
                 env["PATH"] = os.pathsep.join(p for p in env["PATH"].split(os.pathsep) if not any((Path(p) / n).is_file() for n in ["axm.exe", "axiom-cli.exe"]))
                 for phase in ["Downloading", "Verifying", "Extracting"]:
                     wrapper = home / "wrapper.ps1"
+                    started = home / "wrapper.started"
+                    started.unlink(missing_ok=True)
                     block = ""
                     if phase == "Verifying":
                         block = "function Get-FileHash { param($LiteralPath,$Algorithm) Start-Sleep -Seconds 10; Microsoft.PowerShell.Utility\\Get-FileHash @PSBoundParameters }\n"
                     elif phase == "Extracting":
                         block = "function Expand-Archive { param($LiteralPath,$DestinationPath) Start-Sleep -Seconds 10; Microsoft.PowerShell.Archive\\Expand-Archive @PSBoundParameters }\n"
-                    wrapper.write_text("Write-Output 'fixture-wrapper-started'\n" + block + "& '" + str(target).replace("'", "''") + "' -Yes\nexit $LASTEXITCODE\n", encoding="utf-8", newline="\n")
+                    wrapper.write_text("[IO.File]::WriteAllText('" + str(started).replace("'", "''") + "','started')\n" + block + "& '" + str(target).replace("'", "''") + "' -Yes\nexit $LASTEXITCODE\n", encoding="utf-8", newline="\n")
                     c = Capture([str(ps), "-NoProfile", "-File", str(wrapper)], env=env, cwd=home)
                     try:
-                        c.until(b"fixture-wrapper-started", timeout=60)
+                        wait_fixture_start(started, c.alive)
                         c.until(phase.encode(), timeout=30); c.send(b"\x03")
                         code = c.wait(20)
                     finally:

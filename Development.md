@@ -150,7 +150,17 @@ cross-phase reads and unnecessary per-frame forks. Native shell regressions dela
 archive creation for both curl and wget across fresh, existing and legacy paths.
 The release collector prefixes native proof and progress parity filenames with
 their platform while retaining exact input bytes; other filename collisions fail.
-Windows cancellation fixtures separately bound host startup at 60 seconds and
-wait for the actual phase for 30 seconds after the wrapper starts. The original
+Windows visual fixtures record script entry in a private marker file. They bound
+host startup at 60 seconds and fixture execution at 30 seconds after entry,
+including redirected cases. Cancellation waits for the actual phase for 30 seconds.
+The original
 phase/cancellation assertions remain, and failing captures are saved in finally.
 These are QA budgets, not installation transaction timeouts.
+
+## Authorized corrected 0.1.14 release
+
+The owner explicitly selected corrected 0.1.14 after the unpublished CLI 0.1.13
+tag exposed POSIX progress races and release evidence naming conflicts. Preserve
+all 0.1.13 tags and published owner assets. Native Windows/Linux/macOS source,
+upgrade/rollback, integrity and independent-review checks remain required. This
+release retains the owner-selected native-only scope and publishes no Docker image.

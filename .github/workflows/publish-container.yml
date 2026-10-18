@@ -34,6 +34,8 @@ on:
   push:
     tags:
       - "v*"
+      # Owner-selected native-only release; no image is advertised for this tag.
+      - "!v0.1.14"
 
 permissions:
   contents: read
