@@ -22,6 +22,7 @@ def verify(out):
     gen = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gen)
     payload = b"x" * 1_048_576
+    released = threading.Event()
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -34,7 +35,8 @@ def verify(out):
             try:
                 self.wfile.write(payload[:len(payload)//2])
                 self.wfile.flush()
-                time.sleep(1.6)
+                if self.path == "/resize": released.wait(15)
+                else: time.sleep(1.6)
                 self.wfile.write(payload[len(payload)//2:])
             except (BrokenPipeError, ConnectionResetError):
                 pass
@@ -51,11 +53,12 @@ def verify(out):
             for action in ["install", "update"]:
                 script_text = generated[action + ".ps1"].decode()
                 helper = script_text.split("# BEGIN AXIOM TERMINAL RENDERER\n", 1)[1].split("# END AXIOM TERMINAL RENDERER", 1)[0]
-                for mode in ["known", "unknown", "error", "plain", "off", "ci", "dumb", "no-color"]:
+                for mode in ["known", "unknown", "error", "plain", "off", "ci", "dumb", "no-color", "resize", "redirected"]:
                     script = work / "probe.ps1"
                     destination = work / "archive.bin"
                     destination.unlink(missing_ok=True)
-                    endpoint = mode if mode in ["known", "unknown", "error"] else "known"
+                    released.clear()
+                    endpoint = mode if mode in ["known", "unknown", "error", "resize"] else "known"
                     source = f"$ErrorActionPreference='Stop'\n$AxiomAction='{action}'\n" + helper
                     source += f"""
 try {{
@@ -78,7 +81,7 @@ Write-Output 'fixture complete'
                     if mode == "no-color":
                         env["NO_COLOR"] = "1"
                     argv = [str(ps), "-NoProfile", "-File", str(script)]
-                    if mode in ["plain", "off", "ci", "dumb"]:
+                    if mode in ["plain", "off", "ci", "dumb", "redirected"]:
                         result = subprocess.run(argv, env=env, capture_output=True, timeout=30)
                         assert result.returncode == 0, result.stderr
                         assert b"\x1b" not in result.stderr
@@ -87,9 +90,22 @@ Write-Output 'fixture complete'
                         continue
                     c = Capture(argv, env=env, cwd=work)
                     try:
+                        if mode == "resize":
+                            c.until(tuple(f"{n}%".encode() for n in range(1, 51)))
+                            for width in [45, 35, 90]:
+                                c.resize(width)
+                                deadline = time.monotonic() + 2
+                                while True:
+                                    lines = [s.rstrip() for s in c.display() if s.strip()]
+                                    if len(lines) == 2 and all(len(s) < width for s in lines): break
+                                    assert time.monotonic() < deadline, (action, width, lines)
+                                    time.sleep(.025)
+                            released.set()
                         code = c.wait(30)
                         c.save(evidence, action + "-" + mode)
                     finally:
+                        released.set()
+                        c.save(evidence, action + "-" + mode)
                         if c.alive():
                             c.close()
                     assert code == (1 if mode == "error" else 0), (mode, code, bytes(c.raw))
@@ -135,6 +151,12 @@ Write-Output 'fixture complete'
                         if c.alive(): c.close()
                     assert code == 130 and not c.screen.cursor.hidden, (action, phase, code, bytes(c.raw))
                     cases.append(dict(case=action + "-cancel-" + phase.lower(), exit_code=code, generated_finally=True, controlled_phase_delay=phase != "Downloading"))
+                # IEX shares the caller's scope: failed initialization must restore
+                # its preference and leave the original error catchable.
+                wrapper.write_text("function Add-Type { throw 'controlled-renderer-init-failure' }\n$ProgressPreference='Continue'\n$caught=$null\ntry { Invoke-Expression ([IO.File]::ReadAllText('" + str(target).replace("'", "''") + "')) } catch { $caught=$_.Exception.Message }\nif ($ProgressPreference -ne 'Continue' -or $caught -notlike '*controlled-renderer-init-failure*') { throw 'initialization cleanup failed' }\nWrite-Output 'initializer-error-retained; preference-restored'\n", encoding="utf-8", newline="\n")
+                result = subprocess.run([str(ps), "-NoProfile", "-File", str(wrapper)], env=env, capture_output=True, timeout=30)
+                assert result.returncode == 0 and b"initializer-error-retained; preference-restored" in result.stdout, result
+                cases.append(dict(case=action + "-initializer-failure", original_error_retained=True, preference_restored=True))
     finally:
         server.shutdown()
         server.server_close()

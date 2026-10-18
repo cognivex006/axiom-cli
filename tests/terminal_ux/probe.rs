@@ -59,6 +59,11 @@ fn main() {
         ]);
     }
     progress::configure(&configured);
+    if args.iter().any(|a| a == "--preface") {
+        for n in 1..=3 {
+            println!("Existing output sentinel {n}");
+        }
+    }
     if args.iter().any(|a| a == "--owned-timeout") {
         let phase =
             progress::Progress::waiting("Testing cleanup", "waiting for owned child timeout");
@@ -86,7 +91,13 @@ fn main() {
         for _ in 0..4 {
             writer.write_all(&vec![42; 262_144]).unwrap();
             writer.flush().unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(450));
+            std::thread::sleep(std::time::Duration::from_millis(
+                if args.iter().any(|a| a == "--resize") {
+                    1500
+                } else {
+                    450
+                },
+            ));
         }
         drop(writer);
         p.finish(true);

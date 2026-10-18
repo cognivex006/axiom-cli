@@ -3,7 +3,7 @@ from pathlib import Path
 import argparse,hashlib,http.server,importlib.util,io,json,os,queue,subprocess,sys,tarfile,tempfile,threading,time,zipfile
 ROOT=Path(__file__).resolve().parents[1]
 
-def verify():
+def verify(evidence=None):
     cases=[]
     with tempfile.TemporaryDirectory(prefix="axiom progress parity ") as directory:
         temp=Path(directory); exe=temp/("worker.exe" if os.name=="nt" else "worker")
@@ -54,9 +54,9 @@ def verify():
 
         # The bootstrap must run its verified downloaded worker, never the old CLI.
         stub=temp/"bootstrap_stub.rs"
-        stub.write_text('fn main(){println!("verified-worker:{}:{}",std::env::var("AXIOM_CLI_INSTALL_ROOT").unwrap(),std::env::args().skip(1).collect::<Vec<_>>().join(" "));std::process::exit(7)}')
+        stub.write_text('fn main(){println!("verified-worker:{}:{}",std::env::var("AXIOM_CLI_INSTALL_ROOT").unwrap_or_default(),std::env::args().skip(1).collect::<Vec<_>>().join(" "));std::process::exit(7)}')
         native=temp/("axiom-cli.exe" if os.name=="nt" else "axiom-cli")
-        subprocess.run(["rustc",str(stub),"-o",str(native)],check=True,capture_output=True,timeout=90)
+        subprocess.run(["rustc","+1.85.0",str(stub),"-o",str(native)],check=True,capture_output=True,timeout=90)
         data=native.read_bytes(); suffix="windows-x64.zip" if os.name=="nt" else "macos-x64.tar.gz" if sys.platform=="darwin" else "linux-x64.tar.gz"
         archive=io.BytesIO()
         if os.name=="nt":
@@ -97,8 +97,19 @@ def verify():
                 else:assert "SHA-256 mismatch" in result.stdout+result.stderr and "verified-worker:" not in result.stdout,(result.stdout,result.stderr)
                 assert record.read_bytes()==b"{}" and old.read_bytes()==b"old-updater-must-not-run"
                 cases.append(dict(case="bootstrap-verified-worker" if good else "bootstrap-bad-digest",old_installation_preserved=True))
+                if good and os.name == "nt":
+                    for action in ["install", "update"]:
+                        target = temp / (action + ".ps1"); target.write_bytes(scripts[target.name])
+                        wrapper = temp / (action + "-interactive.ps1")
+                        wrapper.write_text("$ProgressPreference='Continue'\ntry { Invoke-Expression ([IO.File]::ReadAllText('" + str(target).replace("'", "''") + "')) } catch { Write-Output ('caught:'+$_.Exception.Message) }\nWrite-Output ('interactive-alive:'+$LASTEXITCODE+':'+$ProgressPreference)\n", encoding="utf-8", newline="\n")
+                        interactive = subprocess.run([words[0], "-NoExit", "-NoProfile", "-File", str(wrapper)], env=dict(env, AXIOM_INSTALL_YES="1"), input="exit 0\n", capture_output=True, text=True, timeout=30)
+                        if evidence is not None:
+                            folder = evidence.parent / (evidence.stem + "-lifecycle"); folder.mkdir(parents=True, exist_ok=True)
+                            (folder / (action + ".json")).write_text(json.dumps(dict(exit_code=interactive.returncode, stdout=interactive.stdout, stderr=interactive.stderr, bootstrapper_sha256=hashlib.sha256(scripts[target.name]).hexdigest(), caller_continued="interactive-alive:7:Continue" in interactive.stdout), indent=2) + "\n", encoding="utf-8", newline="\n")
+                        assert interactive.returncode == 0 and "interactive-alive:7:Continue" in interactive.stdout, (action, interactive.returncode, interactive.stdout, interactive.stderr)
+                        cases.append(dict(case=action + "-iex-noexit", child_last_exit_code=7, caller_continued=True, preference_restored=True))
         finally:server.shutdown();server.server_close();thread.join(timeout=3)
     return dict(passed=True,platform=sys.platform,cases=cases,scope="Native production progress module and generated bootstrap against private fixture root/local HTTP; no real installed state or live Agent session")
 
 if __name__=="__main__":
-    p=argparse.ArgumentParser();p.add_argument("--out",type=Path,required=True);args=p.parse_args();result=verify();args.out.write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8");print("PASS native worker progress parity, JSON/off isolation and bootstrap digest refusal")
+    p=argparse.ArgumentParser();p.add_argument("--out",type=Path,required=True);args=p.parse_args();result=verify(args.out.resolve());args.out.write_text(json.dumps(result,indent=2)+"\n",encoding="utf-8");print("PASS native worker progress parity, JSON/off isolation and bootstrap digest refusal")

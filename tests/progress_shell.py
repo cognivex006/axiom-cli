@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -40,6 +41,7 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
         tar.addfile(info, io.BytesIO(padding))
     body = archive.getvalue()
     scenario = ["known"]
+    released = threading.Event()
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *_): pass
         def do_GET(self):
@@ -48,7 +50,9 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
             if scenario[0] != "unknown": self.send_header("Content-Length", str(len(body)))
             self.send_header("Connection", "close"); self.end_headers()
             try:
-                self.wfile.write(body[:len(body)//2]); self.wfile.flush(); time.sleep(1.4)
+                self.wfile.write(body[:len(body)//2]); self.wfile.flush()
+                if scenario[0] == "resize": released.wait(15)
+                else: time.sleep(1.4)
                 self.wfile.write(body[len(body)//2:])
             except (BrokenPipeError, ConnectionResetError): pass
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -68,11 +72,12 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                     resolved = shutil.which(program)
                     if resolved:
                         (tools / program).unlink()
-                        (tools / program).write_text(f'#!/bin/sh\nsleep .4\nexec "{resolved}" "$@"\n')
+                        phase = "Extracting" if program == "tar" else "Verifying"
+                        (tools / program).write_text(f'#!/bin/sh\nif [ "${{AXIOM_UX_DELAY_PHASE:-}}" = "{phase}" ]; then sleep 30; else sleep .4; fi\nexec "{resolved}" "$@"\n')
                         (tools / program).chmod(0o755)
                 for branch in ["install", "existing", "legacy"]:
-                    for mode in ["known", "unknown", "slow-measurement", "hash-error", "network-error", "child-seven", "cancel", "plain"]:
-                        if branch != "install" and mode not in ["known", "unknown"]: continue
+                    for mode in ["known", "unknown", "slow-measurement", "hash-error", "network-error", "child-seven", "cancel", "cancel-verify", "cancel-extract", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb"]:
+                        if branch != "install" and mode not in ["known", "unknown", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb", "cancel", "cancel-verify", "cancel-extract"]: continue
                         home = work / (fetcher + "-" + branch + "-" + mode); home.mkdir()
                         if branch == "existing":
                             root = home / "data/axiom"; (root / "bin").mkdir(parents=True)
@@ -83,37 +88,67 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                             pointer = home / "axiom/installs/ecosystem/current"; pointer.parent.mkdir(parents=True)
                             pointer.write_bytes(b"{}")
                         scenario[0] = mode
+                        released.clear()
                         digest = "0" * 64 if mode == "hash-error" else hashlib.sha256(body).hexdigest()
                         sums = "".join(digest + "  axiom-1.2.3-" + suffix + "\n" for suffix in ["windows-x64.zip", "linux-x64.tar.gz", "macos-x64.tar.gz"])
                         name = "install.sh" if branch == "install" else "update.sh"
                         generated = gen.generate("v1.2.3", sums, f"http://127.0.0.1:{server.server_port}")
                         script = home / name; script.write_bytes(generated[name])
                         env = {k: v for k, v in os.environ.items() if not k.startswith("AXIOM_") and k not in ["CI", "NO_COLOR"]}
-                        env.update(PATH=str(tools), HOME=str(home), XDG_DATA_HOME=str(home / "data"), TERM="xterm-256color", AXIOM_PROGRESS="plain" if mode == "plain" else "auto")
+                        env.update(PATH=str(tools), HOME=str(home), XDG_DATA_HOME=str(home / "data"), TERM="dumb" if mode == "dumb" else "xterm-256color", AXIOM_PROGRESS=mode if mode in ["plain", "off"] else "auto")
+                        if mode == "ci": env["CI"] = "1"
+                        if mode == "redirected":
+                            result = subprocess.run(["/bin/sh", str(script), "--yes"], env=env, cwd=home, input=b"Y\n", capture_output=True, timeout=25)
+                            assert result.returncode == 0 and b"\x1b" not in result.stdout + result.stderr, result
+                            assert len(re.findall(rb"axiom (?:install|update): (?:downloading|verifying|extracting)", result.stderr)) == 3, result.stderr
+                            cases.append(dict(case=fetcher + "-" + branch + "-" + mode, exit_code=0, automatic_plain=True))
+                            continue
                         wc = tools / "wc"
                         if mode == "slow-measurement":
                             wc.unlink()
                             # exec preserves the observer-owned child identity during the stall.
-                            wc.write_text('#!/bin/sh\nexec sleep 30\n')
+                            wc.write_text('#!/bin/sh\nprintf "%s\\n" "$$" >"$AXIOM_UX_MEASURE_PID"\nexec sleep 30\n')
                             wc.chmod(0o755)
+                            env["AXIOM_UX_MEASURE_PID"] = str(home / "measure.pid")
+                        if mode in ["cancel-verify", "cancel-extract"]:
+                            env["AXIOM_UX_DELAY_PHASE"] = "Verifying" if mode == "cancel-verify" else "Extracting"
                         if mode == "child-seven": env["AXIOM_UX_FIXTURE_EXIT"] = "7"
-                        c = Capture(["/bin/sh", str(script)], env=env, cwd=home)
+                        argv = ["/bin/sh", "-c", 'cat "$1" | sh -s --', "axiom-piped-script", str(script)] if mode == "piped-script" else ["/bin/sh", str(script)]
+                        c = Capture(argv, env=env, cwd=home)
                         try:
-                            if mode == "cancel":
-                                c.until(b"axiom install: downloading"); c.send(b"\x03")
+                            if mode == "resize":
+                                c.until((b"49%", b"50%"))
+                                for width in [45, 35, 90]:
+                                    c.resize(width)
+                                    deadline = time.monotonic() + 2
+                                    while True:
+                                        display = c.display()
+                                        first = next((i for i,s in enumerate(display) if "[" in s and "]" in s and ("%" in s or "indeterminate" in s)), None)
+                                        lines = [s.rstrip() for s in display[first:] if s.strip()] if first is not None else []
+                                        if len(lines) == 2 and all(len(s) < width for s in lines): break
+                                        assert time.monotonic() < deadline, (fetcher, branch, width, lines)
+                                        time.sleep(.025)
+                                released.set()
+                            if mode.startswith("cancel"):
+                                phase = "Downloading" if mode == "cancel" else "Verifying" if mode == "cancel-verify" else "Extracting"
+                                c.until(phase.encode()); c.send(b"\x03")
                             elif mode not in ["hash-error", "network-error"]:
                                 c.until(b"Proceed? [Y/n]"); c.send(b"Y\r")
                             code = c.wait(25); c.save(evidence, fetcher + "-" + branch + "-" + mode)
                         finally:
+                            released.set()
+                            c.save(evidence, fetcher + "-" + branch + "-" + mode)
                             if c.alive(): c.close()
-                        expected = 130 if mode == "cancel" else 7 if mode == "child-seven" else 1 if mode in ["hash-error", "network-error"] else 0
+                        expected = 130 if mode.startswith("cancel") else 7 if mode == "child-seven" else 1 if mode in ["hash-error", "network-error"] else 0
                         assert code == expected, (fetcher, branch, mode, code, bytes(c.raw))
                         assert not c.screen.cursor.hidden, (mode, bytes(c.raw))
                         assert b"100%" not in c.raw
                         assert b"\x1b[2J" not in c.raw
-                        if mode == "plain":
+                        if mode in ["plain", "off", "ci", "dumb"]:
                             assert b"\x1b" not in c.raw and b"elapsed" not in c.raw
-                        elif mode != "cancel":
+                            stage_records = re.findall(rb"axiom (?:install|update): (?:downloading|verifying|extracting)", bytes(c.raw))
+                            assert len(stage_records) == (0 if mode == "off" else 3), bytes(c.raw)
+                        elif not mode.startswith("cancel"):
                             frames = activity_frames(c.raw)
                             assert (frames or mode == "network-error") and all(len(f["details"]) == 1 for f in frames), (fetcher, branch, mode, frames)
                             # Update's discovery paragraph is a permitted boundary before live work.
@@ -126,6 +161,13 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                             if mode == "slow-measurement":
                                 downloading = [f for f in frames if any("Downloading" in line for _, line in f["lines"])]
                                 assert len({f["details"][0][1][0] for f in downloading}) > 1, downloading
+                                pid = int((home / "measure.pid").read_text())
+                                deadline = time.monotonic() + 3
+                                while True:
+                                    try: os.kill(pid, 0)
+                                    except ProcessLookupError: break
+                                    assert time.monotonic() < deadline, ("measurement child survived handoff", pid)
+                                    time.sleep(.025)
                                 wc.unlink(); wc.symlink_to(shutil.which("wc"))
                         if branch == "existing":
                             assert (root / "installed.json").read_bytes() == b"{}"

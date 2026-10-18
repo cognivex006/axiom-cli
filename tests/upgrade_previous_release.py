@@ -7,13 +7,16 @@ import http.server
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import tarfile
 import threading
 import urllib.request
 import uuid
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / "VERSION").read_text().strip()
@@ -38,11 +41,27 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
     if not current.is_file():
         raise ValueError("current checked archive is missing")
     composer = load("upgrade_composer", ROOT / "release/compose_012.py")
-    generator = load("upgrade_generator", ROOT / "packaging/oneline/generate_bootstrappers.py")
+    if suffix:
+        with zipfile.ZipFile(current) as archive:
+            binding = json.loads(archive.read("DISTRIBUTION-FILES.json"))
+    else:
+        with tarfile.open(current) as archive:
+            binding = json.loads(archive.extractfile("DISTRIBUTION-FILES.json").read())
+    if binding.get("version") != VERSION or binding.get("platform") != lane or not re.fullmatch(r"[0-9a-f]{40}", binding.get("source_revision", "")):
+        raise ValueError("candidate source/version/platform binding is invalid")
     cases = []
     registry_key = r"Software\AxiomCliTest\UpgradePrevious-" + uuid.uuid4().hex
     with tempfile.TemporaryDirectory(prefix="axiom-upgrade-previous-") as temporary:
         work = Path(temporary).resolve()
+        # Freeze generator inputs before the long transaction. Record the exact
+        # bytes used, rather than silently reading a changing development tree.
+        snapshot = work / "generator-source"
+        generation_sources = {}
+        for relative in ["packaging/oneline/generate_bootstrappers.py", *["installers/oneline/" + name for name in ["install.ps1.in", "update.ps1.in", "install.sh.in", "update.sh.in", "progress.ps1", "progress.sh"]]]:
+            raw = (ROOT / relative).read_bytes().replace(b"\r\n", b"\n")
+            target = snapshot / relative; target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw)
+            generation_sources[relative] = hashlib.sha256(raw).hexdigest()
+        generator = load("upgrade_generator", snapshot / "packaging/oneline/generate_bootstrappers.py")
         home = work / "home"
         home.mkdir()
         data = home / "data"
@@ -114,12 +133,13 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
         scripts = generator.generate("v" + VERSION, checksums, address)
         script = tag_root / ("update.ps1" if suffix else "update.sh")
         script.write_bytes(scripts[script.name])
+        bootstrapper_sha256 = sha(script)
         workspace = work / "user-project"
         workspace.mkdir()
         sentinel = workspace / "notes.txt"
         sentinel.write_text("user project data")
         try:
-            command = [shutil.which("pwsh") or "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
+            command = [Path(env["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
             upgraded = run("verified current updater migrates previous release", command)
             if not any(phase in upgraded.stderr.casefold() for phase in ["preparing the pinned python runtime", "staging verified axiom", "applying components with the verified graph engine"]):
                 raise ValueError("update hid its actual install stages: " + upgraded.stderr)
@@ -182,7 +202,8 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({"platform": lane, "previous_version": previous_version, "version": VERSION,
                                  "execution": "native", "candidate_sha256": sha(current), "cases": cases,
-                                 "passed": True, "elevation_test_seam_used": elevation_seam, "scope": "Actual immutable previous release to exact checked candidate, then rollback; isolated user directories and Windows test registry key"}, indent=2) + "\n")
+                                 "passed": True, "source_revision": binding["source_revision"], "bootstrapper_sha256": bootstrapper_sha256, "generation_sources": generation_sources,
+                                 "elevation_test_seam_used": elevation_seam, "scope": "Actual immutable previous release to exact checked candidate, then rollback; isolated user directories and Windows test registry key"}, indent=2) + "\n")
 
 
 if __name__ == "__main__":

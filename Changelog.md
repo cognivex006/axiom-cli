@@ -8,12 +8,11 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ### Bug Fixes
 
-- Repaint install and update activity in two stable terminal rows, including bootstrap downloads, with truthful percentages and a rotating spinner.
-- Preserve confirmation input and exact updater exit codes while handing the console between verified workers.
+- Keep install and update activity in two stable terminal rows, with measured download progress, a rotating spinner and clean stage changes.
+- Handle terminal resizing, redirected logs and interactive PowerShell failures without leaving stale rows or interrupting the caller.
+- Preserve confirmation input, verified updater execution, exact failure codes and rollback.
 - Report MCP graph readiness separately from installation health in `axm doctor`.
-- Show the same live install/update stages on Windows and Linux without repeated host probes or elapsed-only logs.
-- Simplify installation plans and host results while retaining complete JSON diagnostics and transactional approval/rollback.
-- Verify the current updater before upgrading existing installations.
+- Simplify installation plans and host results while retaining complete JSON diagnostics.
 
 ## 0.1.12
 

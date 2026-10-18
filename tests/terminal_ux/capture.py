@@ -34,6 +34,7 @@ class Capture:
         self.screen = Screen(columns, rows)
         self.stream = pyte.ByteStream(self.screen)
         self.frames = []
+        self.screen_lock = threading.Lock()
         self.closed = False
         if os.name == "nt":
             from winpty import PtyProcess
@@ -68,12 +69,17 @@ class Capture:
             if not data:
                 break
             quiet = time.monotonic()
-            self.raw.extend(data)
-            self.stream.feed(data)
-            self.frames.append(dict(at=quiet, lines=[s.rstrip() for s in self.screen.display], cursor=[self.screen.cursor.x, self.screen.cursor.y], hidden=self.screen.cursor.hidden))
+            with self.screen_lock:
+                self.raw.extend(data)
+                self.stream.feed(data)
+                self.frames.append(dict(at=quiet, columns=self.screen.columns, rows=self.screen.lines, lines=[s.rstrip() for s in self.screen.display], cursor=[self.screen.cursor.x, self.screen.cursor.y], hidden=self.screen.cursor.hidden))
             self.chunks.put(data)
             if b"\x1b[6n" in data:
-                self.send(b"\x1b[1;1R")
+                # ConPTY queries the terminal cursor when synchronizing a resize.
+                # A fixed 1;1 reply moves its real cursor over preceding output.
+                with self.screen_lock:
+                    row, column = self.screen.cursor.y + 1, self.screen.cursor.x + 1
+                self.send(f"\x1b[{row};{column}R".encode("ascii"))
 
     def send(self, data):
         if os.name == "nt":
@@ -97,7 +103,12 @@ class Capture:
             import struct
             import termios
             fcntl.ioctl(self.master, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
-        self.screen.resize(rows, columns)
+        with self.screen_lock:
+            self.screen.resize(rows, columns)
+
+    def display(self):
+        with self.screen_lock:
+            return list(self.screen.display)
 
     def wait(self, timeout=30):
         deadline = time.monotonic() + timeout
@@ -126,8 +137,11 @@ class Capture:
     def save(self, directory: Path, name: str):
         import json
         directory.mkdir(parents=True, exist_ok=True)
-        (directory / (name + ".vt")).write_bytes(self.raw)
-        (directory / (name + ".json")).write_text(json.dumps(dict(frames=self.frames, final_frame=self.screen.display), indent=2) + "\n", encoding="utf-8", newline="\n")
+        with self.screen_lock:
+            raw = bytes(self.raw)
+            state = dict(frames=list(self.frames), final_frame=list(self.screen.display))
+        (directory / (name + ".vt")).write_bytes(raw)
+        (directory / (name + ".json")).write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def activity_frames(raw, columns=90, rows=24):

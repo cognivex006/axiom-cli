@@ -32,7 +32,7 @@ public sealed class @@PROGRESS_CLASS@@ : IDisposable {
     string fallback = "";
     string label = "", detail = "", path = "";
     long total, received;
-    int frame, generation, measuring;
+    int frame, generation, measuring, viewportWidth, viewportHeight;
     Timer timer, meter;
     public @@PROGRESS_CLASS@@(string action) {
         this.action = action;
@@ -87,11 +87,13 @@ public sealed class @@PROGRESS_CLASS@@ : IDisposable {
         if(!live || label.Length == 0) return;
         try {
             int width = Console.WindowWidth - 1;
-            if(width < 31 || Console.WindowHeight < 3) {
+            int height = Console.WindowHeight;
+            if(width < 31 || height < 3) {
                 Clear();
                 if(fallback != detail) { Console.Error.WriteLine("axiom "+action+": "+Safe(detail,2048)); fallback=detail; }
                 return;
             }
+            string position=Position(width,height);
             if(!reserved) { Console.Error.Write("\x1b[?25l\r\n\r\n\x1b[2A\x1b" + "7"); reserved=true; }
             int percent=measured && total>0 ? (int)Math.Min(99, Math.Floor((decimal)received * 100 / total)) : -1;
             int count=Math.Max(3,Math.Min(40,width/3));
@@ -100,7 +102,7 @@ public sealed class @@PROGRESS_CLASS@@ : IDisposable {
             string status=percent<0 ? "indeterminate" : percent+"%";
             string top=Safe(label,Math.Max(0,width-count-status.Length-5))+"  ["+bar+"] "+status;
             string second=Safe("|/-\\"[frame%4]+" axiom "+action+": "+detail,width);
-            Console.Error.Write("\x1b"+"8\r\x1b[2K"+top+"\r\n\x1b[2K"+second+"\x1b"+"8");
+            Console.Error.Write(position+"\x1b"+"8\r\x1b[J\x1b[2K"+top+"\r\n\x1b[2K"+second+"\x1b"+"8");
             frame=(frame+1)%120000;
         } catch(Exception) {
             live=false;
@@ -108,8 +110,13 @@ public sealed class @@PROGRESS_CLASS@@ : IDisposable {
             if(cursorSaved) { cursor.visible=1; SetConsoleCursorInfo(handle,ref cursor); }
         }
     }
+    string Position(int width,int height) {
+        bool changed=reserved && (viewportWidth!=width || viewportHeight!=height);
+        viewportWidth=width; viewportHeight=height;
+        return changed ? "\r\x1b"+"7" : "";
+    }
     void Clear() {
-        if(reserved) { Console.Error.Write("\x1b"+"8\r\x1b[2K\r\n\x1b[2K\x1b"+"8\x1b[?25h"); reserved=false; }
+        if(reserved) { string position=Position(Console.WindowWidth-1,Console.WindowHeight); Console.Error.Write(position+"\x1b"+"8\r\x1b[J\x1b[?25h"); reserved=false; }
     }
     public void Suspend() { lock(gate) { Clear(); label=""; path=""; generation++; } }
     public void Resume(string label,string detail) { Begin(label,detail); }

@@ -67,6 +67,7 @@ def verify(probe, out):
             argv = [str(probe), "install", "--visual" if mode == "prompt" else "--transfer"]
             if mode == "unknown": argv.append("--unknown")
             if mode == "failed": argv.append("--fail")
+            if mode == "resize": argv.extend(["--resize", "--preface"])
             env = dict(base)
             if mode == "no-color": env["NO_COLOR"] = "1"
             c = Capture(argv, env=env, cwd=work)
@@ -77,12 +78,19 @@ def verify(probe, out):
                     assert not c.screen.cursor.hidden
                     c.send(b"Y\r")
                 elif mode == "resize":
-                    c.resize(45)
-                    time.sleep(0.4)
-                    nonempty = [s.rstrip() for s in c.screen.display if s.strip()]
-                    assert len(nonempty) == 2 and all(len(s) < 45 for s in nonempty), nonempty
-                    assert "indeterminate" in nonempty[0] or "%" in nonempty[0], nonempty
-                    c.resize(90)
+                    for width in [45, 90, 35, 70, 45, 90]:
+                        c.resize(width)
+                        deadline = time.monotonic() + 2
+                        while True:
+                            display = c.display()
+                            assert all(any(f"Existing output sentinel {n}" in line for line in display) for n in range(1,4)), display
+                            first = next((i for i,s in enumerate(display) if "[" in s and "]" in s and ("%" in s or "indeterminate" in s)), None)
+                            nonempty = [s.rstrip() for s in display[first:] if s.strip()] if first is not None else []
+                            if len(nonempty) == 2 and all(len(s) < width for s in nonempty): break
+                            assert time.monotonic() < deadline, (width, nonempty)
+                            time.sleep(.025)
+                        assert "indeterminate" in nonempty[0] or "%" in nonempty[0], nonempty
+                        time.sleep(.15)
                 elif mode == "cancel":
                     c.send(b"\x03")
                 code = c.wait(20)
@@ -92,6 +100,11 @@ def verify(probe, out):
                 if c.alive(): c.close()
             assert code == (130 if mode == "cancel" else 7 if mode == "failed" else 0), (mode, code, bytes(c.raw))
             assert not c.screen.cursor.hidden, (mode, bytes(c.raw))
+            if mode == "resize":
+                assert all(any(f"Existing output sentinel {n}" in line for line in c.display()) for n in range(1,4)), c.display()
+            if mode == "prompt":
+                display = "\n".join(c.display())
+                assert "Plan: controlled terminal fixture" in display and "Proceed? [Y/n]" in display and "Fixture complete: Y" in display, display
             if mode not in ["resize", "cancel"]:
                 frames = activity_frames(c.raw)
                 before_prompt = [f for f in frames if not any("Plan:" in s for _, s in f["lines"])]

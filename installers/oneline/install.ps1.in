@@ -115,15 +115,20 @@ catch { $AxiomBootstrapFailed = $true; throw }
 finally {
     try { if ($null -ne $ui) { $ui.Dispose() } }
     finally {
+    try {
+        if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+    finally {
     $ProgressPreference = $AxiomSavedProgressPreference
-    if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue }
     # PS5.1 otherwise reports exit 0 after Ctrl+C unwinds a script pipeline.
     if (-not $AxiomBootstrapReturned -and -not $AxiomBootstrapFailed) {
         $global:LASTEXITCODE = 130
         if ($AxiomOwnsProcess) { $Host.SetShouldExit(130) }
     }
     }
+    }
 }
 $global:LASTEXITCODE = $code
-if ($code -ne 0 -and ($AxiomOwnsProcess -or ($MyInvocation.MyCommand.CommandType -eq 'ExternalScript' -and $MyInvocation.InvocationName -ne '.'))) { exit $code }
+# A borrowed interactive/NoExit caller must be able to catch the failure and continue.
+if ($code -ne 0 -and $AxiomOwnsProcess) { exit $code }
 if ($code -ne 0) { Stop-AxiomInstall "axm install exited $code" }

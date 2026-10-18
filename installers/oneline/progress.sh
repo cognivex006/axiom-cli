@@ -2,13 +2,16 @@
 ux_pid=''
 ux_worker=''
 ux_meter=''
+ux_state=''
 ux_mode=plain
 ux_start() {
-    case "${AXIOM_PROGRESS:-auto}" in off) ux_mode=off; return ;; plain) return ;; esac
-    [ -t 1 ] && [ -t 2 ] && [ -z "${CI+x}" ] && [ "${TERM:-dumb}" != dumb ] || return
-    ux_size=$(stty size 2>/dev/null </dev/tty) || return
+    case "${AXIOM_PROGRESS:-auto}" in off) ux_mode=off; return 0 ;; plain) return 0 ;; esac
+    [ -t 1 ] && [ -t 2 ] && [ -z "${CI+x}" ] && [ "${TERM:-dumb}" != dumb ] || return 0
+    ux_size=$(stty size 2>/dev/null </dev/tty) || return 0
     set -- $ux_size
-    [ "$#" = 2 ] && [ "$1" -ge 3 ] && [ "$2" -ge 32 ] || return
+    [ "$#" = 2 ] && [ "$1" -ge 3 ] && [ "$2" -ge 32 ] || return 0
+    # Keep display IPC local even when the archive's TMPDIR is a slow mount.
+    ux_state=$(mktemp -d /tmp/axiom-ux.XXXXXX 2>/dev/null) || return 0
     ux_mode=live
     ux_observe </dev/null &
     ux_meter=$!
@@ -24,27 +27,27 @@ ux_observe() {
     trap 'ux_observer_stop' TERM INT HUP
     while :; do
         ux_path=''
-        if [ -f "$tmp/progress.state" ]; then
-            { IFS= read -r ux_top; IFS= read -r ux_text; IFS= read -r ux_path; } <"$tmp/progress.state" || :
+        if [ -f "$ux_state/progress.state" ]; then
+            { IFS= read -r ux_top; IFS= read -r ux_text; IFS= read -r ux_path; } <"$ux_state/progress.state" || :
         fi
         if [ -n "$ux_path" ]; then
             # File/header observation can stall; it never owns the display timer.
-            wc -c <"$ux_path" >"$tmp/progress.bytes" 2>/dev/null &
+            wc -c <"$ux_path" >"$ux_state/progress.bytes" 2>/dev/null &
             ux_observer_child=$!
             ux_bytes=''
-            if wait "$ux_observer_child"; then IFS= read -r ux_bytes <"$tmp/progress.bytes" || :; fi
+            if wait "$ux_observer_child"; then IFS= read -r ux_bytes <"$ux_state/progress.bytes" || :; fi
             ux_observer_child=''
             ux_headers="$tmp/headers"
             [ "$fetcher" = curl ] || ux_headers="$tmp/download.error"
-            awk 'tolower($1) ~ /^http\// {n=0} tolower($1)=="content-length:" {gsub("\r", "", $2); if($2 ~ /^[0-9]+$/) n=$2} END {printf "%.0f\n", (n>0 && n<=9007199254740991?n:0)}' "$ux_headers" >"$tmp/progress.total" 2>/dev/null &
+            awk 'tolower($1) ~ /^http\// {n=0} tolower($1)=="content-length:" {gsub("\r", "", $2); if($2 ~ /^[0-9]+$/) n=$2} END {printf "%.0f\n", (n>0 && n<=9007199254740991?n:0)}' "$ux_headers" >"$ux_state/progress.total" 2>/dev/null &
             ux_observer_child=$!
             ux_total=0
-            if wait "$ux_observer_child"; then IFS= read -r ux_total <"$tmp/progress.total" || :; fi
+            if wait "$ux_observer_child"; then IFS= read -r ux_total <"$ux_state/progress.total" || :; fi
             ux_observer_child=''
             # Whitespace from wc is harmless to awk; failed reads stay unknown.
-            awk -v b="$ux_bytes" -v t="$ux_total" 'BEGIN {p=-1; if(b ~ /^[ ]*[0-9]+[ ]*$/ && t>0) {p=int(b*100/t); if(p>99)p=99} print p}' >"$tmp/progress.percent"
-            { printf '%s\n' "$ux_path"; cat "$tmp/progress.percent"; } >"$tmp/progress.measure.next"
-            mv "$tmp/progress.measure.next" "$tmp/progress.measure"
+            awk -v b="$ux_bytes" -v t="$ux_total" 'BEGIN {p=-1; if(b ~ /^[ ]*[0-9]+[ ]*$/ && t>0) {p=int(b*100/t); if(p>99)p=99} print p}' >"$ux_state/progress.percent"
+            { printf '%s\n' "$ux_path"; cat "$ux_state/progress.percent"; } >"$ux_state/progress.measure.next"
+            mv "$ux_state/progress.measure.next" "$ux_state/progress.measure"
         fi
         sleep 0.125 &
         ux_observer_child=$!
@@ -62,8 +65,8 @@ ux_stage() {
         ux_safe_detail=$(printf '%s' "$2" | LC_ALL=C tr -cd '\40-\176')
         ux_safe_path=$(printf '%s' "${3:-}" | LC_ALL=C tr -d '\000-\037\177')
         [ "$ux_safe_path" = "${3:-}" ] || ux_safe_path=''
-        printf '%s\n%s\n%s\n' "$ux_safe_label" "$ux_safe_detail" "$ux_safe_path" >"$tmp/progress.next"
-        mv "$tmp/progress.next" "$tmp/progress.state"
+        printf '%s\n%s\n%s\n' "$ux_safe_label" "$ux_safe_detail" "$ux_safe_path" >"$ux_state/progress.next"
+        mv "$ux_state/progress.next" "$ux_state/progress.state"
     else
         printf 'axiom %s: %s\n' "$AXIOM_ACTION" "$2" >&2
     fi
@@ -72,22 +75,33 @@ ux_loop() {
     ux_reserved=0
     ux_frame=0
     ux_clear() {
-        if [ "$ux_reserved" = 1 ]; then printf '\0338\r\033[2K\r\n\033[2K\0338\033[?25h' >&2; ux_reserved=0; fi
+        if [ "$ux_reserved" = 1 ]; then
+            ux_anchor=''
+            ux_size=$(stty size 2>/dev/null </dev/tty) || ux_size=''
+            set -- $ux_size
+            if [ "$#" = 2 ] && { [ "${ux_last_width:-}" != "$(($2 - 1))" ] || [ "${ux_last_height:-}" != "$1" ]; }; then ux_anchor='\r\0337'; fi
+            printf '%b\0338\r\033[J\033[?25h' "$ux_anchor" >&2
+            ux_reserved=0
+        fi
     }
     trap 'ux_clear; exit 0' TERM INT HUP
     while :; do
-        if [ -f "$tmp/progress.state" ]; then
+        if [ -f "$ux_state/progress.state" ]; then
             ux_size=$(stty size 2>/dev/null </dev/tty) || break
             set -- $ux_size
             [ "$#" = 2 ] || break
             ux_width=$(($2 - 1))
             if [ "$ux_width" -ge 31 ] && [ "$1" -ge 3 ]; then
-                ux_top=$(sed -n '1p' "$tmp/progress.state")
-                ux_text=$(sed -n '2p' "$tmp/progress.state")
-                ux_path=$(sed -n '3p' "$tmp/progress.state")
+                ux_anchor=''
+                if [ "$ux_reserved" = 1 ] && { [ "${ux_last_width:-}" != "$ux_width" ] || [ "${ux_last_height:-}" != "$1" ]; }; then ux_anchor='\r\0337'; fi
+                ux_last_width=$ux_width
+                ux_last_height=$1
+                ux_top=$(sed -n '1p' "$ux_state/progress.state")
+                ux_text=$(sed -n '2p' "$ux_state/progress.state")
+                ux_path=$(sed -n '3p' "$ux_state/progress.state")
                 ux_percent=-1
-                if [ -n "$ux_path" ] && [ -f "$tmp/progress.measure" ]; then
-                    { IFS= read -r ux_observed; IFS= read -r ux_sample; } <"$tmp/progress.measure" || :
+                if [ -n "$ux_path" ] && [ -f "$ux_state/progress.measure" ]; then
+                    { IFS= read -r ux_observed; IFS= read -r ux_sample; } <"$ux_state/progress.measure" || :
                     if [ "$ux_observed" = "$ux_path" ]; then
                         case "$ux_sample" in -1|[0-9]|[0-9][0-9]) ux_percent=$ux_sample ;; esac
                     fi
@@ -106,11 +120,11 @@ ux_loop() {
                 ux_top=$(printf '%.*s' "$ux_labelwidth" "$ux_top")
                 case "$((ux_frame % 4))" in 0) ux_spin='|' ;; 1) ux_spin='/' ;; 2) ux_spin='-' ;; 3) ux_spin='\' ;; esac
                 if [ "$ux_reserved" = 0 ]; then printf '\033[?25l\r\n\r\n\033[2A\0337' >&2; ux_reserved=1; fi
-                printf '\0338\r\033[2K%.*s\r\n\033[2K%.*s\0338' "$ux_width" "$ux_top  [$ux_bar] $ux_status" "$ux_width" "$ux_spin axiom $AXIOM_ACTION: $ux_text" >&2
+                printf '%b\0338\r\033[J\033[2K%.*s\r\n\033[2K%.*s\0338' "$ux_anchor" "$ux_width" "$ux_top  [$ux_bar] $ux_status" "$ux_width" "$ux_spin axiom $AXIOM_ACTION: $ux_text" >&2
                 ux_frame=$(((ux_frame + 1) % 120000))
             else
                 ux_clear
-                ux_text=$(sed -n '2p' "$tmp/progress.state")
+                ux_text=$(sed -n '2p' "$ux_state/progress.state")
                 if [ "${ux_fallback:-}" != "$ux_text" ]; then printf 'axiom %s: %s\n' "$AXIOM_ACTION" "$ux_text" >&2; ux_fallback=$ux_text; fi
             fi
         fi
@@ -121,6 +135,7 @@ ux_loop() {
 ux_dispose() {
     if [ -n "$ux_pid" ]; then kill -TERM "$ux_pid" 2>/dev/null || :; wait "$ux_pid" 2>/dev/null || :; ux_pid=''; fi
     if [ -n "$ux_meter" ]; then kill -TERM "$ux_meter" 2>/dev/null || :; wait "$ux_meter" 2>/dev/null || :; ux_meter=''; fi
+    case "$ux_state" in /tmp/axiom-ux.*) rm -rf "$ux_state"; ux_state='' ;; esac
 }
 ux_cleanup() {
     ux_dispose

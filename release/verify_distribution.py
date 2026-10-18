@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 import platform
 from pathlib import Path
 import subprocess
@@ -82,8 +83,6 @@ def verify(root, output):
                 "--dry-run",
             ]
         else:
-            import os
-
             env = dict(os.environ, HOME=str(Path(temporary).resolve()))
             argv = [
                 "sh",
@@ -153,7 +152,9 @@ def verify(root, output):
                 "owners": manifest["owners"],
                 "archive": archive.name,
                 "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
-                "scope": "exact published peer bytes, native launch and fresh install plan; integration tests retain actual installation evidence",
+                "owner_input_kind": "ci_candidate" if "candidate_owner_ci" in manifest else "published_release",
+                "elevation_test_seam_used": "AXIOM_CLI_TEST_ALLOW_ELEVATED" in os.environ,
+                "scope": "Source-bound owner bytes and native install checks; exact executed cases are listed. GUI and non-elevated-user acceptance remain separate.",
             },
             indent=2,
         )

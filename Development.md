@@ -73,6 +73,12 @@ report. ConPTY is native console evidence; it does not replace the required
 Windows Terminal/VS Code screenshots or actual release upgrade/rollback checks.
 The deterministic generator embeds the single `progress.ps1`/`progress.sh` helper
 into both entrypoints; do not edit generated release assets to repair source.
+Resize checks keep the transfer paused while changing terminal columns. The live
+owner reanchors the saved cursor after viewport changes and clears stale wrapped
+tails below its activity anchor; normal output is always suspended first. POSIX
+display IPC uses its own private local `/tmp` directory, separate from a possibly
+slow archive TMPDIR, and is removed at handoff/cleanup. Failure to obtain live
+capabilities falls back successfully under `set -e` rather than aborting install.
 
 The coordinator captures bounded semantic apply-worker stderr and keeps genuine
 diagnostics at cleared output boundaries. A bounded queue and separate measurement
@@ -81,6 +87,8 @@ process-family ownership; reader failures and cancellation close/reap those
 children. Root MCP diagnostics have a 15-second timeout. No progress-only timeout
 is added to installation transactions. The Unix ABI crate and Unicode width crate
 are exact Cargo pins and require native checks and audit alongside renderer changes.
+Raw progress records also count toward the worker stderr budget; malformed
+records emit one bounded warning rather than repeating a diagnostic per record.
 Audit the terminal dependency graph with cargo-deny 0.20.2 using
 `cargo-deny --locked --config .delivery/dependency-audit.toml check`. The QA policy
 checks advisories, exact-source constraints and MIT/Apache dependency licenses,
@@ -115,6 +123,11 @@ credential requires separate owner authorization; never copy local credentials
 into workflow inputs, logs or source. Local read-only collection and hosted
 collection are distinct evidence.
 Candidate composition is a verification input, never a visual/release gate waiver.
+Previous-release checks freeze/hash all generator inputs and the generated update
+script, bind the candidate's embedded source revision and run native PS5.1 on
+Windows. Private client profiles and registry keys protect the operator's state;
+an explicit elevated fixture allowance is reported and never counts as a
+non-elevated-user check. Candidate provenance is distinguished from publication.
 Feature pushes without an owner vector run the source/native visual checks and
 record `source_only: true`; composition and previous-release jobs are explicitly
 skipped and remain unverified. Supplying the vector enables those gates. Native

@@ -58,6 +58,7 @@ struct Renderer {
     action: String,
     fallback: String,
     painted: Option<Instant>,
+    viewport: Option<(usize, usize)>,
 }
 impl Renderer {
     fn begin(action: String, live: bool) -> Self {
@@ -72,6 +73,18 @@ impl Renderer {
             action,
             fallback: String::new(),
             painted: None,
+            viewport: None,
+        }
+    }
+    fn position(&mut self, size: (usize, usize)) -> &'static str {
+        let changed = self.reserved && self.viewport.is_some_and(|old| old != size);
+        self.viewport = Some(size);
+        // Resizing can remap the live cursor while the saved physical row stays
+        // behind. Every completed frame leaves this cursor at the activity top.
+        if changed {
+            "\r\x1b7"
+        } else {
+            ""
         }
     }
     fn update(&mut self, s: &Stage) -> std::io::Result<()> {
@@ -99,6 +112,7 @@ impl Renderer {
             return Ok(());
         }
         let w = cols - 1;
+        let position = self.position((cols, rows));
         let reserve = if self.reserved {
             ""
         } else {
@@ -132,7 +146,10 @@ impl Renderer {
         let top = format!("{label}  [{bar}] {status}");
         let spinner = ['|', '/', '-', '\\'][self.frame % 4];
         let detail = clip(&format!("{spinner} axiom {}: {}", self.action, s.detail), w);
-        let frame = format!("{reserve}\x1b8\r\x1b[2K{top}\r\n\x1b[2K{detail}\x1b8");
+        // A frame prepared just before a resize may have wrapped into extra
+        // rows. Nothing else writes below our anchor until suspend; clear those
+        // stale tails as well as both current rows, within this same repaint.
+        let frame = format!("{reserve}{position}\x1b8\r\x1b[J\x1b[2K{top}\r\n\x1b[2K{detail}\x1b8");
         let mut out = std::io::stderr().lock();
         // Record ownership before writing so a partial write is cleared on failure.
         self.reserved = true;
@@ -143,10 +160,13 @@ impl Renderer {
     }
     fn suspend(&mut self) -> std::io::Result<()> {
         if self.reserved {
+            let size = self.console.as_ref().and_then(|c| c.size());
+            let position = size.map(|size| self.position(size)).unwrap_or("");
             self.reserved = false;
             self.painted = None;
+            self.viewport = None;
             let mut out = std::io::stderr().lock();
-            write!(out, "\x1b8\r\x1b[2K\r\n\x1b[2K\x1b8\x1b[?25h")?;
+            write!(out, "{position}\x1b8\r\x1b[J\x1b[?25h")?;
             out.flush()?;
         }
         Ok(())
@@ -610,6 +630,8 @@ pub fn install_worker(command: &mut Command, applying: bool) -> std::io::Result<
 
 fn relay_stderr(mut error: impl BufRead, worker_pid: u32) -> std::io::Result<Vec<u8>> {
     let mut stderr = Vec::new();
+    let mut wire_bytes = 0usize;
+    let mut warned = false;
     let mut last_sequence: Option<u64> = None;
     let mut active_id: Option<String> = None;
     let mut discarding = false;
@@ -619,6 +641,10 @@ fn relay_stderr(mut error: impl BufRead, worker_pid: u32) -> std::io::Result<Vec
         let n = error.by_ref().take(16385).read_until(b'\n', &mut bytes)?;
         if n == 0 {
             break;
+        }
+        wire_bytes += n;
+        if wire_bytes > 4 * 1024 * 1024 {
+            return Err(std::io::Error::other("worker stderr exceeded 4 MiB"));
         }
         if discarding {
             discarding = !bytes.ends_with(b"\n");
@@ -657,13 +683,16 @@ fn relay_stderr(mut error: impl BufRead, worker_pid: u32) -> std::io::Result<Vec
                 send(event);
             }
         } else if bytes.starts_with(b"AXIOM_PROGRESS_") {
-            suspend();
-            let message = b"axiom: ignored invalid worker progress record\n";
-            diagnostic(message);
-            if stderr.len() + message.len() <= 4 * 1024 * 1024 {
-                stderr.extend_from_slice(message);
-            } else {
-                overflow = true;
+            if !warned {
+                warned = true;
+                suspend();
+                let message = b"axiom: ignored invalid worker progress record\n";
+                diagnostic(message);
+                if stderr.len() + message.len() <= 4 * 1024 * 1024 {
+                    stderr.extend_from_slice(message);
+                } else {
+                    overflow = true;
+                }
             }
             discarding = !bytes.ends_with(b"\n");
         } else {
@@ -795,5 +824,23 @@ mod tests {
             fn consume(&mut self, _: usize) {}
         }
         assert!(relay_stderr(Broken, 123).is_err());
+    }
+    #[test]
+    fn malformed_progress_has_one_bounded_warning() {
+        let bytes = b"AXIOM_PROGRESS_V2\tunknown\n".repeat(100);
+        let result = relay_stderr(std::io::Cursor::new(bytes), 123).unwrap();
+        assert_eq!(
+            String::from_utf8(result)
+                .unwrap()
+                .matches("ignored invalid")
+                .count(),
+            1
+        );
+    }
+    #[test]
+    fn progress_records_also_count_toward_the_stderr_budget() {
+        let line = b"AXIOM_PROGRESS_V1\tcomplete\t123-0\t\t\t\t0\n";
+        let bytes = line.repeat(4 * 1024 * 1024 / line.len() + 1);
+        assert!(relay_stderr(std::io::Cursor::new(bytes), 123).is_err());
     }
 }
