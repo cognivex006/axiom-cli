@@ -124,8 +124,25 @@ impl Report {
     /// Aggregate independently applied host results; retain the first-stage projection.
     pub fn host_stages(&mut self, stages: Vec<(String, Report)>) {
         let mut results = Vec::new();
+        let mut registered = false;
         for (host, stage) in stages {
+            let start = self.lines.len();
+            let success = stage.code() == 0;
+            let disabled = stage.status == "skipped_disabled" || stage.status == "disabled";
             self.host_stage(stage);
+            if success {
+                self.lines.truncate(start);
+                let state = if disabled {
+                    "disabled; unchanged"
+                } else {
+                    "registered"
+                };
+                registered |= !disabled;
+                self.lines.push(format!("Agent skills ({host}): {state}"));
+            } else {
+                self.lines
+                    .push(format!("Agent skills ({host}): needs attention"));
+            }
             let mut result = self
                 .details
                 .get("host_setup")
@@ -133,6 +150,9 @@ impl Report {
                 .unwrap_or(Json::Null);
             let _ = result.set("host", Json::text(&host));
             results.push(result);
+        }
+        if registered {
+            self.lines.push("Open a new agent session to discover skills. MCP credentials and graph access are checked separately.".to_string());
         }
         if let Some(first) = results.first() {
             self.detail("host_setup", first.clone());
@@ -296,5 +316,41 @@ mod tests {
                 Some("kept")
             );
         }
+    }
+
+    #[test]
+    fn host_summary_labels_results_and_preserves_disabled_state() {
+        let mut report = Report::ok("installed", "runtime installed");
+        let mut registered = Report::ok("ok", "registered");
+        registered.lines(["Agent skills update: OK", "Open a new agent session."]);
+        report.host_stages(vec![
+            ("codex".into(), registered),
+            ("claude".into(), Report::ok("skipped_disabled", "preserved")),
+        ]);
+        assert_eq!(report.code(), 0);
+        assert_eq!(report.lines.len(), 3);
+        assert_eq!(report.lines[0], "Agent skills (codex): registered");
+        assert_eq!(
+            report.lines[1],
+            "Agent skills (claude): disabled; unchanged"
+        );
+        assert_eq!(
+            report
+                .lines
+                .iter()
+                .filter(|line| line.contains("new agent session"))
+                .count(),
+            1
+        );
+
+        let mut disabled = Report::ok("installed", "runtime installed");
+        disabled.host_stages(vec![(
+            "codex".into(),
+            Report::ok("skipped_disabled", "preserved"),
+        )]);
+        assert_eq!(
+            disabled.lines,
+            ["Agent skills (codex): disabled; unchanged"]
+        );
     }
 }

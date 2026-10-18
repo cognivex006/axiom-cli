@@ -14,16 +14,16 @@ struct Renderer {
     terminal: bool,
     width: usize,
     started: bool,
-    detail: String,
+    last_heading: String,
 }
 
 impl Renderer {
-    fn new(terminal: bool, detail: String) -> Self {
+    fn new(terminal: bool, _detail: String) -> Self {
         Self {
             terminal,
             width: 0,
             started: false,
-            detail,
+            last_heading: String::new(),
         }
     }
 
@@ -36,10 +36,6 @@ impl Renderer {
         finished: bool,
     ) -> std::io::Result<()> {
         if self.terminal {
-            if !self.started {
-                writeln!(output, "{}", self.detail)?;
-                self.started = true;
-            }
             let width = inline.chars().count();
             write!(
                 output,
@@ -50,9 +46,13 @@ impl Renderer {
             if finished {
                 writeln!(output)?;
             }
-        } else {
-            writeln!(output, "{heading}\n  {details}")?;
+        } else if finished || !self.started || heading != self.last_heading {
+            // A pipe is a log, not a terminal: elapsed-only heartbeats add no information.
+            writeln!(output, "{inline}")?;
         }
+        self.started = true;
+        self.last_heading = heading.to_string();
+        let _ = details;
         output.flush()
     }
 }
@@ -60,7 +60,10 @@ impl Renderer {
 pub fn configure(args: &[std::ffi::OsString]) {
     let mode = std::env::var("AXIOM_PROGRESS").unwrap_or_default();
     ENABLED.store(
-        !args.iter().any(|a| a == "--json") && mode != "off",
+        (!args.iter().any(|a| a == "--json")
+            || (std::env::var("AXIOM_CLI_COMPOSITE_UPDATE").as_deref() == Ok("1")
+                && std::env::var("AXIOM_CLI_PROGRESS_RELAY").as_deref() == Ok("1")))
+            && mode != "off",
         Ordering::Relaxed,
     );
     TERMINAL.store(
@@ -124,6 +127,10 @@ impl Progress {
                     {
                         return;
                     }
+                    // A measured first transfer frame can include a meaningful rate/ETA.
+                    if file.is_some() && finish.is_none() && start.elapsed().as_secs_f64() < 1.0 {
+                        continue;
+                    }
                     let elapsed = start.elapsed().as_secs_f64();
                     let status = match finish {
                         Some(true) => "Done",
@@ -144,8 +151,13 @@ impl Progress {
                             .unwrap_or(0);
                         transfer(&label, &detail, bytes, *total, elapsed, finish)
                     } else {
-                        let heading = format!("{label} [{status}] elapsed {:.0}s", elapsed);
-                        (heading.clone(), detail.clone(), heading)
+                        let heading = format!("{label} [{status}]");
+                        let inline = if terminal || finish.is_some() {
+                            format!("{heading} elapsed {elapsed:.0}s")
+                        } else {
+                            heading.clone()
+                        };
+                        (heading, detail.clone(), inline)
                     };
                     let mut stderr = std::io::stderr().lock();
                     let _ =
@@ -205,9 +217,11 @@ fn transfer(
     };
     let Some(total) = total.filter(|n| *n > 0) else {
         return (
-            format!("{label} [{status}] {mb:.1} MB received; elapsed {seconds:.0}s"),
+            format!("{label} [{status}] {bytes} bytes received"),
             format!("{detail}; total size unknown"),
-            format!("{label} [{status}] {mb:.1} MB received; elapsed {seconds:.0}s"),
+            format!(
+                "{label} [{status}] {mb:.1} MB received; total size unknown; elapsed {seconds:.0}s"
+            ),
         );
     };
     let complete = finish == Some(true) && bytes == total;
@@ -255,6 +269,21 @@ pub fn capture(command: &mut Command, label: &str, detail: &str) -> std::io::Res
     result
 }
 
+/// The verified install worker owns live stage diagnostics; its JSON stdout stays captured.
+/// Relaying is opt-in only for a human update's apply worker, never its dry-run or JSON caller.
+pub fn install_worker(command: &mut Command, applying: bool) -> std::io::Result<Output> {
+    let live = applying && ENABLED.load(Ordering::Relaxed);
+    if live {
+        command.env("AXIOM_CLI_PROGRESS_RELAY", "1");
+        command.stderr(std::process::Stdio::inherit());
+    } else {
+        command.env("AXIOM_PROGRESS", "off");
+        command.env_remove("AXIOM_CLI_PROGRESS_RELAY");
+        command.stderr(std::process::Stdio::piped());
+    }
+    command.output()
+}
+
 pub fn status(command: &mut Command, label: &str, detail: &str) -> std::io::Result<ExitStatus> {
     let progress = Progress::waiting(label, detail);
     let result = command.status();
@@ -283,10 +312,7 @@ mod tests {
             .render(&mut output, "", "", "Working 9s", false)
             .unwrap();
         renderer.render(&mut output, "", "", "Done", true).unwrap();
-        assert_eq!(
-            output,
-            b"Preparing runtime\n\rWorking 100s\rWorking 9s  \rDone      \n"
-        );
+        assert_eq!(output, b"\rWorking 100s\rWorking 9s  \rDone      \n");
     }
     #[test]
     fn failed_terminal_frame_finishes_before_following_diagnostics() {
@@ -306,14 +332,46 @@ mod tests {
         let mut output = Vec::new();
         let mut renderer = Renderer::new(false, "Ignored".to_string());
         renderer
-            .render(&mut output, "Working", "Preparing runtime", "", false)
+            .render(
+                &mut output,
+                "Working",
+                "Preparing runtime",
+                "Working",
+                false,
+            )
             .unwrap();
         renderer
-            .render(&mut output, "Done", "Prepared runtime", "", true)
+            .render(&mut output, "Done", "Prepared runtime", "Done", true)
+            .unwrap();
+        assert_eq!(output, b"Working\nDone\n");
+    }
+    #[test]
+    fn redirected_heartbeats_are_coalesced_but_failure_is_retained() {
+        let mut output = Vec::new();
+        let mut renderer = Renderer::new(false, String::new());
+        for _ in 0..30 {
+            renderer
+                .render(
+                    &mut output,
+                    "Preparing [Working]",
+                    "",
+                    "Preparing [Working]",
+                    false,
+                )
+                .unwrap();
+        }
+        renderer
+            .render(
+                &mut output,
+                "Preparing [Failed]",
+                "",
+                "Preparing [Failed] elapsed 30s",
+                true,
+            )
             .unwrap();
         assert_eq!(
             output,
-            b"Working\n  Preparing runtime\nDone\n  Prepared runtime\n"
+            b"Preparing [Working]\nPreparing [Failed] elapsed 30s\n"
         );
     }
     #[test]

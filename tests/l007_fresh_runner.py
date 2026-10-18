@@ -115,7 +115,7 @@ def main() -> int:
          check=lambda t: "up to date" in t)
     installed_json = root / "installed.json"
     step("update one-liner with an installed release (runs its axiom-cli update)", update_oneliner,
-         check=lambda t: "running its axm update" in t and "up to date" in t)
+         check=lambda t: "preparing the verified" in t and "up to date" in t)
     before = sha(installed_json)
     step("update one-liner refuses a leftover AXIOM_ENGINE_BIN", update_oneliner, expect=1,
          check=lambda t: "leftover variables" in t and "AXIOM_ENGINE_BIN" in t,
@@ -131,7 +131,7 @@ def main() -> int:
     current.parent.mkdir(parents=True, exist_ok=True)
     current.write_text("{}", encoding="utf-8")
     step("update one-liner on a 0.1.2 bootstrap layout takes the verified install hand-off", update_oneliner,
-         check=lambda t: "bootstrap root" in t and "installed: generation" in t)
+         check=lambda t: "bootstrap root" in t and "Installed Axiom in" in t)
     steps.append({"step": "legacy update recorded installed.json", "passed": installed_json.is_file()})
     shutil.rmtree(legacy_root, ignore_errors=True)
     step("reinstall with the same one-liner", oneliner)

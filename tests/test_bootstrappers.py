@@ -187,7 +187,7 @@ class UpdateShBehaviourTests(unittest.TestCase):
             self.assertIn("leftover variables", result.stderr)
             self.assertIn(name + "=/somewhere", result.stderr)
 
-    def test_current_layout_runs_its_own_axm_update(self):
+    def test_current_layout_requires_verified_worker_before_any_update(self):
         root = self.home / "data" / "axiom"
         (root / "bin").mkdir(parents=True)
         (root / "installed.json").write_text("{}", encoding="utf-8")
@@ -197,9 +197,9 @@ class UpdateShBehaviourTests(unittest.TestCase):
         (root / "bin/graphd-engine").mkdir()
         (root / "bin/graphd-engine/axiom").write_bytes(b"owned current layout fixture")
         result = self.run_update("--yes")
-        self.assertIn("running its axm update", result.stdout)
-        self.assertIn("stub axm update --yes", result.stdout)
-        self.assertEqual(result.returncode, 7, "the installed CLI's exit code is passed through")
+        self.assertIn("preparing the verified", result.stdout)
+        self.assertNotIn("stub axm update", result.stdout)
+        self.assertEqual(result.returncode, 1, "unavailable verified worker must not run the old updater")
 
     def test_canonical_command_root_wins_over_a_separate_legacy_installation(self):
         import os
@@ -216,8 +216,11 @@ class UpdateShBehaviourTests(unittest.TestCase):
                 (root / "bin/graphd-engine/axiom").write_bytes(b"owned current layout fixture")
             roots.append(str(root / "bin"))
         result = self.run_update("--yes", extra={"PATH": os.pathsep.join([*roots, os.environ.get("PATH", "")])})
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("current-root update --yes", result.stdout)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        # Git sh can render a Windows temp directory as /tmp/... rather than C:\... .
+        selected = result.stdout.replace("\\", "/")
+        self.assertIn(self.home.name + "/current; preparing the verified", selected)
+        self.assertNotIn(self.home.name + "/legacy", selected)
         self.assertNotIn("legacy-root", result.stdout)
 
     def test_older_command_layout_preserves_it_on_bootstrap_refusal(self):
@@ -231,7 +234,7 @@ class UpdateShBehaviourTests(unittest.TestCase):
         before = self.tree()
         result = self.run_update("--yes")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("older command layout", result.stdout)
+        self.assertIn("preparing the verified", result.stdout)
         self.assertNotIn("unexpected legacy updater", result.stdout)
         if sys.platform == "win32":
             self.assertIn("unsupported platform", result.stderr)

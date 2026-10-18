@@ -301,7 +301,22 @@ fn install(request: InstallRequest, json: bool) -> Result<Report, Refusal> {
                                 .and_then(Json::as_text)
                                 .unwrap_or("unknown")
                                 .to_string(),
-                            crate::host_skills::apply_approved(plan),
+                            crate::progress::during(
+                                &format!(
+                                    "Setting up {} skills",
+                                    plan.get("host").and_then(Json::as_text).unwrap_or("agent")
+                                ),
+                                "Registering the verified skills bundle",
+                                || {
+                                    let stage = crate::host_skills::apply_approved(plan);
+                                    if stage.code() == 0 {
+                                        Ok(stage)
+                                    } else {
+                                        Err(stage)
+                                    }
+                                },
+                            )
+                            .unwrap_or_else(|stage| stage),
                         )
                     })
                     .collect(),
@@ -553,9 +568,8 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
         }
     }
     report.line(format!(
-        "installed: generation {} recorded in {}",
-        recorded.current_generation,
-        request.install_root.join(state::INSTALLED_FILE).display()
+        "Installed Axiom in {}",
+        request.install_root.display()
     ));
     report.detail(
         "staging_root",
@@ -1659,22 +1673,12 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
         if plan.get("plugin_enabled").and_then(Json::as_bool) == Some(false) {
             lines.push(format!("Agent setup: {host} plugin is disabled; preserve its settings and content without refreshing or enabling it."));
         } else {
-            lines.push(format!("Agent setup: register verified Axiom skills in {host}; start a new agent session after installation. MCP query readiness is separate."));
+            lines.push(format!("Agent skills: {host} (register verified bundle)"));
         }
     }
     let host = set.plan.get("host").and_then(Json::as_text).unwrap_or("?");
-    lines.push(format!(
-        "target: {host} (evidence target {})",
-        target::evidence_target_for(host)
-    ));
-    lines.push(format!(
-        "release set: {} (sha256 {})",
-        set.manifest_source, set.manifest_sha256
-    ));
-    lines.push(format!(
-        "channel: {} published={}",
-        set.manifest.channel, set.manifest.published
-    ));
+    lines.push(format!("target: {host}"));
+    lines.push(format!("channel: {}", set.manifest.channel));
     if let Some(components) = set.plan.get("components").and_then(Json::as_array) {
         for entry in components {
             let Some(object) = entry.as_object() else {
@@ -1694,7 +1698,7 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
                 object
                     .get("artifact")
                     .and_then(Json::as_object)
-                    .map(|_| "artifact declared")
+                    .map(|_| "component")
                     .unwrap_or("no artifact for this host")
             };
             lines.push(format!("  {component} {version} - {artifact}"));
@@ -1721,7 +1725,7 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
         .filter_map(|item| item.get("artifact")?.get("size_bytes")?.as_int())
         .sum();
     lines.push(format!(
-        "size: {:.1} MB of verified artifacts",
+        "component size: {:.1} MB (runtime and skills are additional)",
         bytes as f64 / 1_000_000.0
     ));
     if let Some(block) = set.plan.get("path_change") {

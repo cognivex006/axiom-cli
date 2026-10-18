@@ -463,10 +463,6 @@ fn host(adapter: Adapter, args: &[&str]) -> Result<Json, Refusal> {
                 "Agent CLI is unavailable; install a supported Agent client first",
             )
         })?;
-    let progress = crate::progress::Progress::waiting(
-        &format!("Waiting for {}", adapter.label()),
-        "Waiting for the native Agent client response; registration and discovery are separate",
-    );
     let out = child.stdout.take().unwrap();
     let err = child.stderr.take().unwrap();
     let output = std::thread::spawn(move || {
@@ -505,7 +501,7 @@ fn host(adapter: Adapter, args: &[&str]) -> Result<Json, Refusal> {
     if !status.success() {
         return Err(Refusal::not_ready("host_command_failed", format!("Agent plugin command failed (exit {}); retained content and pending recovery record were kept", status.code().unwrap_or(8))));
     }
-    let result = if words.iter().any(|a| a == "--json") {
+    if words.iter().any(|a| a == "--json") {
         if bytes.len() > 4_194_304 {
             return Err(invalid("host output exceeds budget"));
         }
@@ -514,9 +510,7 @@ fn host(adapter: Adapter, args: &[&str]) -> Result<Json, Refusal> {
             .and_then(|result| adapter.normalize(args, result))
     } else {
         Ok(Json::Null)
-    };
-    progress.finish(result.is_ok());
-    result
+    }
 }
 
 fn marketplace(adapter: Adapter) -> Result<Option<PathBuf>, Refusal> {

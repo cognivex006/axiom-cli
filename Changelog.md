@@ -4,6 +4,12 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Bug Fixes
+
+- Show the same live install/update stages on Windows and Linux without repeated host probes or elapsed-only logs.
+- Simplify installation plans and host results while retaining complete JSON diagnostics and transactional approval/rollback.
+- Verify the current updater before upgrading existing installations.
+
 ## 0.1.12
 
 ### Bug Fixes

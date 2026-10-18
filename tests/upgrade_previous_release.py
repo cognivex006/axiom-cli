@@ -118,7 +118,11 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
         sentinel.write_text("user project data")
         try:
             command = [shutil.which("pwsh") or "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
-            run("verified current updater migrates previous release", command)
+            upgraded = run("verified current updater migrates previous release", command)
+            if not any(phase in upgraded.stderr for phase in ["Preparing MCP runtime", "Staging components", "Applying components"]):
+                raise ValueError("update hid its actual install stages: " + upgraded.stderr)
+            if "Installing new release [Working]" in upgraded.stderr or "updater active; elapsed" in upgraded.stderr:
+                raise ValueError("wrapper heartbeat obscured the worker stages")
             axm = root / "bin" / ("axm" + suffix)
             version = run("current component versions", [axm, "version"]).stdout
             if version.count(VERSION) != 4:
