@@ -76,7 +76,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
             raise ValueError("previous release archive digest mismatch")
         previous = work / "previous"
         composer.unpack(old_archive, previous)
-        env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
+        env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM") and (not suffix or k.upper() != "PSMODULEPATH")}
         env.update(HOME=str(home), USERPROFILE=str(home), XDG_DATA_HOME=str(data), LOCALAPPDATA=str(data),
                    APPDATA=str(home / "roaming"), CODEX_HOME=str(home / ".codex"), CLAUDE_CONFIG_DIR=str(home / ".claude"),
                    AXIOM_CLI_TEST_USER_ENV_KEY=registry_key)
@@ -139,7 +139,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
         sentinel = workspace / "notes.txt"
         sentinel.write_text("user project data")
         try:
-            command = [Path(env["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
+            command = [Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
             upgraded = run("verified current updater migrates previous release", command)
             if not any(phase in upgraded.stderr.casefold() for phase in ["preparing the pinned python runtime", "staging verified axiom", "applying components with the verified graph engine"]):
                 raise ValueError("update hid its actual install stages: " + upgraded.stderr)
