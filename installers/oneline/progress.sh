@@ -142,7 +142,7 @@ ux_fetch() {
         ux_dispose
         # Wget headers are remote text, never terminal instructions. Keep UTF-8
         # diagnostics and newlines/tabs, remove C0/C1 and bidi formatting controls.
-        LC_ALL=C tr -cd '\11\12\40-\377' <"$tmp/download.error" |
+        LC_ALL=C tr -cd '\11\12\40-\176\200-\377' <"$tmp/download.error" |
             LC_ALL=C awk '{gsub(/\302[\200-\237]|\342\200[\213\216\217\252-\256]|\342\201[\246-\251]/, ""); print}' >&2
     fi
     return "$ux_result"

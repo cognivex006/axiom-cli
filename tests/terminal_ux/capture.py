@@ -82,10 +82,11 @@ class Capture:
             os.write(self.master, data)
 
     def until(self, needle, timeout=30):
+        needles = needle if isinstance(needle, tuple) else (needle,)
         deadline = time.monotonic() + timeout
-        while needle not in self.raw:
+        while not any(item in self.raw for item in needles):
             if time.monotonic() >= deadline or not self.alive():
-                raise AssertionError((needle, bytes(self.raw).decode(errors="replace")))
+                raise AssertionError((needle, bytes(self.raw[-4096:]).decode(errors="replace")))
             time.sleep(0.025)
 
     def resize(self, columns, rows=24):

@@ -77,11 +77,13 @@ def verify(cli, out):
                     env.pop("CI", None); env["TERM"] = "xterm-256color"
                     c = Capture(words, env=env, cwd=home)
                     try:
-                        c.until(b"50%", timeout=15)
+                        # curl can retain its final output buffer while the peer
+                        # stalls: visible filesystem bytes are 49%, not yet 50%.
+                        c.until((b"49%", b"50%"), timeout=15)
                         assert c.alive()
                         time.sleep(.5)
                         frames = activity_frames(c.raw)
-                        transfer = [f for f in frames if any("50%" in text for _, text in f["lines"])]
+                        transfer = [f for f in frames if any("49%" in text or "50%" in text for _, text in f["lines"])]
                         assert transfer and all(len(f["lines"]) == 2 for f in transfer), transfer
                         assert len({text[0] for f in transfer for _, text in f["details"]}) >= 2
                         observed = True; released.set()
@@ -89,6 +91,7 @@ def verify(cli, out):
                     finally:
                         released.set()
                         if c.alive(): c.close()
+                        c.save(out.parent / (out.stem + "-frames"), mode)
                     stdout = ""; stderr = bytes(c.raw).decode(errors="replace")
                     assert "100%" not in stderr and not c.screen.cursor.hidden
                 else:
