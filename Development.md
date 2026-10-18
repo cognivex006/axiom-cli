@@ -128,6 +128,10 @@ script, bind the candidate's embedded source revision and run native PS5.1 on
 Windows. Private client profiles and registry keys protect the operator's state;
 an explicit elevated fixture allowance is reported and never counts as a
 non-elevated-user check. Candidate provenance is distinguished from publication.
+Linux/macOS runtime provisioning verifies exact component, version and source
+through `axmp version --json`; human version wording is not a machine interface.
+Run `python -m unittest tests.test_runtime_version_protocol -v` for protocol
+acceptance and malformed/wrong-identity refusals on both provisioners.
 Borrowed PowerShell `-NoExit` fixtures use ConPTY and type `exit` only after the
 caller has returned, rather than preloading a pipe. Retain their raw console
 states on failure. Native PS5.1 checks discard inherited PowerShell 7 module paths

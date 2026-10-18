@@ -68,6 +68,7 @@ jobs:
           python release/check_public_docs.py
           python -m unittest tests.test_public_docs tests.test_release_012 -v
           python -m unittest tests.test_windows_runtime_recovery -v
+          python -m unittest tests.test_runtime_version_protocol -v
       - name: Required owner Rust checks
         shell: bash
         run: |

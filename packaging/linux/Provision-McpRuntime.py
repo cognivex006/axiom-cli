@@ -102,6 +102,24 @@ def command(argv: list[str], env: dict[str, str]) -> str:
     return result.stdout
 
 
+def verify_entrypoint(launcher: Path, env: dict[str, str], version: str, revision: str) -> None:
+    output = command(
+        [str(launcher), "version", "--json"],
+        {**env, "AXIOM_MCP_BUILD_REVISION": revision},
+    )
+    try:
+        identity = json.loads(output)
+    except ValueError as error:
+        raise ValueError("installed entrypoint version response is not valid JSON") from error
+    if (
+        not isinstance(identity, dict)
+        or identity.get("component") != "axiom-mcp"
+        or identity.get("version") != version
+        or identity.get("build_revision") != revision
+    ):
+        raise ValueError("installed entrypoint reports the wrong version or source")
+
+
 def owned_version(root: Path, key: str) -> Path:
     if not re.fullmatch(r"[0-9a-f]{24}", key):
         raise ValueError("invalid runtime generation")
@@ -247,15 +265,7 @@ def provision(args: argparse.Namespace) -> dict:
         )
         runtime_bin = version / "venv" / "bin"
         launcher = runtime_bin / ("axmp" if (runtime_bin / "axmp").exists() else "axiom-mcp")
-        output = command(
-            [str(launcher), "version"],
-            {**env, "AXIOM_MCP_BUILD_REVISION": args.source_revision},
-        )
-        if (
-            "version: " + args.version not in output
-            or "build_revision: " + args.source_revision not in output
-        ):
-            raise ValueError("installed entrypoint reports the wrong version or source")
+        verify_entrypoint(launcher, env, args.version, args.source_revision)
         new = {
             "generation": key,
             "version": args.version,

@@ -13,6 +13,7 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 - Preserve confirmation input, verified updater execution, exact failure codes and rollback.
 - Report MCP graph readiness separately from installation health in `axm doctor`.
 - Simplify installation plans and host results while retaining complete JSON diagnostics.
+- Verify MCP runtime versions through structured output so Linux and macOS installation remains compatible with concise command text.
 
 ## 0.1.12
 
