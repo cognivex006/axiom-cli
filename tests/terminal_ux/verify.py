@@ -108,8 +108,30 @@ def verify(probe, out):
             if mode == "json": argv.append("--json")
             if mode == "ci": env["CI"] = "1"
             if mode == "dumb": env["TERM"] = "dumb"
+            transport_negotiation = False
             # One redirected stream must disable live output even if the other is a PTY.
-            if mode in ["stdout-only", "stderr-only"] and os.name != "nt":
+            if mode in ["stdout-only", "stderr-only"] and os.name == "nt":
+                target = work / (mode + ".log")
+                c = Capture([str(probe), "--redirect-stdout" if mode == "stdout-only" else "--redirect-stderr"], env=dict(env, AXIOM_UX_REDIRECT_FILE=str(target)), cwd=work)
+                try:
+                    code = c.wait(15)
+                finally:
+                    c.save(out.parent / (out.stem + "-frames"), mode)
+                    if c.alive(): c.close()
+                machine = target.read_bytes()
+                assert b"\x1b" not in machine, (mode, machine)
+                terminal = bytes(c.raw)
+                # ConPTY itself emits a leading capability/focus/Win32-input
+                # negotiation, also reproduced with plain cmd echo (no Axiom).
+                # Never strip arbitrary ANSI, a middle sequence, or file output.
+                preambles = [b"\x1b[1t", b"\x1b[c", b"\x1b[?1004h", b"\x1b[?9001h"]
+                while any(terminal.startswith(prefix) for prefix in preambles):
+                    prefix = next(p for p in preambles if terminal.startswith(p))
+                    terminal = terminal[len(prefix):]
+                    transport_negotiation = True
+                data = terminal + machine
+                assert code == 0
+            elif mode in ["stdout-only", "stderr-only"]:
                 import pty
                 master, slave = pty.openpty()
                 try:
@@ -121,9 +143,9 @@ def verify(probe, out):
             else:
                 result = subprocess.run(argv, env=env, capture_output=True, timeout=15)
                 data = result.stdout + result.stderr
-            assert result.returncode == 0 and b"\x1b" not in data and b"elapsed" not in data, (mode, data)
+            assert (code if os.name == "nt" and mode in ["stdout-only", "stderr-only"] else result.returncode) == 0 and b"\x1b" not in data and b"elapsed" not in data, (mode, data)
             if mode in ["json", "off"]: assert data == b'{"verified":true}\n' or data == b'{"verified":true}\r\n', data
-            cases.append(dict(case=mode, exit_code=0, controls_absent=True, single_stream_tty_exercised=(os.name != "nt" and mode in ["stdout-only", "stderr-only"])))
+            cases.append(dict(case=mode, exit_code=0, controls_absent=True, single_stream_tty_exercised=(mode in ["stdout-only", "stderr-only"]), conpty_transport_preamble=transport_negotiation))
     return dict(passed=True, platform=sys.platform, cases=cases, scope="Production Rust module in a source-built fixture; not release upgrade or GUI acceptance")
 
 

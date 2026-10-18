@@ -1,0 +1,24 @@
+# QA policy for the two exact terminal-support dependencies; not a release waiver.
+[graph]
+targets = [
+  { triple = "x86_64-pc-windows-msvc" },
+  { triple = "x86_64-unknown-linux-gnu" },
+  { triple = "x86_64-apple-darwin" },
+]
+
+[advisories]
+yanked = "deny"
+
+[licenses]
+private = { ignore = true }
+confidence-threshold = 0.9
+allow = ["MIT", "Apache-2.0"]
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

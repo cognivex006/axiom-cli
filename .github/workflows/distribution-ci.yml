@@ -14,6 +14,27 @@ on:
 permissions:
   contents: read
 jobs:
+  dependency-audit:
+    name: Terminal dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the pinned audit parser
+        run: |
+          rustup toolchain install 1.88.0 --profile minimal
+          cargo +1.88.0 install cargo-deny --version 0.20.2 --locked --root "$RUNNER_TEMP/audit-tools"
+      - name: Audit pinned terminal dependencies
+        run: |
+          "$RUNNER_TEMP/audit-tools/bin/cargo-deny" --locked --config .delivery/dependency-audit.toml check 2>&1 | tee "$RUNNER_TEMP/dependency-audit.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terminal-dependency-audit-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/dependency-audit.log
+            .delivery/dependency-audit.toml
+            Cargo.lock
   native:
     name: native (${{ matrix.platform }})
     outputs:
@@ -185,7 +206,7 @@ jobs:
     # the ADR-0035 / L-013 update one-liner (installed, leftover variable, nothing installed, 0.1.2 layout).
     # ADR-0034 / M-001 owns the macOS Intel candidate lane separately from L.
     name: one-line install (${{ matrix.platform }})
-    needs: native
+    needs: [native, dependency-audit]
     if: needs.native.outputs.composed == 'true'
     strategy:
       fail-fast: false

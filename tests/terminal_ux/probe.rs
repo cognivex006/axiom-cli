@@ -4,6 +4,26 @@
 mod progress;
 fn main() {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
+    if args
+        .iter()
+        .any(|a| a == "--redirect-stdout" || a == "--redirect-stderr")
+    {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(std::env::var_os("AXIOM_UX_REDIRECT_FILE").unwrap())
+            .unwrap();
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .args(["install", "--transfer"])
+            .stdin(std::process::Stdio::null());
+        if args.iter().any(|a| a == "--redirect-stdout") {
+            command.stdout(file).stderr(std::process::Stdio::inherit());
+        } else {
+            command.stderr(file).stdout(std::process::Stdio::inherit());
+        }
+        std::process::exit(command.status().unwrap().code().unwrap_or(8));
+    }
     #[cfg(windows)]
     if args.iter().any(|a| a == "--inherited-ignore") {
         #[link(name = "kernel32")]

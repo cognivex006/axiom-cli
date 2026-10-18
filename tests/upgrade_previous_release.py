@@ -31,7 +31,7 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify(artifacts, lane, output, previous_version=PREVIOUS):
+def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fixture=False):
     extension = "zip" if lane == "windows-x64" else "tar.gz"
     suffix = ".exe" if lane == "windows-x64" else ""
     current = artifacts / f"axiom-{VERSION}-{lane}.{extension}"
@@ -59,6 +59,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
         composer.unpack(old_archive, previous)
         env = {k: v for k, v in os.environ.items() if not k.upper().startswith("AXIOM")}
         env.update(HOME=str(home), USERPROFILE=str(home), XDG_DATA_HOME=str(data), LOCALAPPDATA=str(data),
+                   APPDATA=str(home / "roaming"), CODEX_HOME=str(home / ".codex"), CLAUDE_CONFIG_DIR=str(home / ".claude"),
                    AXIOM_CLI_TEST_USER_ENV_KEY=registry_key)
         # Bootstrap discovery prefers commands on PATH. Keep it inside this fixture even
         # when the developer already has a real installation or an earlier CI case ran.
@@ -66,7 +67,8 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
         entries = [entry for entry in env.get("PATH", "").split(os.pathsep)
                    if entry and not any((Path(entry) / name).is_file() for name in names)]
         env["PATH"] = os.pathsep.join([str(root / "bin"), *entries])
-        if suffix and os.environ.get("GITHUB_ACTIONS") == "true":
+        elevation_seam = bool(suffix and (os.environ.get("GITHUB_ACTIONS") == "true" or allow_elevated_fixture))
+        if elevation_seam:
             env["AXIOM_CLI_TEST_ALLOW_ELEVATED"] = "1"
 
         def run(name, argv, expected_code=0):
@@ -119,7 +121,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
         try:
             command = [shutil.which("pwsh") or "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", script, "-Yes"] if suffix else ["sh", script, "--yes"]
             upgraded = run("verified current updater migrates previous release", command)
-            if not any(phase in upgraded.stderr for phase in ["Preparing MCP runtime", "Staging components", "Applying components"]):
+            if not any(phase in upgraded.stderr.casefold() for phase in ["preparing the pinned python runtime", "staging verified axiom", "applying components with the verified graph engine"]):
                 raise ValueError("update hid its actual install stages: " + upgraded.stderr)
             if "Installing new release [Working]" in upgraded.stderr or "updater active; elapsed" in upgraded.stderr:
                 raise ValueError("wrapper heartbeat obscured the worker stages")
@@ -180,7 +182,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS):
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({"platform": lane, "previous_version": previous_version, "version": VERSION,
                                  "execution": "native", "candidate_sha256": sha(current), "cases": cases,
-                                 "passed": True, "scope": "Actual immutable previous release to exact checked candidate, then rollback; isolated user directories and Windows test registry key"}, indent=2) + "\n")
+                                 "passed": True, "elevation_test_seam_used": elevation_seam, "scope": "Actual immutable previous release to exact checked candidate, then rollback; isolated user directories and Windows test registry key"}, indent=2) + "\n")
 
 
 if __name__ == "__main__":
@@ -189,5 +191,6 @@ if __name__ == "__main__":
     parser.add_argument("--platform", required=True, choices=["windows-x64", "linux-x64", "macos-x64"])
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7", "0.1.8", "0.1.9", "0.1.10", "0.1.11", "0.1.12"])
+    parser.add_argument("--allow-elevated-fixture", action="store_true", help="allow only this isolated Windows fixture to use the existing CI elevation seam; not non-elevated-user evidence")
     args = parser.parse_args()
-    verify(args.artifacts.resolve(), args.platform, args.out.resolve(), args.previous)
+    verify(args.artifacts.resolve(), args.platform, args.out.resolve(), args.previous, args.allow_elevated_fixture)

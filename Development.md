@@ -81,6 +81,10 @@ process-family ownership; reader failures and cancellation close/reap those
 children. Root MCP diagnostics have a 15-second timeout. No progress-only timeout
 is added to installation transactions. The Unix ABI crate and Unicode width crate
 are exact Cargo pins and require native checks and audit alongside renderer changes.
+Audit the terminal dependency graph with cargo-deny 0.20.2 using
+`cargo-deny --locked --config .delivery/dependency-audit.toml check`. The QA policy
+checks advisories, exact-source constraints and MIT/Apache dependency licenses,
+while excluding this unpublished proprietary package from dependency licensing.
 
 Windows workers are created suspended, assigned to the retained job and resumed
 before any worker user code can launch descendants; see Microsoft's
