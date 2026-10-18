@@ -36,14 +36,11 @@ def collect(root, source, output):
         lanes.add(lane)
         for p in proof.parent.iterdir():
             if p.is_file():
-                selected.append(
-                    (
-                        p,
-                        lane + "-native-proof.json"
-                        if p.name == "native-proof.json"
-                        else p.name,
-                    )
-                )
+                if p.name in {"native-proof.json", "progress-parity.json"}:
+                    name = lane + "-" + p.name
+                else:
+                    name = p.name
+                selected.append((p, name))
     if lanes != {"windows-x64", "linux-x64", "macos-x64"}:
         raise ValueError("all three native lanes required")
     if len({n for _, n in selected}) != len(selected):

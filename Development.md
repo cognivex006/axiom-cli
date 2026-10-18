@@ -143,3 +143,14 @@ Feature pushes without an owner vector run the source/native visual checks and
 record `source_only: true`; composition and previous-release jobs are explicitly
 skipped and remain unverified. Supplying the vector enables those gates. Native
 feature CI success alone is never distribution/release acceptance.
+
+The shell observer redirects stderr before opening a possibly not-yet-created
+archive. The display reads all stage fields from one opened snapshot, avoiding
+cross-phase reads and unnecessary per-frame forks. Native shell regressions delay
+archive creation for both curl and wget across fresh, existing and legacy paths.
+The release collector prefixes native proof and progress parity filenames with
+their platform while retaining exact input bytes; other filename collisions fail.
+Windows cancellation fixtures separately bound host startup at 60 seconds and
+wait for the actual phase for 30 seconds after the wrapper starts. The original
+phase/cancellation assertions remain, and failing captures are saved in finally.
+These are QA budgets, not installation transaction timeouts.

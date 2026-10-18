@@ -32,7 +32,7 @@ ux_observe() {
         fi
         if [ -n "$ux_path" ]; then
             # File/header observation can stall; it never owns the display timer.
-            wc -c <"$ux_path" >"$ux_state/progress.bytes" 2>/dev/null &
+            wc -c 2>/dev/null <"$ux_path" >"$ux_state/progress.bytes" &
             ux_observer_child=$!
             ux_bytes=''
             if wait "$ux_observer_child"; then IFS= read -r ux_bytes <"$ux_state/progress.bytes" || :; fi
@@ -91,14 +91,14 @@ ux_loop() {
             set -- $ux_size
             [ "$#" = 2 ] || break
             ux_width=$(($2 - 1))
+            # Read one atomic snapshot, without mixing phases across sed forks.
+            ux_top=''; ux_text=''; ux_path=''
+            { IFS= read -r ux_top; IFS= read -r ux_text; IFS= read -r ux_path; } <"$ux_state/progress.state" || :
             if [ "$ux_width" -ge 31 ] && [ "$1" -ge 3 ]; then
                 ux_anchor=''
                 if [ "$ux_reserved" = 1 ] && { [ "${ux_last_width:-}" != "$ux_width" ] || [ "${ux_last_height:-}" != "$1" ]; }; then ux_anchor='\r\0337'; fi
                 ux_last_width=$ux_width
                 ux_last_height=$1
-                ux_top=$(sed -n '1p' "$ux_state/progress.state")
-                ux_text=$(sed -n '2p' "$ux_state/progress.state")
-                ux_path=$(sed -n '3p' "$ux_state/progress.state")
                 ux_percent=-1
                 if [ -n "$ux_path" ] && [ -f "$ux_state/progress.measure" ]; then
                     { IFS= read -r ux_observed; IFS= read -r ux_sample; } <"$ux_state/progress.measure" || :
@@ -124,7 +124,6 @@ ux_loop() {
                 ux_frame=$(((ux_frame + 1) % 120000))
             else
                 ux_clear
-                ux_text=$(sed -n '2p' "$ux_state/progress.state")
                 if [ "${ux_fallback:-}" != "$ux_text" ]; then printf 'axiom %s: %s\n' "$AXIOM_ACTION" "$ux_text" >&2; ux_fallback=$ux_text; fi
             fi
         fi

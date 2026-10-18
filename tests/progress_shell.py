@@ -75,9 +75,13 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                         phase = "Extracting" if program == "tar" else "Verifying"
                         (tools / program).write_text(f'#!/bin/sh\nif [ "${{AXIOM_UX_DELAY_PHASE:-}}" = "{phase}" ]; then sleep 30; else sleep .4; fi\nexec "{resolved}" "$@"\n')
                         (tools / program).chmod(0o755)
+                resolved_fetcher = shutil.which(fetcher)
+                (tools / fetcher).unlink()
+                (tools / fetcher).write_text('#!/bin/sh\nif [ -n "${AXIOM_UX_FETCH_DELAY:-}" ]; then sleep .6; fi\nexec "' + resolved_fetcher + '" "$@"\n')
+                (tools / fetcher).chmod(0o755)
                 for branch in ["install", "existing", "legacy"]:
-                    for mode in ["known", "unknown", "slow-measurement", "hash-error", "network-error", "child-seven", "cancel", "cancel-verify", "cancel-extract", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb"]:
-                        if branch != "install" and mode not in ["known", "unknown", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb", "cancel", "cancel-verify", "cancel-extract"]: continue
+                    for mode in ["known", "delayed-open", "unknown", "slow-measurement", "hash-error", "network-error", "child-seven", "cancel", "cancel-verify", "cancel-extract", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb"]:
+                        if branch != "install" and mode not in ["known", "delayed-open", "unknown", "plain", "resize", "piped-script", "redirected", "ci", "off", "dumb", "cancel", "cancel-verify", "cancel-extract"]: continue
                         home = work / (fetcher + "-" + branch + "-" + mode); home.mkdir()
                         if branch == "existing":
                             root = home / "data/axiom"; (root / "bin").mkdir(parents=True)
@@ -97,6 +101,7 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                         env = {k: v for k, v in os.environ.items() if not k.startswith("AXIOM_") and k not in ["CI", "NO_COLOR"]}
                         env.update(PATH=str(tools), HOME=str(home), XDG_DATA_HOME=str(home / "data"), TERM="dumb" if mode == "dumb" else "xterm-256color", AXIOM_PROGRESS=mode if mode in ["plain", "off"] else "auto")
                         if mode == "ci": env["CI"] = "1"
+                        if mode == "delayed-open": env["AXIOM_UX_FETCH_DELAY"] = "1"
                         if mode == "redirected":
                             result = subprocess.run(["/bin/sh", str(script), "--yes"], env=env, cwd=home, input=b"Y\n", capture_output=True, timeout=25)
                             assert result.returncode == 0 and b"\x1b" not in result.stdout + result.stderr, result
@@ -144,6 +149,7 @@ exit "${AXIOM_UX_FIXTURE_EXIT:-0}"
                         assert not c.screen.cursor.hidden, (mode, bytes(c.raw))
                         assert b"100%" not in c.raw
                         assert b"\x1b[2J" not in c.raw
+                        assert b"No such file or directory" not in c.raw, (fetcher, branch, mode, bytes(c.raw))
                         if mode in ["plain", "off", "ci", "dumb"]:
                             assert b"\x1b" not in c.raw and b"elapsed" not in c.raw
                             stage_records = re.findall(rb"axiom (?:install|update): (?:downloading|verifying|extracting)", bytes(c.raw))

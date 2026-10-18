@@ -142,15 +142,17 @@ Write-Output 'fixture complete'
                         block = "function Get-FileHash { param($LiteralPath,$Algorithm) Start-Sleep -Seconds 10; Microsoft.PowerShell.Utility\\Get-FileHash @PSBoundParameters }\n"
                     elif phase == "Extracting":
                         block = "function Expand-Archive { param($LiteralPath,$DestinationPath) Start-Sleep -Seconds 10; Microsoft.PowerShell.Archive\\Expand-Archive @PSBoundParameters }\n"
-                    wrapper.write_text(block + "& '" + str(target).replace("'", "''") + "' -Yes\nexit $LASTEXITCODE\n", encoding="utf-8", newline="\n")
+                    wrapper.write_text("Write-Output 'fixture-wrapper-started'\n" + block + "& '" + str(target).replace("'", "''") + "' -Yes\nexit $LASTEXITCODE\n", encoding="utf-8", newline="\n")
                     c = Capture([str(ps), "-NoProfile", "-File", str(wrapper)], env=env, cwd=home)
                     try:
+                        c.until(b"fixture-wrapper-started", timeout=60)
                         c.until(phase.encode(), timeout=30); c.send(b"\x03")
-                        code = c.wait(20); c.save(evidence, action + "-cancel-" + phase.lower())
+                        code = c.wait(20)
                     finally:
+                        c.save(evidence, action + "-cancel-" + phase.lower())
                         if c.alive(): c.close()
                     assert code == 130 and not c.screen.cursor.hidden, (action, phase, code, bytes(c.raw))
-                    cases.append(dict(case=action + "-cancel-" + phase.lower(), exit_code=code, generated_finally=True, controlled_phase_delay=phase != "Downloading"))
+                    cases.append(dict(case=action + "-cancel-" + phase.lower(), exit_code=code, generated_finally=True, controlled_phase_delay=phase != "Downloading", host_startup_budget_seconds=60, phase_wait_budget_seconds=30))
                 # IEX shares the caller's scope: failed initialization must restore
                 # its preference and leave the original error catchable.
                 wrapper.write_text("function Add-Type { throw 'controlled-renderer-init-failure' }\n$ProgressPreference='Continue'\n$caught=$null\ntry { Invoke-Expression ([IO.File]::ReadAllText('" + str(target).replace("'", "''") + "')) } catch { $caught=$_.Exception.Message }\nif ($ProgressPreference -ne 'Continue' -or $caught -notlike '*controlled-renderer-init-failure*') { throw 'initialization cleanup failed' }\nWrite-Output 'initializer-error-retained; preference-restored'\n", encoding="utf-8", newline="\n")

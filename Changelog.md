@@ -4,6 +4,11 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Bug Fixes
+
+- Keep download measurement quiet while the archive is being created and read coherent stage details without extra display-process forks.
+- Preserve platform-specific progress records when collecting native release assets.
+
 ### Chores
 
 - Align native bootstrap verification with progress on stderr and installation results on stdout.

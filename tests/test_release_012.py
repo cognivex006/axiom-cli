@@ -105,6 +105,35 @@ class ReleaseTests(unittest.TestCase):
             collector.collect(root / "inputs", "a" * 40, root / "out")
             self.assertTrue((root / "out/SHA256SUMS").is_file())
 
+    def test_progress_records_are_namespaced_without_changing_checked_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.inputs(root / "inputs")
+            expected = {}
+            for lane in ["windows-x64", "linux-x64", "macos-x64"]:
+                record = json.dumps({"fixture_platform": lane}).encode()
+                (root / "inputs" / lane / "progress-parity.json").write_bytes(record)
+                expected[lane] = record
+            before = {p.relative_to(root / "inputs").as_posix(): p.read_bytes()
+                      for p in (root / "inputs").rglob("*") if p.is_file()}
+            collector.collect(root / "inputs", "a" * 40, root / "out")
+            for lane, record in expected.items():
+                self.assertEqual((root / "out" / (lane + "-progress-parity.json")).read_bytes(), record)
+            self.assertFalse((root / "out/progress-parity.json").exists())
+            after = {p.relative_to(root / "inputs").as_posix(): p.read_bytes()
+                     for p in (root / "inputs").rglob("*") if p.is_file()}
+            self.assertEqual(before, after)
+
+    def test_unrecognized_duplicate_evidence_still_refuses_before_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.inputs(root / "inputs")
+            for lane in ["windows-x64", "linux-x64", "macos-x64"]:
+                (root / "inputs" / lane / "unrecognized.json").write_bytes(b"{}")
+            with self.assertRaisesRegex(ValueError, "duplicate asset name"):
+                collector.collect(root / "inputs", "a" * 40, root / "out")
+            self.assertFalse((root / "out").exists())
+
     def test_changed_archive_or_missing_lane_refuses_before_output(self):
         for condition in ["archive", "missing"]:
             with tempfile.TemporaryDirectory() as temporary:
