@@ -240,7 +240,9 @@ class UpdateShBehaviourTests(unittest.TestCase):
             self.assertIn("unsupported platform", result.stderr)
             self.assertNotIn("downloading v1.2.3", result.stdout)
         else:
-            self.assertIn("downloading v1.2.3", result.stdout)
+            self.assertNotIn("downloading v1.2.3", result.stdout)
+            self.assertEqual(result.stderr.count("axiom update: downloading v1.2.3"), 1)
+            self.assertNotIn("\x1b", result.stderr)
             self.assertIn("download failed", result.stderr)
         self.assertEqual(record.read_text(), "{}")
         self.assertEqual(self.tree(), before)
