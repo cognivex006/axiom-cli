@@ -87,7 +87,9 @@ def main() -> int:
                               stdin=subprocess.DEVNULL, start_new_session=True, timeout=1200)
         root = home / "data" / "axiom"
         return {"command": command, "exit_code": proc.returncode, "stdout_tail": proc.stdout[-1200:],
-                "download_markers": [line for line in proc.stdout.splitlines() if "downloading " in line],
+                "download_markers": [line for line in proc.stderr.splitlines() if "downloading " in line],
+                "stdout_has_download_progress": "downloading " in proc.stdout,
+                "stderr_has_ansi": "\x1b" in proc.stderr,
                 "stderr_tail": proc.stderr[-1200:], "installed": (root / "installed.json").is_file(),
                 "root_exists": root.exists(), "path_record": (root / "path-change.json").is_file(),
                 "profile": (home / ".profile").read_text() if (home / ".profile").exists() else None,
@@ -114,7 +116,10 @@ def main() -> int:
          and r["profile"] is None and not r["temp_leftovers"], run=r)
     r = run("pin", f"curl -fsSL {url(T[1])} | sh -s -- --yes --no-modify-path --version {T[2][1:]}")
     case("version_pin_runs_that_tags_installer", r["exit_code"] == 0 and r["installed"]
-         and any(f"downloading {T[2]}" in line for line in r["download_markers"]), run=r)
+         and len(r["download_markers"]) == 1
+         and f"axiom install: downloading {T[2]} " in r["download_markers"][0]
+         and not r["stdout_has_download_progress"]
+         and not r["stderr_has_ansi"], run=r)
     r = run("noyes", f"curl -fsSL {url(T[1])} | sh")
     case("no_terminal_without_yes_changes_nothing", r["exit_code"] == 4 and not r["root_exists"]
          and not r["temp_leftovers"], run=r)

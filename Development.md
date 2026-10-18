@@ -132,6 +132,9 @@ Linux/macOS runtime provisioning verifies exact component, version and source
 through `axmp version --json`; human version wording is not a machine interface.
 Run `python -m unittest tests.test_runtime_version_protocol -v` for protocol
 acceptance and malformed/wrong-identity refusals on both provisioners.
+The native POSIX bootstrap boundary suite collects plain download records from
+stderr, separately from installation results on stdout. A version override must
+produce exactly one record for the selected archive without terminal controls.
 Borrowed PowerShell `-NoExit` fixtures use ConPTY and type `exit` only after the
 caller has returned, rather than preloading a pipe. Retain their raw console
 states on failure. Native PS5.1 checks discard inherited PowerShell 7 module paths

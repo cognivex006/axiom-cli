@@ -4,6 +4,10 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+### Chores
+
+- Align native bootstrap verification with progress on stderr and installation results on stdout.
+
 ## 0.1.13
 
 ### Bug Fixes
