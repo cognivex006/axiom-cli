@@ -32,6 +32,9 @@ class Capture:
         self.raw = bytearray()
         self.chunks = queue.Queue()
         self.screen = Screen(columns, rows)
+        # Let the incremental VT parser reply at each query's exact position,
+        # including queries split across reads or coalesced with later output.
+        self.screen.write_process_input = lambda data: self.send(data.encode("utf-8"))
         self.stream = pyte.ByteStream(self.screen)
         self.frames = []
         self.screen_lock = threading.Lock()
@@ -74,12 +77,6 @@ class Capture:
                 self.stream.feed(data)
                 self.frames.append(dict(at=quiet, columns=self.screen.columns, rows=self.screen.lines, lines=[s.rstrip() for s in self.screen.display], cursor=[self.screen.cursor.x, self.screen.cursor.y], hidden=self.screen.cursor.hidden))
             self.chunks.put(data)
-            if b"\x1b[6n" in data:
-                # ConPTY queries the terminal cursor when synchronizing a resize.
-                # A fixed 1;1 reply moves its real cursor over preceding output.
-                with self.screen_lock:
-                    row, column = self.screen.cursor.y + 1, self.screen.cursor.x + 1
-                self.send(f"\x1b[{row};{column}R".encode("ascii"))
 
     def send(self, data):
         if os.name == "nt":

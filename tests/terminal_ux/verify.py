@@ -8,11 +8,23 @@ import sys
 import tempfile
 import time
 
-from capture import Capture, activity_frames
+from capture import Capture, Screen, activity_frames
 
 
 def verify(probe, out):
     cases = []
+    # Cursor queries are a PTY protocol, not read-chunk boundaries. A wrong
+    # response can move ConPTY over ordinary output during resize.
+    import pyte
+    screen = Screen(90, 24)
+    replies = []
+    screen.write_process_input = replies.append
+    stream = pyte.ByteStream(screen)
+    stream.feed(b"\x1b[4;7H\x1b[")
+    assert not replies
+    stream.feed(b"6nabc\x1b[6n\x1b[2;3H\x1b[6ntrailing")
+    assert replies == ["\x1b[4;7R", "\x1b[4;10R", "\x1b[2;3R"], replies
+    cases.append(dict(case="split-and-coalesced-cursor-queries", replies_at_query_position=True))
     with tempfile.TemporaryDirectory(prefix="axiom terminal acceptance ") as directory:
         work = Path(directory)
         base = {k: v for k, v in os.environ.items() if not k.startswith("AXIOM_") and k not in ["CI", "NO_COLOR"]}
