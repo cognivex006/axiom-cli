@@ -143,6 +143,7 @@ jobs:
             ${{ runner.temp }}/progress-proof.json
             ${{ runner.temp }}/progress-proof-frames/**
             ${{ runner.temp }}/progress-parity.json
+            ${{ runner.temp }}/progress-parity-lifecycle/**
             ${{ runner.temp }}/source-scope.json
           if-no-files-found: warn
       - name: Native runtime regression checks

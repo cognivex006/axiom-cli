@@ -128,6 +128,10 @@ script, bind the candidate's embedded source revision and run native PS5.1 on
 Windows. Private client profiles and registry keys protect the operator's state;
 an explicit elevated fixture allowance is reported and never counts as a
 non-elevated-user check. Candidate provenance is distinguished from publication.
+Borrowed PowerShell `-NoExit` fixtures use ConPTY and type `exit` only after the
+caller has returned, rather than preloading a pipe. Retain their raw console
+states on failure. Native PS5.1 checks discard inherited PowerShell 7 module paths
+and resolve Windows environment names through its case-insensitive environment.
 Feature pushes without an owner vector run the source/native visual checks and
 record `source_only: true`; composition and previous-release jobs are explicitly
 skipped and remain unverified. Supplying the vector enables those gates. Native

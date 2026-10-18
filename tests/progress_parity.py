@@ -98,16 +98,29 @@ def verify(evidence=None):
                 assert record.read_bytes()==b"{}" and old.read_bytes()==b"old-updater-must-not-run"
                 cases.append(dict(case="bootstrap-verified-worker" if good else "bootstrap-bad-digest",old_installation_preserved=True))
                 if good and os.name == "nt":
+                    sys.path.insert(0, str(ROOT / "tests/terminal_ux"))
+                    from capture import Capture
                     for action in ["install", "update"]:
                         target = temp / (action + ".ps1"); target.write_bytes(scripts[target.name])
                         wrapper = temp / (action + "-interactive.ps1")
                         wrapper.write_text("$ProgressPreference='Continue'\ntry { Invoke-Expression ([IO.File]::ReadAllText('" + str(target).replace("'", "''") + "')) } catch { Write-Output ('caught:'+$_.Exception.Message) }\nWrite-Output ('interactive-alive:'+$LASTEXITCODE+':'+$ProgressPreference)\n", encoding="utf-8", newline="\n")
-                        interactive = subprocess.run([words[0], "-NoExit", "-NoProfile", "-File", str(wrapper)], env=dict(env, AXIOM_INSTALL_YES="1"), input="exit 0\n", capture_output=True, text=True, timeout=30)
+                        folder = evidence.parent / (evidence.stem + "-lifecycle") if evidence is not None else temp / "lifecycle"
+                        folder.mkdir(parents=True, exist_ok=True)
+                        interactive = Capture([words[0], "-NoExit", "-NoProfile", "-File", str(wrapper)], env=dict(env, AXIOM_INSTALL_YES="1"), cwd=temp)
+                        try:
+                            # The borrowed console must return before we type exit.
+                            # Piping exit before -File completes is not an interactive host.
+                            interactive.until(b"interactive-alive:", timeout=60)
+                            interactive.send(b"exit 0\r")
+                            code = interactive.wait(20)
+                        finally:
+                            interactive.save(folder, action + "-console")
+                            if interactive.alive(): interactive.close()
+                        output = bytes(interactive.raw).decode("utf-8", errors="replace")
                         if evidence is not None:
-                            folder = evidence.parent / (evidence.stem + "-lifecycle"); folder.mkdir(parents=True, exist_ok=True)
-                            (folder / (action + ".json")).write_text(json.dumps(dict(exit_code=interactive.returncode, stdout=interactive.stdout, stderr=interactive.stderr, bootstrapper_sha256=hashlib.sha256(scripts[target.name]).hexdigest(), caller_continued="interactive-alive:7:Continue" in interactive.stdout), indent=2) + "\n", encoding="utf-8", newline="\n")
-                        assert interactive.returncode == 0 and "interactive-alive:7:Continue" in interactive.stdout, (action, interactive.returncode, interactive.stdout, interactive.stderr)
-                        cases.append(dict(case=action + "-iex-noexit", child_last_exit_code=7, caller_continued=True, preference_restored=True))
+                            (folder / (action + ".json")).write_text(json.dumps(dict(exit_code=code, console_output=output, bootstrapper_sha256=hashlib.sha256(scripts[target.name]).hexdigest(), caller_continued="interactive-alive:7:Continue" in output), indent=2) + "\n", encoding="utf-8", newline="\n")
+                        assert code == 0 and "interactive-alive:7:Continue" in output, (action, code, output)
+                        cases.append(dict(case=action + "-iex-noexit", child_last_exit_code=7, caller_continued=True, preference_restored=True, native_console=True))
         finally:server.shutdown();server.server_close();thread.join(timeout=3)
     return dict(passed=True,platform=sys.platform,cases=cases,scope="Native production progress module and generated bootstrap against private fixture root/local HTTP; no real installed state or live Agent session")
 
