@@ -13,9 +13,18 @@ description = "Axiom ecosystem distribution entrypoint: thin distribution layer 
 license = "UNLICENSED"
 publish = false
 
-# No third-party dependencies. The distribution layer must build from a pinned
-# toolchain with no network fetch, no Node.js, no WSL, no Docker and no elevation.
+# Unicode display width is pinned for safe terminal clipping (ADR-0043).
+# Packaged binaries still require no external runtime or elevation.
 [dependencies]
+unicode-width = "=0.2.2"
+
+[target.'cfg(unix)'.dependencies]
+# Native ABI definitions avoid hand-written Darwin/Linux layouts and constants.
+libc = "=0.2.172"
+
+[[example]]
+name = "terminal-ux-probe"
+path = "tests/terminal_ux/probe.rs"
 
 [[bin]]
 name = "axiom-cli"

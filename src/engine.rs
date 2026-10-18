@@ -76,7 +76,7 @@ impl Engine {
                 crate::progress::capture(
                     &mut command,
                     stage,
-                    "Waiting for the installation engine to finish the requested plan or transaction",
+                    &format!("{} with the verified graph engine", stage.to_lowercase()),
                 )
             }
             // Metadata/help/diagnostic probes are reads, even when a cold child

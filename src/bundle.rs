@@ -140,7 +140,7 @@ pub fn update(engine: &Engine, request: &Request<'_>) -> Result<Report, Refusal>
 fn run(engine: &Engine, request: &Request<'_>, updating: bool) -> Result<Report, Refusal> {
     let assembly = crate::progress::during(
         "Staging components",
-        "Preparing verified component files and skills for the engine",
+        "staging verified Axiom graph engine, MCP and agent skills",
         || assemble(request),
     )?;
     let plan_file = request.staging_root.join("engine-plan.json");

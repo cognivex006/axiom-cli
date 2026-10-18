@@ -164,6 +164,7 @@ impl Report {
 
     /// Write the report and return the process exit code.
     pub fn emit(mut self, json: bool, verbose: bool) -> i32 {
+        crate::progress::suspend();
         let code = self.code();
         self.detail("engine_owner", Json::text(ENGINE_OWNER));
         let mut envelope = Json::Object(Default::default());

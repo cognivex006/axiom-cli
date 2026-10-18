@@ -13,9 +13,11 @@ import tempfile
 import threading
 import time
 
+from terminal_ux.capture import Capture, activity_frames
+
 ROOT = Path(__file__).resolve().parents[1]
 
-def verify(cli):
+def verify(cli, out):
     cases = []
     with tempfile.TemporaryDirectory(prefix="axiom progress ") as temporary:
         work = Path(temporary).resolve()
@@ -56,8 +58,7 @@ def verify(cli):
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         try:
             modes = ["human", "unknown", "json", "off"]
-            if os.name != "nt":
-                modes.append("terminal")
+            modes.append("terminal")
             for mode in modes:
                 home = work / mode; home.mkdir()
                 manifest = (ROOT / "channels/stable.json").read_bytes()
@@ -71,63 +72,56 @@ def verify(cli):
                 words = [str(cli), "update", "--channel", f"http://127.0.0.1:{server.server_port}/channel?private-token-do-not-log"]
                 words.append("--dry-run" if mode == "unknown" else "--yes")
                 if mode == "json": words.append("--json")
-                master = slave = None
-                if mode == "terminal":
-                    import pty
-                    master, slave = pty.openpty()
-                proc = subprocess.Popen(words, env=env, stdout=subprocess.PIPE,
-                                        stderr=slave if slave is not None else subprocess.PIPE, text=True)
-                if slave is not None:
-                    os.close(slave)
-                lines = []; seen = queue.Queue()
-                def read():
-                    if master is not None:
-                        while True:
-                            try:
-                                chunk = os.read(master, 4096)
-                            except OSError:
-                                return
-                            if not chunk:
-                                return
-                            text = chunk.decode("utf-8", errors="replace")
-                            lines.append(text); seen.put(text)
-                    for line in proc.stderr:
-                        lines.append(line); seen.put(line)
-                reader = threading.Thread(target=read, daemon=True); reader.start()
                 observed = False
-                try:
-                    if mode in ["human", "terminal", "unknown"]:
-                        deadline = time.monotonic() + 13
-                        while time.monotonic() < deadline:
-                            try:
-                                line = seen.get(timeout=max(0.1, deadline - time.monotonic()))
-                            except queue.Empty:
-                                raise AssertionError((mode, lines, proc.poll())) from None
-                            if (mode in ["human", "terminal"] and "ETA ~" in line) or (mode == "unknown" and "total size unknown" in line):
-                                assert proc.poll() is None, "progress must appear while transfer is blocked"
-                                observed = True; break
-                        assert observed, lines
+                if mode == "terminal":
+                    env.pop("CI", None); env["TERM"] = "xterm-256color"
+                    c = Capture(words, env=env, cwd=home)
+                    try:
+                        c.until(b"50%", timeout=15)
+                        assert c.alive()
+                        time.sleep(.5)
+                        frames = activity_frames(c.raw)
+                        transfer = [f for f in frames if any("50%" in text for _, text in f["lines"])]
+                        assert transfer and all(len(f["lines"]) == 2 for f in transfer), transfer
+                        assert len({text[0] for f in transfer for _, text in f["details"]}) >= 2
+                        observed = True; released.set()
+                        code = c.wait(25); c.save(out.parent / (out.stem + "-frames"), mode)
+                    finally:
                         released.set()
-                    code = proc.wait(timeout=25)
-                    stdout = proc.stdout.read()
-                    reader.join(timeout=5)
-                finally:
-                    released.set()
-                    if proc.poll() is None: proc.kill(); proc.wait(timeout=5)
-                    if master is not None: os.close(master)
-                stderr = "".join(lines)
+                        if c.alive(): c.close()
+                    stdout = ""; stderr = bytes(c.raw).decode(errors="replace")
+                    assert "100%" not in stderr and not c.screen.cursor.hidden
+                else:
+                    proc = subprocess.Popen(words, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    lines = []; seen = queue.Queue()
+                    def read():
+                        for line in proc.stderr:
+                            lines.append(line); seen.put(line)
+                    reader = threading.Thread(target=read, daemon=True); reader.start()
+                    try:
+                        if mode in ["human", "unknown"]:
+                            deadline = time.monotonic() + 13
+                            while time.monotonic() < deadline:
+                                line = seen.get(timeout=max(.1, deadline-time.monotonic()))
+                                if "downloading" in line and (mode == "unknown" or extension in line):
+                                    assert proc.poll() is None
+                                    observed = True; break
+                            assert observed, lines
+                            released.set()
+                        code = proc.wait(timeout=25); stdout = proc.stdout.read(); reader.join(timeout=5)
+                    finally:
+                        released.set()
+                        if proc.poll() is None: proc.kill(); proc.wait(timeout=5)
+                    stderr = "".join(lines)
+                    assert "\x1b" not in stderr and "elapsed" not in stderr
                 assert code == (0 if mode == "unknown" else 2), (mode, code, stdout, stderr)
                 assert (home / "installed.json").read_bytes() == original
-                assert "private-token-do-not-log" not in stderr and "\x1b" not in stderr
+                assert "private-token-do-not-log" not in stderr
                 if mode in ["human", "terminal"]:
-                    assert any(f"{n}%" in stderr for n in range(40, 51)) and "100%" in stderr and "MB/s" in stderr, stderr
                     assert "approved plan pins" in stdout + stderr, (stdout, stderr)
-                if mode == "terminal":
-                    assert stderr.count("\rDownloading") >= 3, stderr
-                    assert "Receiving data; integrity is checked after transfer" not in stderr, stderr
-                if mode == "unknown": assert "%" not in stderr and "ETA" not in stderr, stderr
+                if mode == "unknown": assert "%" not in stderr and "ETA" not in stderr
                 if mode == "json": json.loads(stdout); assert stderr == "", stderr
-                if mode == "off": assert "MB received" not in stderr and "ETA" not in stderr
+                if mode == "off": assert "downloading" not in stderr and "ETA" not in stderr
                 cases.append(dict(case=mode, exit_code=code, live_progress_before_completion=observed, approved_state_preserved=True))
         finally:
             released.set(); server.shutdown(); server.server_close(); thread.join(timeout=5)
@@ -138,6 +132,6 @@ if __name__ == "__main__":
     parser.add_argument("--cli", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    result = verify(args.cli.resolve())
+    result = verify(args.cli.resolve(), args.out.resolve())
     args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8", newline="\n")
     print("PASS live known/unknown downloads, JSON/quiet output and integrity refusal")

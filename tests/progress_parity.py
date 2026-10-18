@@ -7,11 +7,13 @@ def verify():
     cases=[]
     with tempfile.TemporaryDirectory(prefix="axiom progress parity ") as directory:
         temp=Path(directory); exe=temp/("worker.exe" if os.name=="nt" else "worker")
-        subprocess.run(["rustc","--edition=2021",str(ROOT/"tests/progress_worker_fixture.rs"),"-o",str(exe)],check=True,capture_output=True,timeout=90)
-        for mode in ["plain","json","off","dry-run","failed"]+(["terminal"] if os.name!="nt" else []):
-            env={k:v for k,v in os.environ.items() if not k.startswith("AXIOM_")}
+        subprocess.run(["cargo", "+1.85.0", "build", "--locked", "--example", "terminal-ux-probe"], cwd=ROOT, check=True, capture_output=True, timeout=180)
+        import shutil
+        shutil.copy2(ROOT / "target/debug/examples" / ("terminal-ux-probe.exe" if os.name == "nt" else "terminal-ux-probe"), exe)
+        for mode in ["plain","json","off","dry-run","failed","diagnostic"]:
+            env={k:v for k,v in os.environ.items() if not k.startswith("AXIOM_") and k.upper() not in ["PSMODULEPATH", "PSMODULEANALYSISCACHEPATH"]}
             env["AXIOM_PROGRESS"]="off" if mode=="off" else "" if mode=="terminal" else "plain"
-            args=[str(exe)]+({"json":["--json"],"dry-run":["--dry-run"],"failed":["--fail"]}.get(mode,[]))
+            args=[str(exe)]+({"json":["--json"],"dry-run":["--dry-run"],"failed":["--fail"],"diagnostic":["--diagnostic"]}.get(mode,[]))
             master=slave=None
             if mode=="terminal":
                 import pty
@@ -30,9 +32,9 @@ def verify():
             try:
                 if mode in ["plain","failed","terminal"]:
                     sample=b""; deadline=time.monotonic()+1.8
-                    while b"Preparing MCP runtime" not in sample and time.monotonic()<deadline:
+                    while b"Fixture runtime" not in sample and time.monotonic()<deadline:
                         sample+=seen.get(timeout=max(.01,deadline-time.monotonic()))
-                    assert b"Preparing MCP runtime" in sample and proc.poll() is None,(mode,sample)
+                    assert b"Fixture runtime" in sample and proc.poll() is None,(mode,sample)
                     live=True
                 proc.wait(timeout=10);stdout=proc.stdout.read();reader.join(timeout=3)
             finally:
@@ -44,9 +46,10 @@ def verify():
             if mode in ["json","off","dry-run"]:assert stderr=="",(mode,stderr)
             elif mode=="terminal":assert "\rPreparing MCP runtime" in stderr and "[Done]" in stderr,stderr
             else:
-                assert len(stderr.splitlines())==2,(mode,stderr)
-                assert stderr.count("elapsed")==1,(mode,stderr)
-                assert ("[Failed]" if mode=="failed" else "[Done]") in stderr
+                assert "elapsed" not in stderr and "\x1b" not in stderr
+                assert "Fixture runtime" in stderr
+                if mode == "failed": assert "failed:" in stderr
+                if mode == "diagnostic": assert stderr.count("fixture diagnostic: retained[2J") == 1
             cases.append(dict(case="worker-"+mode,live_before_completion=live,exact_exit=True,json_stdout_isolated=True))
 
         # The bootstrap must run its verified downloaded worker, never the old CLI.
@@ -72,7 +75,7 @@ def verify():
             home=temp/"private home";install=home/("data/Axiom" if os.name=="nt" else "data/axiom"); (install/"bin/graphd-engine").mkdir(parents=True)
             record=install/"installed.json";record.write_bytes(b"{}")
             old=install/"bin"/("axm.exe" if os.name=="nt" else "axm");old.write_bytes(b"old-updater-must-not-run");old.chmod(0o755)
-            env={k:v for k,v in os.environ.items() if not k.startswith("AXIOM_")}
+            env={k:v for k,v in os.environ.items() if not k.startswith("AXIOM_") and k.upper() not in ["PSMODULEPATH", "PSMODULEANALYSISCACHEPATH"]}
             env.update(HOME=str(home),USERPROFILE=str(home),LOCALAPPDATA=str(home/"data"),XDG_DATA_HOME=str(home/"data"),AXIOM_CLI_TEST_ALLOW_ELEVATED="1",AXIOM_PROGRESS="off")
             if os.name == "nt":
                 # PowerShell 7's inherited module path must not hide the native 5.1 modules.
@@ -87,11 +90,10 @@ def verify():
                 if os.name=="nt":words=[str(Path(os.environ["SystemRoot"])/"System32/WindowsPowerShell/v1.0/powershell.exe"),"-NoProfile","-File",str(script),"-Yes"]
                 else:words=["sh",str(script),"--yes"]
                 result=subprocess.run(words,env=env,capture_output=True,text=True,timeout=90)
-                expected_code = (1 if os.name == "nt" else 7) if good else 1
+                expected_code = 7 if good else 1
                 assert result.returncode == expected_code, (result.stdout, result.stderr)
                 if good:
                     assert f"verified-worker:{install}:update --yes" in result.stdout,(result.stdout,result.stderr)
-                    assert ("exited 7" in result.stderr) if os.name=="nt" else True
                 else:assert "SHA-256 mismatch" in result.stdout+result.stderr and "verified-worker:" not in result.stdout,(result.stdout,result.stderr)
                 assert record.read_bytes()==b"{}" and old.read_bytes()==b"old-updater-must-not-run"
                 cases.append(dict(case="bootstrap-verified-worker" if good else "bootstrap-bad-digest",old_installation_preserved=True))

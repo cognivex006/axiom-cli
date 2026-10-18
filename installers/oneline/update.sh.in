@@ -16,12 +16,15 @@
 # from the 0.1.2 procedure are set. Options: --yes, --no-modify-path (also AXIOM_INSTALL_YES=1,
 # AXIOM_NO_MODIFY_PATH=1; the latter only matters for a 0.1.0/0.1.2 layout).
 set -eu
+AXIOM_ACTION='update'
+@@PROGRESS_SH@@
 
 AXIOM_TAG='@@TAG@@'
 AXIOM_BASE_URL='@@BASE_URL@@'
 AXIOM_CLI='@@CLI_PATH_POSIX@@'
 
 fail() {
+    ux_dispose
     echo "axiom update: $*" >&2
     exit 1
 }
@@ -105,21 +108,11 @@ case "$(uname -s) $(uname -m)" in
 esac
 
 if command -v curl >/dev/null 2>&1; then
-    fetch() {
-        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ]; then
-            curl -fL --progress-bar --retry 2 -o "$2" "$1"
-        else
-            curl -fsSL --retry 2 -o "$2" "$1"
-        fi
-    }
+    fetcher=curl
+    fetch() { curl -fsSL --retry 2 -o "$2" "$1"; }
 elif command -v wget >/dev/null 2>&1; then
-    fetch() {
-        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ] && wget --help 2>&1 | grep -q -- --show-progress; then
-            wget -q --show-progress -O "$2" "$1"
-        else
-            wget -q -O "$2" "$1"
-        fi
-    }
+    fetcher=wget
+    fetch() { wget -q -O "$2" "$1"; }
 else
     fail 'curl or wget is required'
 fi
@@ -132,20 +125,24 @@ else
 fi
 
 tmp=$(mktemp -d 2>/dev/null || mktemp -d -t axiom-update)
-trap 'rm -rf "$tmp"' EXIT INT TERM
-echo "axiom update: downloading $AXIOM_TAG ($asset)"
-fetch "$AXIOM_BASE_URL/$AXIOM_TAG/$asset" "$tmp/$asset" ||
+trap 'ux_cleanup' 0
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+ux_start
+ux_stage Downloading "downloading $AXIOM_TAG ($asset)" "$tmp/$asset"
+ux_fetch "$AXIOM_BASE_URL/$AXIOM_TAG/$asset" "$tmp/$asset" ||
     fail "download failed for $AXIOM_BASE_URL/$AXIOM_TAG/$asset; nothing was changed"
-echo "axiom update: verifying archive SHA-256" >&2
+ux_stage Verifying "verifying SHA-256 for $asset"
 actual=$(digest "$tmp/$asset")
 [ "$actual" = "$expected" ] ||
     fail "SHA-256 mismatch for $asset (expected $expected, got $actual); the archive was not extracted and nothing was changed"
-echo "axiom update: extracting verified archive" >&2
+ux_stage Extracting "extracting verified $asset"
 mkdir "$tmp/release"
 tar -xzf "$tmp/$asset" -C "$tmp/release" ||
     fail 'the verified archive could not be extracted; nothing was changed'
 [ -f "$tmp/release/$AXIOM_CLI" ] || fail "the archive does not contain $AXIOM_CLI; nothing was changed"
 
+ux_dispose
 status=0
 if [ -n "$root" ]; then
     AXIOM_CLI_INSTALL_ROOT="$root" run_cli "$tmp/release/$AXIOM_CLI" update || status=$?

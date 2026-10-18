@@ -47,6 +47,7 @@ pub fn yes_from_env() -> bool {
 
 /// Decide once. Only an interactive terminal on stdin is ever prompted.
 pub fn decide(yes: bool, json: bool, plan: &[String]) -> Decision {
+    crate::progress::suspend();
     if yes || yes_from_env() {
         return Decision::PreApproved;
     }

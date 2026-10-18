@@ -54,6 +54,9 @@ jobs:
             exe=".exe"
           fi
           python tests/host_onboarding.py --cli "target/release/axiom-cli${exe}" --out "${RUNNER_TEMP}/host-adapter.json"
+      - name: Install pinned native visual capture dependencies
+        shell: bash
+        run: python -m pip install -r tests/terminal_ux/requirements.txt
       - name: Live download progress and machine output isolation
         shell: bash
         run: |
@@ -71,6 +74,30 @@ jobs:
         run: |
           import os, subprocess, sys
           subprocess.run([sys.executable, 'tests/progress_powershell.py', '--out', os.path.join(os.environ['RUNNER_TEMP'], 'bootstrap-progress.json')], check=True)
+      - name: Native terminal frames, resize, cancellation and modes
+        shell: bash
+        run: |
+          cargo +1.85.0 build --locked --example terminal-ux-probe
+          exe=""
+          if [ "$RUNNER_OS" = Windows ]; then exe=".exe"; fi
+          python tests/terminal_ux/verify.py --probe "target/debug/examples/terminal-ux-probe${exe}" --out "${RUNNER_TEMP}/terminal-visual.json"
+      - name: Native POSIX generated curl and wget visual matrix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: python tests/progress_shell.py --out "${RUNNER_TEMP}/shell-visual.json"
+      - name: Retain native visual traces even when a later release gate fails
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terminal-visual-${{ matrix.platform }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/*visual*.json
+            ${{ runner.temp }}/*visual*-frames/**
+            ${{ runner.temp }}/bootstrap-progress.json
+            ${{ runner.temp }}/bootstrap-progress-frames/**
+            ${{ runner.temp }}/progress-proof.json
+            ${{ runner.temp }}/progress-proof-frames/**
+          if-no-files-found: warn
       - name: Native runtime regression checks
         if: runner.os != 'Windows'
         shell: bash

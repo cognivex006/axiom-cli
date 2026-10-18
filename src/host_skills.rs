@@ -1,9 +1,9 @@
 //! Host onboarding from the installed verified bundle; never fetch mutable Git content.
 use std::ffi::OsString;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::process::Command;
+use std::time::Duration;
 
 use crate::confirm::{self, Decision};
 use crate::update::error::{Class, Refusal};
@@ -451,53 +451,26 @@ fn host(adapter: Adapter, args: &[&str]) -> Result<Json, Refusal> {
             .find(|p| p.is_file())
     }).ok_or_else(|| Refusal::not_ready("host_missing", "A native Agent CLI executable is unavailable on PATH; install a supported Agent client first"))?;
     let words = adapter.arguments(args);
-    let mut child = Command::new(executable)
-        .args(&words)
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|_| {
-            Refusal::not_ready(
-                "host_missing",
-                "Agent CLI is unavailable; install a supported Agent client first",
-            )
-        })?;
-    let out = child.stdout.take().unwrap();
-    let err = child.stderr.take().unwrap();
-    let output = std::thread::spawn(move || {
-        let mut b = Vec::new();
-        let _ = out.take(4_194_305).read_to_end(&mut b);
-        b
-    });
-    let errors = std::thread::spawn(move || {
-        let mut b = Vec::new();
-        let _ = err.take(4_194_305).read_to_end(&mut b);
-        b
-    });
-    let started = Instant::now();
-    let status = loop {
-        if let Some(status) = child.try_wait().map_err(io)? {
-            break status;
-        }
-        if started.elapsed() > Duration::from_secs(60) {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(Refusal::not_ready(
-                "host_timeout",
-                format!(
+    let phase = crate::progress::Progress::waiting(
+        "Agent setup",
+        &format!("configuring Axiom skills in {}", adapter.label()),
+    );
+    let mut command = Command::new(executable);
+    command.args(&words);
+    let output = crate::progress::bounded_output(&mut command, Duration::from_secs(60))
+        .map_err(|error| {
+            if error.kind() == std::io::ErrorKind::TimedOut {
+                Refusal::not_ready("host_timeout", format!(
                     "{} command timed out; inspect axm skills doctor {} before retrying",
-                    adapter.label(),
-                    adapter.name()
-                ),
-            ));
-        }
-        std::thread::sleep(Duration::from_millis(50));
-    };
-    let bytes = output
-        .join()
-        .map_err(|_| invalid("host output reader failed"))?;
-    let _ = errors.join();
+                    adapter.label(), adapter.name()
+                ))
+            } else {
+                Refusal::not_ready("host_command_failed", "Agent command could not complete; retained content and pending recovery record were kept")
+            }
+        })?;
+    let status = output.status;
+    let bytes = output.stdout;
+    phase.finish(status.success());
     if !status.success() {
         return Err(Refusal::not_ready("host_command_failed", format!("Agent plugin command failed (exit {}); retained content and pending recovery record were kept", status.code().unwrap_or(8))));
     }

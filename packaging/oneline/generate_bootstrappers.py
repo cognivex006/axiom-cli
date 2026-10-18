@@ -15,6 +15,7 @@ embedded tag (or an explicitly pinned tag's own script); they never resolve `lat
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -76,6 +77,12 @@ def render(template: str, mapping: dict[str, str]) -> str:
 
 def generate(tag: str, sums_text: str, base_url: str = CANONICAL_BASE_URL) -> dict[str, bytes]:
     mapping = values(tag, read_sums(sums_text), base_url)
+    helper = (TEMPLATES / "progress.ps1").read_text(encoding="utf-8")
+    # A repeated IEX session must never reuse a stale compiled renderer type.
+    # LF-normalized content identity is deterministic across checkout platforms.
+    renderer_class = "AxiomTerminal_" + hashlib.sha256(helper.encode("utf-8")).hexdigest()[:16]
+    mapping["PROGRESS_PS"] = helper.replace("@@PROGRESS_CLASS@@", renderer_class)
+    mapping["PROGRESS_SH"] = (TEMPLATES / "progress.sh").read_text(encoding="utf-8")
     return {
         name: render((TEMPLATES / f"{name}.in").read_text(encoding="utf-8"), mapping).encode("utf-8")
         for name in SCRIPTS

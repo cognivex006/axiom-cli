@@ -229,26 +229,32 @@ fn fetch_sized(source: &str, dest: &Path, total: Option<u64>) -> Result<(), Refu
         return Ok(());
     }
     let curl = system_tool("curl");
+    // This destination is the requested staging transfer, not installed data.
+    // Do not count bytes retained from an earlier attempt as newly received.
+    std::fs::File::create(dest)
+        .map_err(|error| Refusal::io("staging_unwritable", &dest.display().to_string(), &error))?;
     let progress = crate::progress::Progress::download(dest.to_path_buf(), total);
-    let status = Command::new(&curl)
+    let mut command = Command::new(&curl);
+    command
         .args(["-fsSL", "--retry", "2", "-o"])
         .arg(dest)
-        .arg(source)
-        .status()
-        .map_err(|error| {
-            Refusal::not_ready(
-                "download_tool_unavailable",
-                format!(
-                    "`{}` could not be started ({error}); curl is required to download updates",
-                    curl.display()
-                ),
-            )
-        })?;
+        .arg(source);
+    let output = crate::progress::worker_output(&mut command).map_err(|error| {
+        Refusal::not_ready(
+            "download_tool_unavailable",
+            format!(
+                "`{}` could not be started ({error}); curl is required to download updates",
+                curl.display()
+            ),
+        )
+    })?;
+    let status = output.status;
     progress.finish(
         status.success()
             && total.is_none_or(|size| std::fs::metadata(dest).is_ok_and(|m| m.len() == size)),
     );
     if !status.success() {
+        crate::progress::diagnostics(&output.stderr);
         let _ = std::fs::remove_file(dest);
         return Err(Refusal::new(
             Class::NotReady,
@@ -466,7 +472,7 @@ pub fn apply(
     fetch_sized(&offer.url, &archive, Some(offer.size_bytes as u64))?;
     crate::progress::during(
         "Verifying archive",
-        "Checking approved byte length and SHA-256; extraction waits for verification",
+        &format!("verifying byte length and SHA-256 for {archive_name}"),
         || {
             let bytes = state::read_bytes(&archive, "archive_unreadable")?;
             if bytes.len() as i64 != offer.size_bytes || digest_of(&bytes) != offer.sha256 {
@@ -504,7 +510,7 @@ pub fn apply(
             .arg("-C")
             .arg(&release),
         "Extracting archive",
-        "Unpacking the checksum-verified release into staging",
+        &format!("extracting the verified {archive_name} into staging"),
     );
     if !matches!(extracted, Ok(status) if status.success()) {
         return Err(Refusal::validation(

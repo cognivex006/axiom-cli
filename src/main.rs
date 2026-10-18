@@ -29,5 +29,6 @@ fn main() {
     let arguments: Vec<_> = std::env::args_os().collect();
     progress::configure(&arguments);
     let code = commands::run(&arguments).unwrap_or_else(|| cli::run(arguments));
+    progress::dispose();
     std::process::exit(code);
 }

@@ -121,7 +121,9 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
     report.detail("all", Json::bool(all));
     report.detail(
         "scope",
-        Json::text("installation only; project graph and AI-host setup are separate"),
+        Json::text(
+            "installation exit status; MCP readiness and AI-host setup are reported separately",
+        ),
     );
     lines.push(
         "Scope: installation; project graph and AI-host setup are separate checks".to_string(),
@@ -131,8 +133,27 @@ pub fn run_doctor(all: bool, json: bool, verbose: bool) -> i32 {
     emit_doctor(report, &findings, json, verbose)
 }
 
-fn emit_doctor(report: Report, findings: &[Json], json: bool, verbose: bool) -> i32 {
+fn emit_doctor(mut report: Report, findings: &[Json], json: bool, verbose: bool) -> i32 {
+    crate::progress::suspend();
+    let component = crate::commands::mcp_diagnostics();
+    let mcp_line = match &component {
+        Ok(Some(value)) => {
+            report.detail("mcp_diagnostics", value.clone());
+            if value.get("ok").and_then(Json::as_bool) == Some(true) {
+                "MCP graph access: ready (credentials checked separately)".to_string()
+            } else {
+                "MCP graph access: NotReady. Details: axm mcp doctor --verbose".to_string()
+            }
+        }
+        Ok(None) => "MCP graph access: not checked; runtime is not installed".to_string(),
+        Err(_) => {
+            "MCP graph access: diagnostics unavailable. Run axm mcp doctor --verbose".to_string()
+        }
+    };
     if json || verbose {
+        if verbose && !json {
+            report.line(mcp_line);
+        }
         return report.emit(json, verbose);
     }
     let code = report.code();
@@ -142,6 +163,11 @@ fn emit_doctor(report: Report, findings: &[Json], json: bool, verbose: bool) -> 
         } else {
             eprintln!("{line}");
         }
+    }
+    if code == 0 {
+        println!("{mcp_line}");
+    } else {
+        eprintln!("{mcp_line}");
     }
     code
 }

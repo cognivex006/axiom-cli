@@ -197,3 +197,29 @@ fn mcp(args: &[OsString]) -> i32 {
     command.args(["-I", "-m", module]).args(forwarded);
     execute("axmp", command, args)
 }
+
+/// Read-only component diagnostics through the provisioned runtime, never PATH Python.
+pub fn mcp_diagnostics() -> Result<Option<crate::update::json::Json>, String> {
+    let Some(root) = state::default_root() else {
+        return Ok(None);
+    };
+    let Some(bin) = crate::lifecycle::provisioned_mcp_runtime_bin(&root)
+        .map_err(|_| "runtime unavailable".to_string())?
+    else {
+        return Ok(None);
+    };
+    let mut command = Command::new(bin.join(crate::layout::program_file("python")));
+    command
+        .args(["-I", "-m", "axiom_mcp.cli", "doctor", "--json"])
+        .env("AXIOM_PROGRESS", "off");
+    let output = crate::progress::bounded_output(&mut command, std::time::Duration::from_secs(15))
+        .map_err(|_| "component diagnostics unavailable".to_string())?;
+    if output.stdout.len() > 1024 * 1024 {
+        return Err("component diagnostics exceeded limit".to_string());
+    }
+    crate::update::json::parse(
+        std::str::from_utf8(&output.stdout)
+            .map_err(|_| "invalid component diagnostics".to_string())?,
+    )
+    .map(Some)
+}

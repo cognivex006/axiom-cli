@@ -55,3 +55,37 @@ The canonical repair decision records this narrow exception: preserve old asset 
 bind replacements to a new immutable source commit, retain review/native/checksum
 gates and disclose the repair identity. No other release or installed human state
 may be overwritten under this exception.
+
+## Terminal UX development
+
+For CLI, installer, bootstrap, interactive setup and long-running terminal changes, consult the canonical [cli-terminal-ux skill](.agents/skills/cli-terminal-ux/SKILL.md) by default. Resolve its normative contract through the verified spec pin; retain native visual evidence and existing ownership/approval/release rules. Other repositories link that source rather than maintaining edited copies.
+
+The current 2026-10-18 owner request explicitly authorizes the scoped 0.1.13 implementation, integration and new immutable publication after mandatory native/visual, independent review and previous-release rollback/source-hash gates. Preserve real user state and historical tags/assets.
+
+Native visual checks use pinned QA-only dependencies in
+`tests/terminal_ux/requirements.txt`. Build the production-module probe with
+`cargo +1.85.0 build --locked --example terminal-ux-probe`, then run
+`python tests/terminal_ux/verify.py --probe <native-probe> --out <evidence.json>`.
+Run `tests/progress_powershell.py` on native Windows PowerShell 5.1 and
+`tests/progress_shell.py` as a non-root native POSIX user with curl and wget.
+Each suite retains raw traces and reconstructed visual frames alongside its JSON
+report. ConPTY is native console evidence; it does not replace the required
+Windows Terminal/VS Code screenshots or actual release upgrade/rollback checks.
+The deterministic generator embeds the single `progress.ps1`/`progress.sh` helper
+into both entrypoints; do not edit generated release assets to repair source.
+
+The coordinator captures bounded semantic apply-worker stderr and keeps genuine
+diagnostics at cleared output boundaries. A bounded queue and separate measurement
+observer prevent stalled I/O from owning the UI timer. Private captures retain
+process-family ownership; reader failures and cancellation close/reap those
+children. Root MCP diagnostics have a 15-second timeout. No progress-only timeout
+is added to installation transactions. The Unix ABI crate and Unicode width crate
+are exact Cargo pins and require native checks and audit alongside renderer changes.
+
+Windows workers are created suspended, assigned to the retained job and resumed
+before any worker user code can launch descendants; see Microsoft's
+[creation flags](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags)
+and [ResumeThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread).
+POSIX ownership uses waitable children before process-group cleanup; see
+[waitid](https://man7.org/linux/man-pages/man2/waitpid.2.html).
+Routed MCP/engine transports own their existing console and signal lifecycle.

@@ -375,3 +375,31 @@ clients connect. Check `/healthz`, `/readyz` and `axmp doctor` separately. See t
 Direct install/repair over an existing installation also verifies and selects the
 approved MCP runtime generation. Having an older Python environment already
 installed does not cause the new release to reuse that older MCP package.
+
+## Terminal activity
+
+Install and update share a two-row activity area in supported terminals. The top
+row shows the current stage with a measured percentage, or an indeterminate bar.
+The second row rotates while work continues and identifies the current target.
+Downloads remain below 100% until verification; no overall installation percentage
+or unknown-size ETA is invented. Plans and confirmation appear after activity is
+cleared, so `Proceed? [Y/n]` remains a normal prompt.
+
+Use `AXIOM_PROGRESS=plain` for readable stage records or `AXIOM_PROGRESS=off` to
+disable activity. Redirected streams, CI and unsupported terminals use plain
+records. `--json` keeps machine output clean; `NO_COLOR` disables color without
+disabling the two-row display.
+
+## Start the MCP gateway
+
+```sh
+axm mcp start
+axm mcp status
+axm mcp doctor
+```
+
+The local gateway chooses an available loopback port and prints its endpoint.
+`axm mcp stop` stops a unique owned gateway. Authentication and graph permissions
+still apply. `axm doctor` reports installation checks and MCP readiness separately;
+its exit code continues to describe installation health. Use
+`axm mcp doctor --verbose` to diagnose graph access and credentials.

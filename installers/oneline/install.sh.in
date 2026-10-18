@@ -10,12 +10,15 @@
 # It never resolves `latest` itself, never runs as root and contains no installation logic.
 # Options: --yes, --no-modify-path, --version X.Y.Z (also AXIOM_INSTALL_YES=1, AXIOM_NO_MODIFY_PATH=1, AXIOM_VERSION).
 set -eu
+AXIOM_ACTION='install'
+@@PROGRESS_SH@@
 
 AXIOM_TAG='@@TAG@@'
 AXIOM_BASE_URL='@@BASE_URL@@'
 AXIOM_CLI='@@CLI_PATH_POSIX@@'
 
 fail() {
+    ux_dispose
     echo "axiom install: $*" >&2
     exit 1
 }
@@ -46,21 +49,11 @@ case "$(uname -s) $(uname -m)" in
 esac
 
 if command -v curl >/dev/null 2>&1; then
-    fetch() {
-        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ]; then
-            curl -fL --progress-bar --retry 2 -o "$2" "$1"
-        else
-            curl -fsSL --retry 2 -o "$2" "$1"
-        fi
-    }
+    fetcher=curl
+    fetch() { curl -fsSL --retry 2 -o "$2" "$1"; }
 elif command -v wget >/dev/null 2>&1; then
-    fetch() {
-        if [ -t 2 ] && [ "${AXIOM_PROGRESS:-auto}" != off ] && wget --help 2>&1 | grep -q -- --show-progress; then
-            wget -q --show-progress -O "$2" "$1"
-        else
-            wget -q -O "$2" "$1"
-        fi
-    }
+    fetcher=wget
+    fetch() { wget -q -O "$2" "$1"; }
 else
     fail 'curl or wget is required'
 fi
@@ -90,21 +83,25 @@ if [ -n "$version" ]; then
 fi
 
 tmp=$(mktemp -d 2>/dev/null || mktemp -d -t axiom-install)
-trap 'rm -rf "$tmp"' EXIT INT TERM
-echo "axiom install: downloading $AXIOM_TAG ($asset)"
-fetch "$AXIOM_BASE_URL/$AXIOM_TAG/$asset" "$tmp/$asset" ||
+trap 'ux_cleanup' 0
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+ux_start
+ux_stage Downloading "downloading $AXIOM_TAG ($asset)" "$tmp/$asset"
+ux_fetch "$AXIOM_BASE_URL/$AXIOM_TAG/$asset" "$tmp/$asset" ||
     fail "download failed for $AXIOM_BASE_URL/$AXIOM_TAG/$asset; nothing was changed"
-echo "axiom install: verifying archive SHA-256" >&2
+ux_stage Verifying "verifying SHA-256 for $asset"
 actual=$(digest "$tmp/$asset")
 [ "$actual" = "$expected" ] ||
     fail "SHA-256 mismatch for $asset (expected $expected, got $actual); the archive was not extracted and nothing was changed"
-echo "axiom install: extracting verified archive" >&2
+ux_stage Extracting "extracting verified $asset"
 mkdir "$tmp/release"
 tar -xzf "$tmp/$asset" -C "$tmp/release" ||
     fail 'the verified archive could not be extracted; nothing was changed'
 [ -f "$tmp/release/$AXIOM_CLI" ] || fail "the archive does not contain $AXIOM_CLI; nothing was changed"
 
 # `curl | sh` feeds this script on stdin, so the single confirmation reads the terminal instead.
+ux_dispose
 status=0
 if [ -z "$yes" ] && [ -r /dev/tty ] && (: </dev/tty) 2>/dev/null; then
     "$tmp/release/$AXIOM_CLI" install ${modify_path:+"$modify_path"} </dev/tty || status=$?
