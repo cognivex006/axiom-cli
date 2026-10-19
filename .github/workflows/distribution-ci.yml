@@ -242,7 +242,7 @@ jobs:
       - name: Upgrade actual previous release and verify rollback
         shell: bash
         run: |
-          python tests/upgrade_previous_release.py --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/previous-upgrade-${{ matrix.platform }}.json"
+          python tests/upgrade_previous_release.py --previous 0.1.14 --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/previous-upgrade-${{ matrix.platform }}.json"
           python tests/upgrade_previous_release.py --previous 0.1.6 --artifacts "$RUNNER_TEMP/candidate" --platform ${{ matrix.platform }} --out "$RUNNER_TEMP/oneliner/legacy-upgrade-${{ matrix.platform }}.json"
       - name: Windows uninstall and retained-runtime recovery
         if: matrix.platform == 'windows-x64'

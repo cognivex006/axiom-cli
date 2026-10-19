@@ -6,7 +6,7 @@
 
 [package]
 name = "axiom-cli"
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 rust-version = "1.85"
 description = "Axiom ecosystem distribution entrypoint: thin distribution layer over the axiom-graphd installation engine"

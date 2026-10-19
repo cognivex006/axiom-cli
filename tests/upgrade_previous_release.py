@@ -211,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--platform", required=True, choices=["windows-x64", "linux-x64", "macos-x64"])
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7", "0.1.8", "0.1.9", "0.1.10", "0.1.11", "0.1.12"])
+    parser.add_argument("--previous", default=PREVIOUS, choices=["0.1.6", "0.1.7", "0.1.8", "0.1.9", "0.1.10", "0.1.11", "0.1.12", "0.1.14"])
     parser.add_argument("--allow-elevated-fixture", action="store_true", help="allow only this isolated Windows fixture to use the existing CI elevation seam; not non-elevated-user evidence")
     args = parser.parse_args()
     verify(args.artifacts.resolve(), args.platform, args.out.resolve(), args.previous, args.allow_elevated_fixture)

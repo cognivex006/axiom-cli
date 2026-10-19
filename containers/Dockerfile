@@ -14,7 +14,7 @@
 # prerequisite for a native installation path.
 #
 # Cargo.lock pins third-party dependencies. An offline build requires a populated
-# Cargo cache. The native-only 0.1.14 release does not publish this image.
+# Cargo cache. The native-only 0.1.15 release does not publish this image.
 
 FROM rust:1.85-slim-bookworm@sha256:9f841bbe9e7d8e37ceb96ed907265a3a0df7f44e3737d0b100e7907a679acb36 AS builder
 
@@ -35,7 +35,7 @@ FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2
 # timestamp deterministic instead of `whenever the build happened to run`. The
 # publication workflow passes the commit time; a local build may omit it.
 ARG SOURCE_DATE_EPOCH
-ARG AXIOM_VERSION=0.1.14
+ARG AXIOM_VERSION=0.1.15
 ARG AXIOM_REVISION=unknown
 # Deterministic default keeps a bare local build reproducible; the workflow passes
 # the real commit timestamp.

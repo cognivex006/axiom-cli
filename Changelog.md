@@ -4,6 +4,25 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## Unreleased
 
+## 0.1.15
+
+### Bug Fixes
+
+- Build repository graphs with more than 4,096 inventory files, including source files at the repository root.
+- Skip existing generated-output and dependency exclusions before content reads, and preserve the previous graph when source inventory cannot be read completely.
+
+### Documentation
+
+- Follow the registration-first Windows PowerShell guide through build, query and HTML export, with clear solution-ID and readiness explanations.
+
+### Chores
+
+- Package the 0.1.15 engine, MCP runtime and portable skills together; verify upgrading from 0.1.14 and rolling back.
+
+### Known Limitations
+
+- Native packages cover Windows x64, Linux x64 and macOS Intel. No Docker image is published for 0.1.15.
+
 ## 0.1.14
 
 ### New Features
