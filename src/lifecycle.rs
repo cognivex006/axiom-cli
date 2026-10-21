@@ -718,8 +718,35 @@ fn matching_installed_sources(
     {
         return Ok(false);
     }
-    let checked =
-        engine.invoke_with_env(&["skills".into(), "check".into(), "--json".into()], &env)?;
+    let Some(version) = skills.version.as_deref() else {
+        return Ok(false);
+    };
+    if !crate::update::rules::is_semver(version) {
+        return Ok(false);
+    }
+    let directory = format!("skills/{version}");
+    if actual
+        .and_then(|item| item.get("directory"))
+        .and_then(Json::as_text)
+        != Some(directory.as_str())
+    {
+        return Ok(false);
+    }
+    // The engine's check requires an explicit bundle. Validate the physical
+    // installed bundle instead of inheriting a caller's bundle selection.
+    let checked = engine.invoke_with_env(
+        &[
+            "skills".into(),
+            "check".into(),
+            "--bundle".into(),
+            root.join("installs/ecosystem")
+                .join(directory)
+                .display()
+                .to_string(),
+            "--json".into(),
+        ],
+        &env,
+    )?;
     Ok(checked.exit_code() == 0)
 }
 
