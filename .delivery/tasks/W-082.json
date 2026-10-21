@@ -1,0 +1,10 @@
+{
+  "task_id": "W-082",
+  "owner_repository": "axiom-cli",
+  "branch": "feature/w-082-windows-014",
+  "status": "published",
+  "version": "0.1.14",
+  "published_source_revision": "b9a836bcc9d0dfde9df10d104dd60662ef7df73c",
+  "publication_receipt": "evidence/W-082/publication.json",
+  "main_integration": "Pending human review; protected main unchanged."
+}

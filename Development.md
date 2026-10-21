@@ -1,5 +1,16 @@
 # Development — axiom-cli
 
+## Current Windows 0.1.14 machine release
+
+The explicit owner request selects 0.1.14, Windows x64 only, cognivex006 ownership
+and local build/deployment without GitHub Actions. Prepare isolated task branches
+and an authorized release/v0.1.14 stabilization branch from reviewed main. Preserve
+protected main and historical refs. Native tests, checksum/source binding, negative
+installer boundaries and independent review remain required. Same-version source
+replacement and downgrade are refused before runtime provisioning; fresh installs
+and supported earlier-version upgrades retain ordinary integrity/rollback gates.
+
+
 ## Current machine delivery policy (2026-10-21)
 
 The explicit owner request and current ecosystem policy supersede hosted-Actions

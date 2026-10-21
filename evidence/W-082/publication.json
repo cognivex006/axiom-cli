@@ -1,0 +1,124 @@
+{
+  "task_id": "W-082",
+  "version": "0.1.14",
+  "published_source_revision": "b9a836bcc9d0dfde9df10d104dd60662ef7df73c",
+  "tag": "v0.1.14",
+  "publication": {
+    "published": true,
+    "repository": "cognivex006/axiom-cli",
+    "version": "0.1.14",
+    "url": "https://github.com/cognivex006/axiom-cli/releases/tag/v0.1.14",
+    "source_revision": "b9a836bcc9d0dfde9df10d104dd60662ef7df73c",
+    "release_branch": "release/v0.1.14",
+    "asset_count": 16,
+    "downloaded_sha256": {
+      "axiom-0.1.14-windows-x64.zip": "aadc52c18c54765548c90c53162ea88b6bf48892bbff0737c7f3c58b9534742c",
+      "channel.json": "20256bc0248963e1cdbd9b9464e293900ee3f37d27c0a0ffbd85510babdc387f",
+      "install.ps1": "b9b82dc983d6ee5cb4eec3d900fb7bd77870aa6e5a92d9449d0a15d2be1f1317",
+      "RELEASE-NOTES.md": "e29060a0d31feaa5976f00414956aec4211bd1feb349c604b9fdc52d56ac2392",
+      "RELEASE-SCOPE.json": "147623b4b0706895172ba3b37b8e7aa0c5968166aa5ba5c4f8779bba5645fdc5",
+      "RELEASE-SOURCES.json": "0e35fdc428bf5bff96b441d4beb2648fc4e536bddb74781da456741551dabe79",
+      "SHA256SUMS": "27dc0abc50cb6d0918fe8ba86a9c3186db41a07c60ae34e4453f73bd4020ae2e",
+      "SOURCE-REVISION.txt": "8c8e47e6a408dff2d71e28d2ec88be75ec0b0c2903389d7846505eb77cf2f6ee",
+      "update.ps1": "e2a1c565e707e4454a0d401daf92f649f67af930ce6e57f244649daa73f2ac82",
+      "windows-x64-distribution.json": "c4cd559dc1df29619847a182ec4b156ff7e2d826ed3ff7c96628b0ceff390f04",
+      "windows-x64-install.json": "570b29f9f333151920d4242a181ae439345d724ff78b72cebeff92634697148f",
+      "windows-x64-native-proof.json": "643708965eb44e63d23acc4d95bffc350c6b758b2729edc4aca882f6daa8cd20",
+      "windows-x64-progress.json": "13ef5669e7ffd3a4bbbebf8ae913f6c9b6d663e986371333f4edf67c4ed400a4",
+      "windows-x64-refusal-integrity.json": "245067529a4ba9ed4ee2ceed37abb7ca15238142c8b161c62458f72547a9438c",
+      "windows-x64-runtime-reinstall.json": "bd8b48544c4a3ca80272a9ee271850ef7a59d783b02a3e358190145cb941ba6c",
+      "windows-x64-upgrade-rollback.json": "ad00b84c92aace3d1348bedd59e76126d927aacc3abc5ac057da8f285a99ea7e"
+    },
+    "github_workflows_used": false,
+    "protected_main_unchanged": true
+  },
+  "public_install": {
+    "passed": true,
+    "version": "0.1.14",
+    "execution": "native",
+    "platform": "windows-x64",
+    "sources": {
+      "axiom-cli": "b9a836bcc9d0dfde9df10d104dd60662ef7df73c",
+      "axiom-graphd": "b054ea90af103117020878c1c1a3cf97925eb9e5",
+      "axiom-skills": "dd19829e850b9700821ccd2938383df0126b0d76",
+      "axiom-mcp": "0b702e8b68ef48cb628104c1fa5c8124937ccdf5"
+    },
+    "downloaded_scripts_sha256": {
+      "install.ps1": "b9b82dc983d6ee5cb4eec3d900fb7bd77870aa6e5a92d9449d0a15d2be1f1317",
+      "update.ps1": "e2a1c565e707e4454a0d401daf92f649f67af930ce6e57f244649daa73f2ac82",
+      "channel.json": "20256bc0248963e1cdbd9b9464e293900ee3f37d27c0a0ffbd85510babdc387f"
+    },
+    "cases": [
+      {
+        "case": "canonical public Windows install",
+        "exit_code": 0,
+        "raw_log_sha256": "c80c957be19733cf389d1716a886e3f3a8f3b6f3716e8ed966952dbe8028749a"
+      },
+      {
+        "case": "installed version",
+        "exit_code": 0,
+        "raw_log_sha256": "8b9b549075dca0f691926a8bacd4cb93cafed3e93ba9db5bbb5e7adb143b6eb1"
+      },
+      {
+        "case": "installed doctor",
+        "exit_code": 0,
+        "raw_log_sha256": "05eac3aa121e8be60d8613802d60ee4de7ac8193b8076c40d91fbf32bb1b212f"
+      },
+      {
+        "case": "installed MCP source",
+        "exit_code": 0,
+        "raw_log_sha256": "437f66a06b92333196f814aebf1b5908c5dace98a3de859911beedf4b209b1a2"
+      },
+      {
+        "case": "canonical public same-release channel/update smoke",
+        "exit_code": 0,
+        "raw_log_sha256": "a8ca3b31478f1eea403d63556adb9b114ecdb3ea4b4c1b3690da0de241867cfe"
+      },
+      {
+        "case": "doctor after public update",
+        "exit_code": 0,
+        "raw_log_sha256": "05eac3aa121e8be60d8613802d60ee4de7ac8193b8076c40d91fbf32bb1b212f"
+      },
+      {
+        "case": "private-profile uninstall",
+        "exit_code": 0,
+        "raw_log_sha256": "b89b82829b890b26a80a23a939d6994ea8dab49a5df7c5f51b6c5dd92f9ddb83"
+      }
+    ],
+    "profile_isolation": true,
+    "user_data_preserved": true,
+    "scope": "Actual GitHub canonical downloads and installed channel; existing elevation fixture seam, no GUI-host certification."
+  },
+  "local_build_sha256": "eba4084a033938ba0a69ecd5ca40e6ac32fda46e1880bf7d4fca861a3cc27cb2",
+  "source_checks_sha256": "207a9301aa204aa425335276c5f7806c64831ac56a28881d650cf4ad54b46610",
+  "independent_review": "Reviewed source and final local-machine publication plan; all native gates passed before publication.",
+  "limitations": "Windows x64 only; portable MCP/skills tested on Windows, unsigned binaries; no licensed GUI-host certification. Protected component main remains unchanged; source integration awaits human PR review. Historical evidence and original artifacts remain unchanged.",
+  "github_workflows_used": false,
+  "native_acceptance": {
+    "one-line.json": {
+      "passed": true,
+      "raw_sha256": "920785712012ab92e7afaa3c8ee374def9e126d14afe0bc7fe2d3ac5b1c1e1e8",
+      "case_count": 27
+    },
+    "upgrade12.json": {
+      "passed": true,
+      "raw_sha256": "6ec9a88a7be2d282e3e90e0072cc5f435b53861ab799f9a7385b2350a0c69e3c",
+      "case_count": 11
+    },
+    "runtime-reinstall.json": {
+      "passed": true,
+      "raw_sha256": "cd9c232ed71dba5b56469a21c4661c89a7fc823bb34947c61a9f8d6071cb6a46",
+      "case_count": 12
+    },
+    "namespace-refusals.json": {
+      "passed": true,
+      "raw_sha256": "f81d0798c0b713e50fa5768e9c237934c9d0b8b65a2ca312b126649d0872e68c",
+      "case_count": 3
+    },
+    "windows-progress.json": {
+      "passed": true,
+      "raw_sha256": "f307d1b6e47858d477e9deacb416119dc69d38664392b81cfb3d190fbb18087f",
+      "case_count": 28
+    }
+  }
+}

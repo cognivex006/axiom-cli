@@ -1,0 +1,68 @@
+{
+  "task_id": "W-082",
+  "repository": "axiom-cli",
+  "status": "source_verified",
+  "version": "0.1.14",
+  "platform": "windows-x64",
+  "spec_revision": "c8bd7f33d562b31a585478d377f866ce0da4fb0c",
+  "source_unchanged_during_checks": true,
+  "checks": [
+    {
+      "command": "cargo +1.85.0 fmt --all -- --check",
+      "exit_code": 0,
+      "raw_log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 clippy --locked --all-targets -- -D warnings",
+      "exit_code": 0,
+      "raw_log_sha256": "9f46934955e0ae15d53dbaad1ca677e8c307a794f363fc0141a4a26e888f090d",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 test --locked",
+      "exit_code": 0,
+      "raw_log_sha256": "1a0453328b2ac4a59de63fb94fbdaeb133a61e3f206475a09f2b77073e5f3463",
+      "observed_summary": [
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.24s",
+        "test result: ok. 63 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.89s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s",
+        "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.39s"
+      ]
+    },
+    {
+      "command": "python release/check_public_docs.py",
+      "exit_code": 0,
+      "raw_log_sha256": "9f2755f82ece7ff47138c0e34d42bec35824f8ffa8537ca0dfe07c1312e16bd4",
+      "observed_summary": [
+        "Public documentation, product text and selected release assets: no internal identifiers."
+      ]
+    },
+    {
+      "command": "python -m unittest tests.test_public_docs tests.test_bootstrappers tests.test_runtime_version_protocol tests.test_candidate_owners -v",
+      "exit_code": 0,
+      "raw_log_sha256": "73f0cb6c813f285c32e8ce333878e1bb6a41e2301e87512603e0c8df10ef56ae",
+      "observed_summary": [
+        "Ran 28 tests in 1.548s",
+        "OK (skipped=9)"
+      ]
+    },
+    {
+      "command": "cargo-deny.exe --locked --config .delivery/dependency-audit.toml check",
+      "exit_code": 0,
+      "raw_log_sha256": "e3cfd95543d938675702369794225afb703af75001fe73ba60fe399b55bb8943",
+      "observed_summary": [
+        "advisories ok, bans ok, licenses ok, sources ok"
+      ]
+    }
+  ],
+  "independent_review": "No blocking source finding; actual native owner/distribution, refusal and rollback acceptance remains mandatory before publication.",
+  "publication": "not_published",
+  "tested_input_hashes": {
+    "src/lifecycle.rs": "d46aa75388df3340f62e506d5bde9e4a6f39c1e4ce1409315641ebdc2a2e5ef6"
+  }
+}
