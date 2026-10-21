@@ -247,8 +247,8 @@ mod tests {
 
     #[test]
     fn urls_must_be_https() {
-        assert!(is_https_url("https://github.com/orchex006/axiom-cli"));
-        assert!(!is_https_url("http://github.com/orchex006/axiom-cli"));
+        assert!(is_https_url("https://github.com/cognivex006/axiom-cli"));
+        assert!(!is_https_url("http://github.com/cognivex006/axiom-cli"));
         assert!(!is_https_url("https://"));
         assert!(!is_https_url("file:///c:/tmp/artifact.bin"));
         assert!(!is_https_url("c:/tmp/artifact.bin"));

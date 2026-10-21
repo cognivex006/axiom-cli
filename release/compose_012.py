@@ -74,7 +74,7 @@ def owner(repo, directory):
         "download",
         "v" + VERSION,
         "--repo",
-        "orchex006/" + repo,
+        "cognivex006/" + repo,
         "--dir",
         directory,
     )
@@ -85,7 +85,7 @@ def owner(repo, directory):
             [
                 "git",
                 "ls-remote",
-                "https://github.com/orchex006/" + repo + ".git",
+                "https://github.com/cognivex006/" + repo + ".git",
                 "refs/tags/v" + VERSION,
                 "refs/tags/v" + VERSION + "^{}",
             ],

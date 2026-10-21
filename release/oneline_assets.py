@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CANONICAL = "https://github.com/orchex006/axiom-cli/releases/download"
+CANONICAL = "https://github.com/cognivex006/axiom-cli/releases/download"
 PLATFORMS = (("windows-x64", "zip"), ("linux-x64", "tar.gz"), ("macos-x64", "tar.gz"))
 
 

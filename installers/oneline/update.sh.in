@@ -1,8 +1,8 @@
 #!/bin/sh
 # Axiom one-line updater for macOS x64, Linux x64 and WSL2. Generated for @@TAG@@; do not edit.
 #
-#   curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/update.sh | sh
-#   curl -fsSL https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
+#   curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/update.sh | sh
+#   curl -fsSL https://github.com/cognivex006/axiom-cli/releases/download/@@TAG@@/update.sh | sh -s -- --yes
 #
 # This script contains no update logic:
 #   * Existing installed.json layouts: verify this release's current CLI and run

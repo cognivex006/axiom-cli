@@ -1,0 +1,75 @@
+{
+  "task_id": "W-077",
+  "source_repo": "axiom-cli",
+  "platform": "windows-x64",
+  "execution": "native",
+  "verification": "source checks; not release acceptance",
+  "commands": [
+    {
+      "command": "cargo +1.85.0 fmt --all -- --check",
+      "exit_code": 0,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 clippy --locked --all-targets -- -D warnings",
+      "exit_code": 0,
+      "raw_log_sha256": "f591e097f22f91dd5c31fbbf7e587d80c0a4e0ed594f9c9012a544f38c52d926",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 test --locked",
+      "exit_code": 0,
+      "raw_log_sha256": "5b503c1960ccca7bdbba01ffd68b32afb56970bb7f2f53594e2ad2ac89d5d8d7",
+      "observed_summary": [
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.55s",
+        "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.49s"
+      ]
+    },
+    {
+      "command": "python release/check_public_docs.py",
+      "exit_code": 0,
+      "raw_log_sha256": "9ec35318e480db03075870b6507d3fb1d593d9f9a1c552a32658adcb8073c991",
+      "observed_summary": [
+        "Public documentation, product text and selected release assets: no internal identifiers."
+      ]
+    },
+    {
+      "command": "python -m unittest tests.test_public_docs tests.test_bootstrappers tests.test_runtime_version_protocol tests.test_candidate_owners -v",
+      "exit_code": 0,
+      "raw_log_sha256": "a5d0b67c9ad3ce51dad5c4ad4db62d5c0caaf9182e5c058596baaab0acb2723b",
+      "observed_summary": [
+        "Ran 28 tests in 1.741s",
+        "OK (skipped=9)"
+      ]
+    },
+    {
+      "command": "cargo-deny --locked --config .delivery/dependency-audit.toml check",
+      "exit_code": 0,
+      "raw_log_sha256": "aa2657b0ad2d2059d4692c2c2784aaa2894f31bbaa26f532ffd3855f5625cd84",
+      "observed_summary": [
+        "advisories ok, bans ok, licenses ok, sources ok"
+      ]
+    },
+    {
+      "command": "python -m unittest tests.test_public_docs tests.test_bootstrappers tests.test_runtime_version_protocol tests.test_candidate_owners -q",
+      "exit_code": 0,
+      "raw_log_sha256": "9c6e76b943b07024c75342b46f01f055c8984d1fefca1ed0588f63f09c0ae617",
+      "observed_summary": [
+        "Ran 28 tests in 1.795s",
+        "OK (skipped=9)"
+      ]
+    }
+  ],
+  "spec_revision": "4ef9d1d5be0588e85df3a437efa2ae6df2f81245",
+  "verified_contract_digests": 39,
+  "limitations": [
+    "Rebuilt multi-platform binary acceptance and publication are pending.",
+    "Linux, macOS, WSL, current manual terminal screenshots and release upgrade/rollback were not executed for this namespace migration.",
+    "Original legacy-owner cached release bytes remain unpublished."
+  ],
+  "preserved_history": "Original source commits, archived task receipts and frozen contract/skill fixtures retain original identities."
+}

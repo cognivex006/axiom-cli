@@ -59,7 +59,7 @@ class GeneratorTests(unittest.TestCase):
         with self.assertRaises(gen.GenerationError):
             gen.generate("v1.2.3", "nothex  axiom-1.2.3-windows-x64.zip\n")
         with self.assertRaises(gen.GenerationError):
-            gen.generate("v1.2.3", SUMS, "https://github.com/orchex006/axiom-cli/releases/latest/download")
+            gen.generate("v1.2.3", SUMS, "https://github.com/cognivex006/axiom-cli/releases/latest/download")
 
     def test_posix_script_is_valid_sh(self):
         sh = shutil.which("sh")

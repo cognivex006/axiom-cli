@@ -23,7 +23,7 @@ uninstall or rollback. The installer verifies its files and approved inputs befo
 activating it. Modified or incomplete runtime directories are preserved and refused.
 If uninstall removed `axm`, run the installation command below to restore it.
 
-Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. Version 0.1.10 supports `axm skills install codex`; immutable 0.1.9 retains its [versioned manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
+Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` executables remain deprecated compatibility forwarders. The installation engine is private. Version 0.1.10 supports `axm skills install codex`; older installations can use the current [manual plugin setup guide](https://github.com/cognivex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
 - [Before you start](#before-you-start)
 - [Install](#install)
@@ -54,13 +54,13 @@ Canonical terminal commands are `axm`, `axge` and `axmp`; existing `axsk` execut
 Open a normal PowerShell window (not "Run as administrator") and run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/install.ps1 | iex"
 ```
 
 To update later, run the [update command](#update):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/update.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/update.ps1 | iex"
 ```
 
 ### macOS, Linux and WSL2 (not as root)
@@ -68,13 +68,13 @@ powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cl
 Open a terminal and run:
 
 ```sh
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/install.sh | sh
 ```
 
 To update later, run the [update command](#update):
 
 ```sh
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/update.sh | sh
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/update.sh | sh
 ```
 
 ### What happens
@@ -128,12 +128,12 @@ The Windows one-line command cannot take options, so use the environment variabl
 ```powershell
 # Windows: set the environment variable, then run the normal command
 $env:AXIOM_INSTALL_YES = '1'
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/install.ps1 | iex"
 ```
 
 ```sh
 # Linux / macOS: put the options after `sh -s --`
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh | sh -s -- --yes
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/install.sh | sh -s -- --yes
 ```
 
 To pin a version in the URL itself, replace `latest/download` with `download/v0.1.3`.
@@ -168,12 +168,12 @@ Use the update command for your system (published from 0.1.4):
 
 ```powershell
 # Windows
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/update.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/update.ps1 | iex"
 ```
 
 ```sh
 # Linux, WSL2 or macOS
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/update.sh | sh
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/update.sh | sh
 ```
 
 The update script decides what to do from what is on your machine. It changes nothing by itself:
@@ -234,7 +234,7 @@ Why: `AXIOM_CLI_INSTALL_ROOT` changes where Axiom installs, and `AXIOM_ENGINE_BI
 
 Most people should keep this default. If you would rather turn the 0.1.2 bootstrap folder into your install, do this instead of the one-line command:
 
-1. Download `axiom-<version>-windows-x64.zip` and `SHA256SUMS` from the [latest release](https://github.com/orchex006/axiom-cli/releases/latest).
+1. Download `axiom-<version>-windows-x64.zip` and `SHA256SUMS` from the [latest release](https://github.com/cognivex006/axiom-cli/releases/latest).
 2. Check the archive: the output of `Get-FileHash <zip> -Algorithm SHA256` must match the zip's line in `SHA256SUMS`.
 3. Extract the zip to a new folder. In that folder, run:
 
@@ -299,7 +299,7 @@ Modified snapshots and foreign marketplaces are preserved and cause a conflict.
 No command claims a graph query worked merely because plugin registration worked.
 
 The future local gateway is started with `axmp serve`; background lifecycle is
-`axm mcp start|status|stop`. See [gateway lifetime](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md)
+`axm mcp start|status|stop`. See [gateway lifetime](https://github.com/cognivex006/axiom-mcp/blob/main/docs/local-gateway.md)
 for instance isolation, three-hour idle shutdown, owner binding and multi-project
 graph caching. Current immutable releases remain unchanged by these source edits.
 
@@ -370,7 +370,7 @@ targets the observed owner; it never kills an arbitrary process using a port.
 `axm mcp` without arguments runs stdio and waits for its agent on stdin. For a
 manual foreground HTTP gateway use `axmp serve`; its terminal stays open while
 clients connect. Check `/healthz`, `/readyz` and `axmp doctor` separately. See the
-[gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md).
+[gateway guide](https://github.com/cognivex006/axiom-mcp/blob/main/docs/local-gateway.md).
 
 Direct install/repair over an existing installation also verifies and selects the
 approved MCP runtime generation. Having an older Python environment already

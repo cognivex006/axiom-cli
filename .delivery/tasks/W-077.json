@@ -1,0 +1,15 @@
+{
+  "task_id": "W-077",
+  "source_repo": "axiom-cli",
+  "branch": "feature/w-077-local-delivery",
+  "base_revision": "8362d76d11c781b9cba6d2a5510cdd761679ab40",
+  "spec_revision": "4ef9d1d5be0588e85df3a437efa2ae6df2f81245",
+  "status": "source_verified",
+  "push_remote": "https://github.com/cognivex006/axiom-cli",
+  "release_publication": "withheld_until_rebuilt",
+  "latest_real_cached_version": "0.1.15",
+  "native_release_lanes": "Namespace-migrated Windows/Linux/macOS release acceptance and publication remain pending; historical cached binaries are not republished.",
+  "verification_artifact": "evidence/W-077/checks.json",
+  "verification_artifact_sha256": "eda16c37c67e6c37c31a9c4f06cd34973d12c1409f8b75fb4ff1aeabd08402b8",
+  "git_delivery": "Exact committed and remote source revisions are recorded by the canonical specification coordinator after feature push."
+}

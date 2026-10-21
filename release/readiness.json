@@ -1,25 +1,10 @@
 {
-  "state": "PUBLISHED",
-  "ready": true,
-  "version": "0.1.2",
-  "published": true,
-  "source_revision": "256692e71cba1132c8230ca7280c9ee19b76b2d8",
-  "release_url": "https://github.com/orchex006/axiom-cli/releases/tag/v0.1.2",
-  "github_actions": "https://github.com/orchex006/axiom-cli/actions/runs/37280283724",
-  "certification_required": false,
-  "verified_environments": [
-    "windows-x64",
-    "macos-x64",
-    "linux-x64",
-    "wsl2-linux-x64"
-  ],
-  "macos_arm64": "excluded",
-  "receipt": "release/v0.1.2-receipt.json",
-  "limitations": [
-    "Mac ARM excluded.",
-    "Licensed AI host applications are not claimed exercised.",
-    "Mac Intel native package/entrypoint/install-plan and installed MCP/core CI passed; full desktop service registration/apply is not inferred from this runner.",
-    "Use the extracted Windows/Linux CLI for management; optional user-PATH entrypoint installers are explicit actions. Embedded local channels are offline verified descriptions; signed automatic update feeds remain separate.",
-    "Default static-analysis profile remains bounded; a single-line C# namespace-plus-class test fixture was not resolved as a class. Multiline real-source watcher/query passed."
-  ]
+  "schema_version": 1,
+  "repository": "cognivex006/axiom-cli",
+  "state": "BUILD_REQUIRED",
+  "verification": "local_machine",
+  "release_verified": false,
+  "published": false,
+  "latest_cached_version": "0.1.15",
+  "reason": "Owner selected withholding publication until namespace-migrated builds pass on all required native platforms."
 }

@@ -32,7 +32,7 @@ def verify(lane, command, base_env):
     name = "axiom-cli.exe" if windows else "axiom-cli"
     extension = "zip" if windows else "tar.gz"
     asset = f"axiom-0.1.2-{lane}.{extension}"
-    base = "https://github.com/orchex006/axiom-cli/releases/download/v0.1.2/"
+    base = "https://github.com/cognivex006/axiom-cli/releases/download/v0.1.2/"
     with urllib.request.urlopen(base + "SHA256SUMS", timeout=90) as response:
         sums = response.read().decode()
     expected = next(line.split("  ", 1)[0] for line in sums.splitlines()

@@ -11,7 +11,7 @@ axm update --yes
 axm update rollback --transaction previous
 ```
 
-The installed release records its channel source. The default public source is `https://github.com/orchex006/axiom-cli/releases/latest/download/channel.json`. That endpoint selects metadata; every offered archive must still pin an exact version tag, URL, SHA-256 and byte length. A floating archive URL, branch tip or wildcard is refused.
+The installed release records its channel source. The default public source is `https://github.com/cognivex006/axiom-cli/releases/latest/download/channel.json`. That endpoint selects metadata; every offered archive must still pin an exact version tag, URL, SHA-256 and byte length. A floating archive URL, branch tip or wildcard is refused.
 
 The command reads the installed core version and the offer. When the offer is not newer it reports `up to date`; that result does not prove an upgrade was performed. Otherwise it reports the version, download, size and plan digest and asks once. Without a terminal use `--yes`, or use `--dry-run` to inspect without mutation.
 

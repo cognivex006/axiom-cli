@@ -24,7 +24,7 @@ import subprocess
 import time
 from pathlib import Path
 
-BASE = "https://github.com/orchex006/axiom-cli/releases"
+BASE = "https://github.com/cognivex006/axiom-cli/releases"
 PROMPT = b"Proceed? [Y/n]"
 
 

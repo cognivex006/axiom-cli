@@ -34,7 +34,7 @@ Local full-ecosystem candidates add verified core, MCP, skills and Python inputs
 
 ## Publication
 
-`.github/workflows/publish-container.yml` has a separate opt-in publication path for `ghcr.io/orchex006/axiom-cli`. It records the resolved image digest. Version and source tags identify builds; no floating `latest` tag is used. An arm64 image requires its explicit build input and separate verification.
+Container build and publication are manual operator-managed machine operations. Use version and source-derived immutable tags and record the resolved image digest. No container is published by the current native-only migration; arm64 needs separate explicit approval and verification.
 
 Consume an actually published image by its recorded digest. This guide does not supply a verified public image digest or claim container publication from the native archive release.
 

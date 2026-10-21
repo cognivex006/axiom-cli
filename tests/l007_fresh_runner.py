@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""L-007 fresh-runner check: the documented one-liner against the CI-built release candidate.
+"""L-007 clean-machine check: the documented one-liner against a local release candidate.
 
-Run by `.github/workflows/distribution-ci.yml` on fresh hosted runners. The candidate archive is
+Run on native build machines with AXIOM_BUILD_REVISION set to the exact commit. The candidate archive is
 served from a local HTTP server with the GitHub release-download layout (`<base>/<tag>/<asset>`),
 `release/oneline_assets.py` generates `install.ps1` / `install.sh` / `channel.json` for it, and then
 the exact documented command runs, followed by `version`, `doctor` (must exit 0), `update`,
@@ -43,6 +43,9 @@ def main() -> int:
     ap.add_argument("--platform", required=True)
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
+    source_revision = os.environ.get("AXIOM_BUILD_REVISION") or os.environ.get("GITHUB_SHA")
+    if not source_revision or len(source_revision) != 40 or any(c not in "0123456789abcdef" for c in source_revision):
+        ap.error("AXIOM_BUILD_REVISION must identify the exact machine-built source")
     if args.platform == "macos-x64" and (host.system() != "Darwin" or host.machine() != "x86_64" or os.getuid() == 0):
         ap.error("M-001 requires a native macOS Intel non-root runner")
     archive = next(args.artifacts.rglob(f"axiom-*-{args.platform}.*"))
@@ -141,12 +144,12 @@ def main() -> int:
     steps.extend({"step": "legacy CLI store: " + row["case"], "passed": row["passed"]}
                  for row in legacy_store["cases"])
     server.shutdown()
-    run_url = "{}/{}/actions/runs/{}".format(os.environ.get("GITHUB_SERVER_URL", ""), os.environ.get("GITHUB_REPOSITORY", ""),
-                                              os.environ.get("GITHUB_RUN_ID", "local"))
+    run_url = None
     doc = {"task_id": "M-001" if args.platform == "macos-x64" else "L-007",
            "tasks": ["M-001"] if args.platform == "macos-x64" else ["L-007", "L-013", "L-016"],
            "execution": "native", "asset_source": "candidate", "clean_install_preflight": True,
-           "lane": args.platform, "run_url": run_url, "source_revision": os.environ.get("GITHUB_SHA"),
+           "lane": args.platform, "run_url": run_url, "source_revision": source_revision,
+           "verification": "local_machine",
            "host": {"system": host.system(), "release": host.release(), "machine": host.machine()},
            "assets": {p.name: sha(p) for p in sorted((srv / tag).iterdir())},
            "axiom_env_set": sorted(k for k in env if k.upper().startswith("AXIOM")),

@@ -67,7 +67,7 @@ def verify(artifacts, lane, output, previous_version=PREVIOUS, allow_elevated_fi
         data = home / "data"
         root = data / ("Axiom" if suffix else "axiom")
         old_name = f"axiom-{previous_version}-{lane}.{extension}"
-        base = f"https://github.com/orchex006/axiom-cli/releases/download/v{previous_version}"
+        base = f"https://github.com/cognivex006/axiom-cli/releases/download/v{previous_version}"
         sums = urllib.request.urlopen(base + "/SHA256SUMS", timeout=90).read().decode()
         expected = next(line.split("  ", 1)[0] for line in sums.splitlines() if line.split("  ", 1)[-1] == old_name)
         old_archive = work / old_name

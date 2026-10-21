@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "repository": "axiom-cli",
+  "check": [
+    [
+      "cargo",
+      "+1.85.0",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    [
+      "cargo",
+      "+1.85.0",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    [
+      "cargo",
+      "+1.85.0",
+      "test",
+      "--locked"
+    ],
+    [
+      "python",
+      "release/check_public_docs.py"
+    ],
+    [
+      "python",
+      "-m",
+      "unittest",
+      "tests.test_public_docs",
+      "tests.test_bootstrappers",
+      "tests.test_runtime_version_protocol",
+      "tests.test_candidate_owners",
+      "-v"
+    ],
+    [
+      "cargo-deny",
+      "--locked",
+      "--config",
+      ".delivery/dependency-audit.toml",
+      "check"
+    ]
+  ],
+  "build": [
+    [
+      "cargo",
+      "+1.85.0",
+      "build",
+      "--locked",
+      "--release"
+    ]
+  ]
+}

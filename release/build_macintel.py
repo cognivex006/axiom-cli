@@ -33,7 +33,7 @@ for repo in ("axiom-graphd", "axiom-mcp", "axiom-skills"):
         "download",
         "v0.1.1",
         "--repo",
-        "orchex006/" + repo,
+        "cognivex006/" + repo,
         "--dir",
         dest,
     )
@@ -43,7 +43,7 @@ for repo in ("axiom-graphd", "axiom-mcp", "axiom-skills"):
         [
             "git",
             "ls-remote",
-            "https://github.com/orchex006/" + repo + ".git",
+            "https://github.com/cognivex006/" + repo + ".git",
             "refs/tags/v0.1.1",
         ],
         text=True,

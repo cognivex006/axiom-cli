@@ -45,36 +45,6 @@ fn entrypoint() -> String {
     read("containers/entrypoint.sh")
 }
 
-fn workflow() -> String {
-    read(".github/workflows/publish-container.yml")
-}
-
-/// Lines belonging to the block introduced by `marker`, de-indented, stopping at the first
-/// line that is no longer more indented than the marker itself.
-fn indented_block(text: &str, marker: &str) -> Vec<String> {
-    let mut collected: Vec<String> = Vec::new();
-    let mut base: Option<usize> = None;
-    for line in text.lines() {
-        match base {
-            Some(indentation) => {
-                if line.trim().is_empty() {
-                    continue;
-                }
-                if line.len() - line.trim_start().len() <= indentation {
-                    break;
-                }
-                collected.push(line.trim().to_string());
-            }
-            None => {
-                if line.trim() == marker {
-                    base = Some(line.len() - line.trim_start().len());
-                }
-            }
-        }
-    }
-    collected
-}
-
 /// Executable lines of a shell script: comments and blanks dropped, so a guard cannot be
 /// tripped by prose in a doc comment.
 fn executable_lines(text: &str) -> Vec<String> {
@@ -134,7 +104,7 @@ fn oci_label_set_is_complete() {
     let required: [(&str, &str); 4] = [
         (
             "org.opencontainers.image.source",
-            "org.opencontainers.image.source=\"https://github.com/orchex006/axiom-cli\"",
+            "org.opencontainers.image.source=\"https://github.com/cognivex006/axiom-cli\"",
         ),
         (
             "org.opencontainers.image.revision",
@@ -223,11 +193,11 @@ fn dockerfile_version_default_matches_the_version_file() {
 fn the_container_is_declared_a_non_native_channel() {
     let text = dockerfile();
     assert!(
-        text.contains("io.orchex006.axiom.native-evidence=\"false\""),
+        text.contains("io.cognivex006.axiom.native-evidence=\"false\""),
         "the image must label itself as non-native evidence"
     );
     assert!(
-        text.contains("io.orchex006.axiom.channel=\"container-linux-x64\""),
+        text.contains("io.cognivex006.axiom.channel=\"container-linux-x64\""),
         "the image must label itself with its delivery platform id"
     );
     assert!(
@@ -237,10 +207,6 @@ fn the_container_is_declared_a_non_native_channel() {
     assert!(
         text.contains("prerequisite for a native installation path"),
         "the Dockerfile must state that the container is not a native prerequisite"
-    );
-    assert!(
-        workflow().contains("NOT native runtime evidence"),
-        "the publication workflow must repeat the non-native-evidence statement"
     );
     assert!(
         entrypoint().contains("native evidence"),
@@ -282,95 +248,14 @@ fn entrypoint_forwards_the_argv_vector_unchanged() {
 }
 
 #[test]
-fn workflow_builds_with_buildx_and_publishes_immutable_tags_only() {
-    let text = workflow();
-    assert!(
-        text.contains("docker/setup-buildx-action"),
-        "the publication workflow must build with buildx"
-    );
-    assert!(
-        text.contains("docker/build-push-action"),
-        "the publication workflow must publish through build-push-action"
-    );
-    assert!(
-        text.contains("platforms=\"linux/amd64\""),
-        "the finish-first tier starts from linux/amd64"
-    );
-    assert!(
-        text.contains("platforms=\"${platforms},linux/arm64\""),
-        "linux/arm64 must be reachable but opt-in"
-    );
-    assert!(
-        text.contains("publish_arm64") && text.contains("${{ inputs.publish_arm64 }}"),
-        "linux/arm64 must be gated behind an explicit input so it is never an unverified placeholder"
-    );
-    assert!(
-        text.contains("ghcr.io/orchex006/axiom-cli"),
-        "the workflow must target the contract image reference"
-    );
-
-    let tags = indented_block(&text, "tags: |");
-    assert!(
-        !tags.is_empty(),
-        "the build step must declare an explicit tag list"
-    );
-    assert!(
-        !tags.iter().any(|line| line.contains("latest")),
-        "a floating tag must not exist: {tags:?}"
-    );
-    assert!(
-        tags.iter()
-            .any(|line| line.contains(":${{ steps.version.outputs.version }}")),
-        "the image must carry its immutable version tag: {tags:?}"
-    );
-    assert!(
-        tags.iter()
-            .any(|line| line.contains(":git-${{ steps.version.outputs.short_sha }}")),
-        "the image must carry a commit-derived tag: {tags:?}"
-    );
-}
-
-#[test]
-fn workflow_records_the_digest_and_keeps_publication_opt_in() {
-    let text = workflow();
-    assert!(
-        text.contains("${{ steps.build.outputs.digest }}"),
-        "the workflow must read the digest buildx produced"
-    );
-    assert!(
-        text.contains("immutable_reference=${{ env.IMAGE }}@$DIGEST"),
-        "the workflow must record the immutable digest reference"
-    );
-    assert!(
-        text.contains("push: ${{ steps.mode.outputs.push == 'true' }}"),
-        "pushing must be decided by the resolved mode, not hard-coded"
-    );
-    assert!(
-        text.contains("default: false"),
-        "a manual run must default to not pushing"
-    );
-    assert!(
-        text.contains("packages: write"),
-        "publishing needs the packages scope"
-    );
-    assert!(
-        text.contains("contents: read"),
-        "the workflow must not ask for write access to repository contents"
-    );
-    assert!(
-        text.contains("SOURCE_DATE_EPOCH=${{ steps.version.outputs.epoch }}"),
-        "the workflow must pass the commit time as SOURCE_DATE_EPOCH"
-    );
-    assert!(
-        text.contains("distribution.container.published_image_digest"),
-        "the workflow must say where the digest is recorded"
-    );
-    for forbidden in ["docker push", "force", "git tag"] {
-        assert!(
-            !text.contains(forbidden),
-            "the workflow must not contain `{forbidden}`"
-        );
-    }
+fn local_delivery_has_no_automatic_container_publication() {
+    let runner = read("tools/local_delivery.py");
+    assert!(!repo_root()
+        .join(".github/workflows/publish-container.yml")
+        .exists());
+    assert!(!runner.contains("docker push"));
+    assert!(!runner.contains("gh release create"));
+    assert!(read("docs/LOCAL-BUILD-DEPLOY.md").contains("containers and WSL"));
 }
 
 #[test]

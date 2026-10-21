@@ -1,5 +1,15 @@
 # Development — axiom-cli
 
+## Current machine delivery policy (2026-10-21)
+
+The explicit owner request and current ecosystem policy supersede hosted-Actions
+requirements and older release-tag retention instructions for this migration.
+Use [local build and deployment](docs/LOCAL-BUILD-DEPLOY.md). Preserve required
+checks, native evidence, independent review, integrity and rollback gates.
+Do not publish cached legacy-owner binaries. New source is feature-only; main
+integration and rebuilt multi-platform release publication remain separate.
+
+
 ## Pinned governance
 
 The canonical workflow is Development.md in `axiom-specs` at the exact revision in `spec.lock.json`. A missing or unverified pin blocks implementation; do not treat `spec.lock.example.json` as valid authorization.
@@ -14,7 +24,7 @@ Implement one bounded task; coordinate public changes through spec ADR/RFC first
 
 ## Completion
 
-Attach real test output/hashes, acceptance mapping, changed-file review, compatibility and rollback notes, updated local docs and Changelog.md. Record which native targets were actually executed and which stayed unverified; a container image is never native runtime evidence and a WSL2 run is never Windows evidence. Complete the canonical six preflight and eight completion checks; spec tooling validates evidence consistency, but independent CI reruns remain required.
+Attach real test output/hashes, acceptance mapping, changed-file review, compatibility and rollback notes, updated local docs and Changelog.md. Record which native targets were actually executed and which stayed unverified; a container image is never native runtime evidence and a WSL2 run is never Windows evidence. Complete the canonical six preflight and eight completion checks; spec tooling validates evidence consistency, but independent machine reruns remain required.
 
 ## Branch/release policy
 

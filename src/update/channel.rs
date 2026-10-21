@@ -752,7 +752,7 @@ mod tests {
     #[test]
     fn a_declared_component_with_a_published_artifact_parses() {
         let text = document(&format!(
-            r#"[{{"component":"axiom-cli","status":"declared","version":"0.0.0-dev","revision":"{rev}","declared_source":"axiom-cli/VERSION","needs_restart":true,"artifacts":[{{"platform":"windows-x64","class":"per-user-installer","url":"https://github.com/orchex006/axiom-cli/releases/download/x/a.zip","sha256":"{sha}","size_bytes":1}}]}}]"#,
+            r#"[{{"component":"axiom-cli","status":"declared","version":"0.0.0-dev","revision":"{rev}","declared_source":"axiom-cli/VERSION","needs_restart":true,"artifacts":[{{"platform":"windows-x64","class":"per-user-installer","url":"https://github.com/cognivex006/axiom-cli/releases/download/x/a.zip","sha256":"{sha}","size_bytes":1}}]}}]"#,
             rev = CLI_REV,
             sha = digest()
         ));

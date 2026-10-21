@@ -8,7 +8,7 @@ Canonical terminal commands are `axm` (runtime and host manager), `axge` (graph 
 
 The distribution verifies inputs, presents the plan, provisions the MCP runtime and records the installed release. The graph engine owns ecosystem placement, activation, service lifecycle and removal. Calls use program and argv rather than an interpolated shell command.
 
-`axm install` installs the release's complete pinned component set. It does not accept a component name: `axm install cli` and `axm install axiom-graphd` are unsupported. The development `axm skills install codex` adapter registers verified local content; host discovery remains a separate [skills verification step](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md).
+`axm install` installs the release's complete pinned component set. It does not accept a component name: `axm install cli` and `axm install axiom-graphd` are unsupported. The development `axm skills install codex` adapter registers verified local content; host discovery remains a separate [skills verification step](https://github.com/cognivex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
 ## Release archives and bootstrappers
 

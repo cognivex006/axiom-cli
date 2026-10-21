@@ -14,7 +14,7 @@ spec.loader.exec_module(owner)
 class CandidateOwnerTests(unittest.TestCase):
     def test_canonical_successful_push_is_bound_to_explicit_source_and_run(self):
         pin = dict(run_id=123, source_revision="a" * 40)
-        observed = dict(id=123, head_sha="a" * 40, head_repository=dict(full_name="orchex006/axiom-mcp"), path=".github/workflows/mcp-ci.yml", event="push", status="completed", conclusion="success")
+        observed = dict(id=123, head_sha="a" * 40, head_repository=dict(full_name="cognivex006/axiom-mcp"), path=".github/workflows/mcp-ci.yml", event="push", status="completed", conclusion="success")
         self.assertEqual(owner.checked_run("axiom-mcp", pin, observed), "a" * 40)
         for key, bad in [("id", 124), ("head_sha", "b" * 40), ("head_repository", dict(full_name="foreign/axiom-mcp")), ("path", ".github/workflows/other.yml"), ("event", "pull_request"), ("status", "in_progress"), ("conclusion", "failure")]:
             changed = copy.deepcopy(observed); changed[key] = bad

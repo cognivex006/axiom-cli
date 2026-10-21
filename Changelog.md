@@ -1,8 +1,13 @@
 # Changelog
 
-Changes are listed by release, newest first. For downloads, see [GitHub Releases](https://github.com/orchex006/axiom-cli/releases).
+Changes are listed by release, newest first. For downloads, see [GitHub Releases](https://github.com/cognivex006/axiom-cli/releases).
 
 ## Unreleased
+
+### Chores
+
+- Move repository and download references to cognivex006 and run verification/builds on operator-managed machines instead of GitHub Actions.
+
 
 ## 0.1.15
 
@@ -168,7 +173,7 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 - Add an automated check for internal identifiers in public documents, installer templates, generated release metadata and CLI text.
 - Extend fresh-runner installation checks to Intel Macs, including update checks, uninstall and reinstall. These checks do not establish upgrades between different released versions.
 
-Full Changelog: [v0.1.5…v0.1.6](https://github.com/orchex006/axiom-cli/compare/v0.1.5...v0.1.6)
+Full Changelog: [v0.1.5…v0.1.6](https://github.com/cognivex006/axiom-cli/compare/v0.1.5...v0.1.6)
 
 ## 0.1.5
 
@@ -177,7 +182,7 @@ Full Changelog: [v0.1.5…v0.1.6](https://github.com/orchex006/axiom-cli/compare
 - Add `axm` as the short command for `axiom-cli`. Both names run the same program and support the same commands; installation, update, rollback and uninstall manage both entrypoints.
 - Bundle core, MCP and skills version 0.1.5. MCP and agent skills can expose the installation manager's commands.
 
-Full Changelog: [v0.1.4…v0.1.5](https://github.com/orchex006/axiom-cli/compare/v0.1.4...v0.1.5)
+Full Changelog: [v0.1.4…v0.1.5](https://github.com/cognivex006/axiom-cli/compare/v0.1.4...v0.1.5)
 
 ## 0.1.4
 
@@ -186,7 +191,7 @@ Full Changelog: [v0.1.4…v0.1.5](https://github.com/orchex006/axiom-cli/compare
 - Add `update.sh` and `update.ps1` to release downloads. They find an existing installation and run its update command; older installations upgrade through the verified installer. With nothing installed, they print the installation command.
 - Stop with clear instructions when legacy environment overrides would select the wrong installation.
 
-Full Changelog: [v0.1.3…v0.1.4](https://github.com/orchex006/axiom-cli/compare/v0.1.3...v0.1.4)
+Full Changelog: [v0.1.3…v0.1.4](https://github.com/cognivex006/axiom-cli/compare/v0.1.3...v0.1.4)
 
 ## 0.1.3
 
@@ -207,7 +212,7 @@ Full Changelog: [v0.1.3…v0.1.4](https://github.com/orchex006/axiom-cli/compare
 
 - Add the installation guide with options, update, removal, legacy migration and troubleshooting.
 
-Full Changelog: [v0.1.2…v0.1.3](https://github.com/orchex006/axiom-cli/compare/v0.1.2...v0.1.3)
+Full Changelog: [v0.1.2…v0.1.3](https://github.com/cognivex006/axiom-cli/compare/v0.1.2...v0.1.3)
 
 ## 0.1.2
 
@@ -220,7 +225,7 @@ Full Changelog: [v0.1.2…v0.1.3](https://github.com/orchex006/axiom-cli/compare
 
 - These test-release archives use the older explicit bootstrap and approval workflow. Follow the [historical release instructions](release/v0.1.2-notes.md); newer releases provide the one-line installer.
 
-Full Changelog: [v0.1.1…v0.1.2](https://github.com/orchex006/axiom-cli/compare/v0.1.1...v0.1.2)
+Full Changelog: [v0.1.1…v0.1.2](https://github.com/cognivex006/axiom-cli/compare/v0.1.1...v0.1.2)
 
 ## 0.1.1
 
@@ -232,7 +237,7 @@ Full Changelog: [v0.1.1…v0.1.2](https://github.com/orchex006/axiom-cli/compare
 
 - Native binaries are unsigned and not notarized. The embedded channel describes a local offline payload; it is not a signed automatic update feed. See the [release instructions](release/v0.1.1-notes.md).
 
-Full Changelog: [v0.1.0…v0.1.1](https://github.com/orchex006/axiom-cli/compare/v0.1.0...v0.1.1)
+Full Changelog: [v0.1.0…v0.1.1](https://github.com/cognivex006/axiom-cli/compare/v0.1.0...v0.1.1)
 
 ## 0.1.0
 

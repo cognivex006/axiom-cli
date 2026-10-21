@@ -43,15 +43,15 @@ ARG AXIOM_CREATED=1970-01-01T00:00:00Z
 
 LABEL org.opencontainers.image.title="axiom-cli" \
       org.opencontainers.image.description="Axiom ecosystem distribution entrypoint: install, update, doctor, version, uninstall. Additional container delivery channel; not native runtime evidence for any target." \
-      org.opencontainers.image.source="https://github.com/orchex006/axiom-cli" \
-      org.opencontainers.image.url="https://github.com/orchex006/axiom-cli" \
-      org.opencontainers.image.documentation="https://github.com/orchex006/axiom-cli/blob/main/docs/50-CONTAINER-CHANNEL.md" \
+      org.opencontainers.image.source="https://github.com/cognivex006/axiom-cli" \
+      org.opencontainers.image.url="https://github.com/cognivex006/axiom-cli" \
+      org.opencontainers.image.documentation="https://github.com/cognivex006/axiom-cli/blob/main/docs/50-CONTAINER-CHANNEL.md" \
       org.opencontainers.image.version="${AXIOM_VERSION}" \
       org.opencontainers.image.revision="${AXIOM_REVISION}" \
       org.opencontainers.image.created="${AXIOM_CREATED}" \
       org.opencontainers.image.licenses="UNLICENSED" \
-      io.orchex006.axiom.channel="container-linux-x64" \
-      io.orchex006.axiom.native-evidence="false"
+      io.cognivex006.axiom.channel="container-linux-x64" \
+      io.cognivex006.axiom.native-evidence="false"
 
 RUN groupadd --gid 10001 axiom \
  && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /home/axiom --shell /usr/sbin/nologin axiom \

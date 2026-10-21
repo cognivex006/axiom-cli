@@ -6,7 +6,7 @@ names and SHA-256 values taken from that release's `SHA256SUMS`. It is determini
 inputs produce byte-identical scripts (LF line endings, no timestamps, no environment input).
 
     python packaging/oneline/generate_bootstrappers.py --tag v0.1.3 --sums <SHA256SUMS> --out <dir>
-        [--base-url https://github.com/orchex006/axiom-cli/releases/download]
+        [--base-url https://github.com/cognivex006/axiom-cli/releases/download]
 
 `--base-url` exists so a staged release can be served from a test HTTP server; the published
 scripts use the canonical GitHub release download URL. The scripts only ever download the
@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES = ROOT / "installers" / "oneline"
-CANONICAL_BASE_URL = "https://github.com/orchex006/axiom-cli/releases/download"
+CANONICAL_BASE_URL = "https://github.com/cognivex006/axiom-cli/releases/download"
 TAG = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$")
 DIGEST = re.compile(r"^[0-9a-f]{64}$")
 SCRIPTS = ("install.ps1", "install.sh", "update.ps1", "update.sh")

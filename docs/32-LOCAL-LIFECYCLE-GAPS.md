@@ -14,7 +14,7 @@ A successful `doctor` result is limited to the checks it ran. It does not establ
 
 ## After installation
 
-Use the [graph engine guide](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) to register and analyze a project, the [MCP guide](https://github.com/orchex006/axiom-mcp#run) to configure transport and permissions, and the [skills/plugin guide](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) to install into your host.
+Use the [graph engine guide](https://github.com/cognivex006/axiom-graphd/blob/main/docs/README.md) to register and analyze a project, the [MCP guide](https://github.com/cognivex006/axiom-mcp#run) to configure transport and permissions, and the [skills/plugin guide](https://github.com/cognivex006/axiom-skills/blob/main/marketplace-plugins/README.md) to install into your host.
 
 ## Troubleshooting boundaries
 

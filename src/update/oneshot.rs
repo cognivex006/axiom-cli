@@ -32,7 +32,7 @@ use super::{plan as plan_contract, rules, sha256};
 
 /// Where an install created by the one-line installer discovers newer releases.
 pub const CANONICAL_CHANNEL_SOURCE: &str =
-    "https://github.com/orchex006/axiom-cli/releases/latest/download/channel.json";
+    "https://github.com/cognivex006/axiom-cli/releases/latest/download/channel.json";
 /// Test seam: force the post-update health check to fail so the rollback path can be exercised.
 pub const FAIL_HEALTH_TEST_ENV: &str = "AXIOM_CLI_TEST_FAIL_HEALTH";
 
@@ -1227,7 +1227,7 @@ mod tests {
 
     #[test]
     fn a_pinned_offer_is_accepted() {
-        let url = "https://github.com/orchex006/axiom-cli/releases/download/v0.1.3/axiom-0.1.3-windows-x64.zip";
+        let url = "https://github.com/cognivex006/axiom-cli/releases/download/v0.1.3/axiom-0.1.3-windows-x64.zip";
         let offer = offer(&manifest("0.1.3", "v0.1.3", url), "windows-x64").unwrap();
         assert_eq!(offer.version, "0.1.3");
         assert_eq!(offer.url, url);
@@ -1235,7 +1235,7 @@ mod tests {
 
     #[test]
     fn moving_references_are_refused() {
-        let good = "https://github.com/orchex006/axiom-cli/releases/download/v0.1.3/a.zip";
+        let good = "https://github.com/cognivex006/axiom-cli/releases/download/v0.1.3/a.zip";
         for (version, tag, url, reason) in [
             ("latest", "vlatest", good, "forbidden_pin:latest"),
             ("*", "v*", good, "forbidden_pin:*"),
@@ -1243,7 +1243,7 @@ mod tests {
             (
                 "0.1.3",
                 "v0.1.3",
-                "https://github.com/orchex006/axiom-cli/releases/latest/download/a.zip",
+                "https://github.com/cognivex006/axiom-cli/releases/latest/download/a.zip",
                 "channel_archive_url_not_pinned",
             ),
             (
@@ -1278,7 +1278,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
         let source = root.join("channel.json");
-        let url = "https://github.com/orchex006/axiom-cli/releases/download/v0.1.3/axiom-0.1.3-windows-x64.zip";
+        let url = "https://github.com/cognivex006/axiom-cli/releases/download/v0.1.3/axiom-0.1.3-windows-x64.zip";
         std::fs::write(&source, manifest("0.1.3", "v0.1.3", url)).unwrap();
         let planned = digest_of(&std::fs::read(&source).unwrap());
         let offer = offer(&std::fs::read(&source).unwrap(), "windows-x64").unwrap();

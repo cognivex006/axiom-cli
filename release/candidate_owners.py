@@ -27,7 +27,7 @@ def checked_run(repo, pin, observed):
     if (
         observed.get("id") != pin["run_id"]
         or observed.get("head_sha") != revision
-        or observed.get("head_repository", {}).get("full_name") != "orchex006/" + repo
+        or observed.get("head_repository", {}).get("full_name") != "cognivex006/" + repo
         or observed.get("path") != ".github/workflows/" + WORKFLOWS[repo]
         or observed.get("event") != "push"
         or observed.get("status") != "completed"
@@ -60,14 +60,14 @@ def fetch(repo, directory, pin):
         raise ValueError("explicit numeric owner run required")
     if not isinstance(pin.get("source_revision"), str) or not re.fullmatch(r"[0-9a-f]{40}", pin["source_revision"]):
         raise ValueError("immutable owner source required")
-    observed = json.loads(subprocess.check_output(["gh", "api", f"repos/orchex006/{repo}/actions/runs/{pin['run_id']}"]))
+    observed = json.loads(subprocess.check_output(["gh", "api", f"repos/cognivex006/{repo}/actions/runs/{pin['run_id']}"]))
     revision = checked_run(repo, pin, observed)
     raw = directory.with_name(repo + "-ci")
     raw.mkdir()
     patterns = ["portable-skills-" + revision] if repo == "axiom-skills" else ["native-*-" + revision]
     if repo == "axiom-mcp": patterns.append("portable-wheel-" + revision)
     for pattern in patterns:
-        subprocess.run(["gh", "run", "download", str(pin["run_id"]), "--repo", "orchex006/" + repo, "--pattern", pattern, "--dir", str(raw)], check=True)
+        subprocess.run(["gh", "run", "download", str(pin["run_id"]), "--repo", "cognivex006/" + repo, "--pattern", pattern, "--dir", str(raw)], check=True)
     if repo == "axiom-skills":
         # Pattern selection retains the exact artifact-name directory in gh.
         shutil.copytree(raw / ("portable-skills-" + revision), directory)
@@ -77,7 +77,7 @@ def fetch(repo, directory, pin):
         def git(*words):
             subprocess.run(["git", *words], cwd=source, check=True, stdout=subprocess.DEVNULL)
         git("init", "--quiet")
-        git("remote", "add", "origin", "https://github.com/orchex006/" + repo + ".git")
+        git("remote", "add", "origin", "https://github.com/cognivex006/" + repo + ".git")
         git("config", "core.autocrlf", "false")
         git("config", "core.sparseCheckout", "true")
         (source / ".git/info/sparse-checkout").write_text("/release/\n/Cargo.toml\n/pyproject.toml\n/Changelog.md\n", encoding="utf-8")

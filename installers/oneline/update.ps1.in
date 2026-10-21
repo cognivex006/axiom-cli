@@ -1,7 +1,7 @@
 # Axiom one-line updater for Windows x64. Generated for @@TAG@@; do not edit.
 #
-#   powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/update.ps1 | iex"
-#   & ([scriptblock]::Create((irm https://github.com/orchex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
+#   powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/update.ps1 | iex"
+#   & ([scriptblock]::Create((irm https://github.com/cognivex006/axiom-cli/releases/download/@@TAG@@/update.ps1))) -Yes
 #
 # This script contains no update logic:
 #   * Existing installed.json layouts: verify this release's current CLI and run

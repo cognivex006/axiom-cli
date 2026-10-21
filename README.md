@@ -11,13 +11,13 @@ serves the local API/MCP gateway. Agent workflows use `$axsk`.
 Install:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/install.ps1 | iex"
 ```
 
 Update:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cli/releases/latest/download/update.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/cognivex006/axiom-cli/releases/latest/download/update.ps1 | iex"
 ```
 
 ### macOS, Linux and WSL2 (not as root)
@@ -25,13 +25,13 @@ powershell -ExecutionPolicy Bypass -c "irm https://github.com/orchex006/axiom-cl
 Install:
 
 ```sh
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/install.sh | sh
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/install.sh | sh
 ```
 
 Update:
 
 ```sh
-curl -fsSL https://github.com/orchex006/axiom-cli/releases/latest/download/update.sh | sh
+curl -fsSL https://github.com/cognivex006/axiom-cli/releases/latest/download/update.sh | sh
 ```
 
 The install script checks the download's SHA-256, shows what it will install and asks once. At `Proceed? [Y/n]`, press Enter or type `y` to continue, or `n` to cancel. Wait for your shell prompt to return before entering another command. After installing, open a new terminal and check the result with `axm version` and `axm doctor`.
@@ -43,8 +43,8 @@ The update script finds your installation and runs its `axm update`, which shows
 ## Connect your agent
 
 Version 0.1.10 adds managed host commands and the unified `$axsk` skill.
-For older installations, update the runtime first; immutable 0.1.9 retains its
-[manual plugin setup](https://github.com/orchex006/axiom-skills/blob/v0.1.9/marketplace-plugins/README.md).
+For older installations, update the runtime first; see the current
+[manual plugin setup](https://github.com/cognivex006/axiom-skills/blob/main/marketplace-plugins/README.md).
 
 ```powershell
 axm skills install codex
@@ -97,9 +97,9 @@ $axsk watch
 $axsk ask Find callers across the registered projects A, B and C.
 ```
 
-Use the [skills guide](https://github.com/orchex006/axiom-skills/blob/main/docs/GETTING-STARTED.md)
+Use the [skills guide](https://github.com/cognivex006/axiom-skills/blob/main/docs/GETTING-STARTED.md)
 for project registration and MCP credentials, and the
-[local gateway guide](https://github.com/orchex006/axiom-mcp/blob/main/docs/local-gateway.md)
+[local gateway guide](https://github.com/cognivex006/axiom-mcp/blob/main/docs/local-gateway.md)
 for service lifetime and multi-project retention.
 
 ## Commands
@@ -126,10 +126,10 @@ Axiom builds a graph of your code and makes it available to your existing AI too
 
 | Component | What it provides | Where to go |
 |---|---|---|
-| **[axiom-cli](https://github.com/orchex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/orchex006/axiom-cli/releases) |
-| **[axiom-graphd](https://github.com/orchex006/axiom-graphd)** | `axge`: source analysis, file watching, indexing and graph publication | [Command reference](https://github.com/orchex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/orchex006/axiom-graphd/blob/main/docs/README.md) |
-| **[axiom-mcp](https://github.com/orchex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/orchex006/axiom-mcp#run) · [Tools reference](https://github.com/orchex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
-| **[axiom-skills](https://github.com/orchex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/orchex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/orchex006/axiom-skills/blob/main/docs/guides/hosts.md) |
+| **[axiom-cli](https://github.com/cognivex006/axiom-cli)** — this repository | `axm`, ecosystem installation, updates and removal | [Installation guide](docs/INSTALL.md) · [Releases](https://github.com/cognivex006/axiom-cli/releases) |
+| **[axiom-graphd](https://github.com/cognivex006/axiom-graphd)** | `axge`: source analysis, file watching, indexing and graph publication | [Command reference](https://github.com/cognivex006/axiom-graphd/blob/main/docs/reference/axiom-graphd.md) · [Engine documentation](https://github.com/cognivex006/axiom-graphd/blob/main/docs/README.md) |
+| **[axiom-mcp](https://github.com/cognivex006/axiom-mcp)** | MCP gateway for querying the published graph from an AI host, through stdio or HTTP | [Run and configure MCP](https://github.com/cognivex006/axiom-mcp#run) · [Tools reference](https://github.com/cognivex006/axiom-mcp/blob/main/docs/reference/mcp.md) |
+| **[axiom-skills](https://github.com/cognivex006/axiom-skills)** | Agent skills, workflow policy, host adapters and bootstrap templates | [Plugin installation](https://github.com/cognivex006/axiom-skills/blob/main/marketplace-plugins/README.md) · [Host setup](https://github.com/cognivex006/axiom-skills/blob/main/docs/guides/hosts.md) |
 
 The CLI distributes the components together. The engine produces graph data, MCP exposes that data to an AI host, and skills describe how an agent should use it. Component guides own their setup instructions and compatibility details.
 
@@ -141,3 +141,7 @@ The CLI distributes the components together. The engine produces graph data, MCP
 - [Development contract](Development.md) and [Changelog](Changelog.md).
 
 The installation engine is owned by `axiom-graphd`; this repository packages and verifies releases and never forks that engine. The normative distribution contract lives in `axiom-specs`.
+
+## Build and deployment
+
+Build, verify and deploy on operator-managed machines; see [local build and deployment](docs/LOCAL-BUILD-DEPLOY.md). GitHub Actions workflows are removed.
