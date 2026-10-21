@@ -2,9 +2,9 @@
   "task_id": "W-082",
   "owner_repository": "axiom-cli",
   "branch": "feature/w-082-windows-014",
-  "status": "source_verified",
+  "status": "published",
   "version": "0.1.14",
-  "verification_artifact": "evidence/W-082/source-checks.json",
-  "git_delivery": "Exact committed and remote source SHA is recorded in the current release coordination source vector.",
-  "release_acceptance": "Native Windows package/runtime/distribution proof and authorized publication remain pending."
+  "published_source_revision": "b9a836bcc9d0dfde9df10d104dd60662ef7df73c",
+  "publication_receipt": "evidence/W-082/publication.json",
+  "main_integration": "Pending human review; protected main unchanged."
 }
