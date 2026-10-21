@@ -6,5 +6,10 @@
   "release_verified": false,
   "published": false,
   "latest_cached_version": "0.1.15",
-  "reason": "Owner selected withholding publication until namespace-migrated builds pass on all required native platforms."
+  "reason": "Owner selected Windows0.1.14 local-machine builds; no current publication is claimed before native acceptance and verified downloads.",
+  "selected_release_version": "0.1.14",
+  "required_native_platforms": [
+    "windows-x64"
+  ],
+  "decision": "ADR-0045"
 }

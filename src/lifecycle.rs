@@ -429,6 +429,9 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
             return Err(refusal);
         }
     }
+    // Refuse immutable same-version replacements and downgrades before a runtime
+    // provisioner can activate a new MCP generation.
+    check_installed_release_replacement(&root, set, &engine, verified)?;
     for layout in adopting.iter().filter(|layout| layout.kind == "cli-store") {
         crate::legacy::backup_cli_store(layout)?;
     }
@@ -584,6 +587,168 @@ fn apply_install(set: &ReleaseSet, verified: &[Json]) -> Result<Report, Refusal>
         report.detail("mcp_runtime_bin", Json::text(&bin.display().to_string()));
     }
     Ok(report)
+}
+
+fn check_installed_release_replacement(
+    root: &Path,
+    set: &ReleaseSet,
+    engine: &engine::Engine,
+    verified: &[Json],
+) -> Result<(), Refusal> {
+    if set.plan.get("mcp_runtime").is_none()
+        || set
+            .local_root
+            .as_deref()
+            .and_then(crate::runtime::locate)
+            .is_none()
+    {
+        // Partial/no-runtime sets retain the engine's existing validation path;
+        // there is no runtime activation for this preflight to protect.
+        return Ok(());
+    }
+    let installed_path = root.join(state::INSTALLED_FILE);
+    if !installed_path.exists() {
+        return Ok(());
+    }
+    if installed_path.is_symlink() {
+        return Err(Refusal::validation(
+            "installed_record_link",
+            "the installed release record is linked; nothing was changed",
+        ));
+    }
+    let installed = state::State::new(root).read_installed()?;
+    let components = installed
+        .extra
+        .get("components")
+        .and_then(Json::as_array)
+        .ok_or_else(missing_installed_version)?;
+    let previous = installed_core_version(components)?;
+    let candidate = set
+        .manifest
+        .components
+        .iter()
+        .find(|item| item.component == "axiom-graphd")
+        .and_then(|item| item.version.as_deref())
+        .ok_or_else(missing_installed_version)?;
+    let mut same_source = installed.channel_manifest_sha256 == set.manifest_sha256;
+    if previous == candidate && !same_source {
+        // Repairing only a damaged recorded manifest remains possible when all
+        // physical owner identities still match the checked candidate.
+        same_source = matching_installed_sources(root, set, engine, verified, components)?;
+    }
+    check_release_versions(previous, candidate, same_source)
+}
+
+fn missing_installed_version() -> Refusal {
+    Refusal::validation(
+        "installed_version_missing",
+        "the installed or offered core version is missing or invalid; nothing was changed",
+    )
+}
+
+fn installed_core_version(components: &[Json]) -> Result<&str, Refusal> {
+    components
+        .iter()
+        .find(|item| item.get("component").and_then(Json::as_text) == Some("axiom-graphd"))
+        .and_then(|item| item.get("version"))
+        .and_then(Json::as_text)
+        .ok_or_else(missing_installed_version)
+}
+
+fn matching_installed_sources(
+    root: &Path,
+    set: &ReleaseSet,
+    engine: &engine::Engine,
+    verified: &[Json],
+    components: &[Json],
+) -> Result<bool, Refusal> {
+    let recorded = |name: &str| {
+        components
+            .iter()
+            .find(|item| item.get("component").and_then(Json::as_text) == Some(name))
+            .and_then(|item| item.get("sha256"))
+            .and_then(Json::as_text)
+    };
+    let own = std::env::current_exe()
+        .map_err(|error| Refusal::io("current_exe_unreadable", "axiom-cli", &error))?;
+    if recorded("bin/axm") != Some(crate::layout::file_digest(&own)?.as_str()) {
+        return Ok(false);
+    }
+    for (component, name) in [("axiom-graphd", "axiom-graphd"), ("axiom-mcp", "axiom-mcp")] {
+        let wanted = verified
+            .iter()
+            .find(|item| item.get("component").and_then(Json::as_text) == Some(component))
+            .and_then(|item| item.get("sha256"))
+            .and_then(Json::as_text);
+        if wanted.is_none() || recorded(name) != wanted {
+            return Ok(false);
+        }
+    }
+    if recorded("bin/graphd-engine/axiom")
+        != Some(crate::layout::file_digest(engine.program())?.as_str())
+    {
+        return Ok(false);
+    }
+    let Some(skills) = set
+        .manifest
+        .components
+        .iter()
+        .find(|item| item.component == "skills")
+    else {
+        return Ok(false);
+    };
+    let env = bundle::engine_environment(root, None);
+    let version =
+        engine.invoke_with_env(&["skills".into(), "version".into(), "--json".into()], &env)?;
+    if version.exit_code() != 0 {
+        return Ok(false);
+    }
+    let report =
+        crate::update::json::parse(&version.stdout).map_err(|_| missing_installed_version())?;
+    let actual = report.get("installed");
+    if actual
+        .and_then(|item| item.get("revision"))
+        .and_then(Json::as_text)
+        != skills.revision.as_deref()
+        || skills.revision.is_none()
+        || actual
+            .and_then(|item| item.get("version"))
+            .and_then(Json::as_text)
+            != skills.version.as_deref()
+    {
+        return Ok(false);
+    }
+    let checked =
+        engine.invoke_with_env(&["skills".into(), "check".into(), "--json".into()], &env)?;
+    Ok(checked.exit_code() == 0)
+}
+
+fn check_release_versions(
+    installed: &str,
+    candidate: &str,
+    same_manifest: bool,
+) -> Result<(), Refusal> {
+    if !crate::update::rules::is_semver(installed) || !crate::update::rules::is_semver(candidate) {
+        return Err(Refusal::validation(
+            "installed_version_invalid",
+            "the installed or offered core version is invalid; nothing was changed",
+        ));
+    }
+    let without_build = |value: &str| value.split('+').next().unwrap_or(value).to_string();
+    match crate::update::oneshot::semver_cmp(
+        &without_build(candidate),
+        &without_build(installed),
+    ) {
+        std::cmp::Ordering::Less => Err(Refusal::validation(
+            "install_downgrade_refused",
+            format!("refusing to replace {installed} with older release {candidate}; nothing was changed"),
+        )),
+        std::cmp::Ordering::Equal if !same_manifest => Err(Refusal::validation(
+            "same_version_source_conflict",
+            format!("release {candidate} is already installed from a different manifest; immutable same-version replacement is refused before runtime provisioning; nothing was changed"),
+        )),
+        _ => Ok(()),
+    }
 }
 
 /// Put `axiom-cli`, `axiom` and `axiom-graphd` side by side in `<root>/bin` and write the single
@@ -1775,6 +1940,40 @@ fn plan_lines(set: &ReleaseSet) -> Vec<String> {
 mod tests {
     use super::*;
     use crate::update::json::Json;
+
+    #[test]
+    fn same_version_different_source_refuses_before_runtime_activation() {
+        let refusal = check_release_versions("0.1.14", "0.1.14", false).unwrap_err();
+        assert_eq!(refusal.reason, "same_version_source_conflict");
+        assert!(refusal.message.contains("nothing was changed"));
+    }
+
+    #[test]
+    fn downgrade_refuses_before_runtime_activation() {
+        let refusal = check_release_versions("0.1.15", "0.1.14", false).unwrap_err();
+        assert_eq!(refusal.reason, "install_downgrade_refused");
+    }
+
+    #[test]
+    fn identical_manifest_repair_and_newer_release_remain_allowed() {
+        check_release_versions("0.1.14", "0.1.14", true).unwrap();
+        check_release_versions("0.1.12", "0.1.14", false).unwrap();
+        check_release_versions("0.1.14+old", "0.1.14+new", true).unwrap();
+        assert!(check_release_versions("bad", "0.1.14", false).is_err());
+    }
+
+    #[test]
+    fn missing_or_non_text_installed_version_refuses() {
+        assert_eq!(
+            installed_core_version(&[]).unwrap_err().reason,
+            "installed_version_missing"
+        );
+        let malformed = Json::from_pairs(vec![
+            ("component", Json::text("axiom-graphd")),
+            ("version", Json::int(14)),
+        ]);
+        assert!(installed_core_version(&[malformed]).is_err());
+    }
 
     /// A minimal plan body shaped like the distribution plan, without a digest member.
     fn plan_body() -> Json {

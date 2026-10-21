@@ -30,6 +30,13 @@ Changes are listed by release, newest first. For downloads, see [GitHub Releases
 
 ## 0.1.14
 
+### Current Windows distribution
+
+- Refuse different-source same-version replacement and downgrade before activating the MCP runtime, preserving the existing installation on refusal.
+- Rebuild Windows delivery under cognivex006 with source-bound local-machine verification and no GitHub Actions.
+- Retain immutable source/checksum inventories and the current complete-inventory graph fixes.
+
+
 ### New Features
 
 - Start the local MCP gateway with `axm mcp start` and select an available loopback port automatically.

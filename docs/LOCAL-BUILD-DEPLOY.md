@@ -1,5 +1,15 @@
 # Build and deploy from your own machines
 
+## Current Windows 0.1.14 scope
+
+The owner selected Windows x64 and version 0.1.14. Use native local-machine
+builds and tests; GitHub Actions stays disabled. Collector commands accept
+`--platforms windows-x64` for this explicitly selected release scope. MCP and
+skills remain portable packages, verified on Windows. Linux/macOS delivery and
+Docker images are not part of this release. Exact source/checksum, native
+installer tests, failure-state preservation and review gates remain required.
+
+
 Canonical repository: https://github.com/cognivex006/axiom-cli
 
 GitHub Actions is removed. Run from the repository root with existing pinned

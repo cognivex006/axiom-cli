@@ -1,5 +1,13 @@
 # Installing Axiom
 
+This Windows 0.1.14 release uses cognivex006 downloads. Fresh installation and
+upgrades from supported earlier versions retain checksum and approval checks. An
+existing installation from a different manifest with the same version, or a
+downgrade from a newer version, is refused before MCP runtime activation. Keep
+the existing installation or use a clean installation account/root; a matching
+manifest remains eligible for repair.
+
+
 One command installs Axiom for your user account:
 
 - `axm`: Main CLI / Orchestrator.

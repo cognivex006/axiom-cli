@@ -1,0 +1,79 @@
+{
+  "task_id": "W-082",
+  "repository": "axiom-cli",
+  "status": "source_verified",
+  "version": "0.1.14",
+  "platform": "windows-x64",
+  "spec_revision": "c8bd7f33d562b31a585478d377f866ce0da4fb0c",
+  "source_unchanged_during_checks": true,
+  "checks": [
+    {
+      "command": "cargo +1.85.0 fmt --all -- --check",
+      "exit_code": 0,
+      "raw_log_sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 clippy --locked --all-targets -- -D warnings",
+      "exit_code": 0,
+      "raw_log_sha256": "e78e8df7893fb78dcc6bc65dab528cef224c635db762553372fcd14744d9a5fd",
+      "observed_summary": []
+    },
+    {
+      "command": "cargo +1.85.0 test --locked",
+      "exit_code": 0,
+      "raw_log_sha256": "fcc9dd84feb56e57d2a6e388bf484821bbdbef86a40b505e37162d2928fd7df1",
+      "observed_summary": [
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.15s",
+        "test result: ok. 63 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.30s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.69s",
+        "test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.39s"
+      ]
+    },
+    {
+      "command": "python release/check_public_docs.py",
+      "exit_code": 0,
+      "raw_log_sha256": "9f2755f82ece7ff47138c0e34d42bec35824f8ffa8537ca0dfe07c1312e16bd4",
+      "observed_summary": [
+        "Public documentation, product text and selected release assets: no internal identifiers."
+      ]
+    },
+    {
+      "command": "python -m unittest tests.test_public_docs tests.test_bootstrappers tests.test_runtime_version_protocol tests.test_candidate_owners -v",
+      "exit_code": 0,
+      "raw_log_sha256": "6fdb6e56f0e0100e37b3b8a0e76e46cfbd487d7122d0ed97575c81809aad9c40",
+      "observed_summary": [
+        "Ran 28 tests in 1.337s",
+        "OK (skipped=9)"
+      ]
+    },
+    {
+      "command": "cargo-deny.exe --locked --config .delivery/dependency-audit.toml check",
+      "exit_code": 0,
+      "raw_log_sha256": "e3cfd95543d938675702369794225afb703af75001fe73ba60fe399b55bb8943",
+      "observed_summary": [
+        "advisories ok, bans ok, licenses ok, sources ok"
+      ]
+    }
+  ],
+  "independent_review": "No blocking source finding; actual native owner/distribution, refusal and rollback acceptance remains mandatory before publication.",
+  "publication": "not_published",
+  "tested_input_hashes": {
+    "Cargo.lock": "93505f3fac8239ead9e457ab5e7d720e385c3e1c17c2abceb6a566036bbedf69",
+    "Cargo.toml": "20ada83a760f823da05f44c1d57d280eefd65913f298490e1bd8356b87925ef7",
+    "Changelog.md": "5ee97e185d5481803d7ae547ed83dcabccfe28df6eff4cae4d39c0e13d9cfbdd",
+    "Development.md": "e14669bfc98365c09f9bca497aca389dea88d68eedc8ba27b0c80b73295f2cab",
+    "VERSION": "9940d4b5219de8404015bc18af844c88d7e9e9105682a5d47b1d369d027dbd25",
+    "containers/Dockerfile": "1355d14c598d6eb71f451d720166e6ebd4ef991dfc110d8523bdeaf38dd06ddb",
+    "docs/INSTALL.md": "12ebfd87643a59c234f7ac7dfcf895c6c2c8e76f0bfc73326663aec349249335",
+    "docs/LOCAL-BUILD-DEPLOY.md": "5fd6a569a291e6b089056d87eb906e3b57cc925f86b4eaae623a6dcd1af8fa67",
+    "release/collect_distribution.py": "a8adfd768ed780e5ff1d1bcfaaad9b226497c23f7457be897e4dd53cb0c8948c",
+    "release/readiness.json": "a546c286e8b67bd60614b57d10f8f68b85eab5cce5dcf552c41be90dd3c7d646",
+    "spec.lock.json": "15774a4dc96bef8e274afec0b7f3df0f7db77e64ccb9678c18813b949abe0844",
+    "src/lifecycle.rs": "86ecb1fa96155aedad93cfc641258626305fd7429996e16b8aaa04d9db9f3702"
+  }
+}
